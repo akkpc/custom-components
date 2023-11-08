@@ -16,7 +16,7 @@ const LineChart: React.FC = () => {
 
   const config = {
     data,
-    width: 800,
+    width: window.innerWidth,
     height: 400,
     autoFit: false,
     xField: 'year',
