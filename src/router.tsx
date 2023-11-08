@@ -4,6 +4,7 @@ import {
 } from "react-router-dom";
 import UICalender from "./components/Calender";
 import { LineChart } from "./components/LineChart";
+import { BarChart } from "./components/BarChart";
 
 const router = createBrowserRouter([
     {
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
     {
         path: "/line-chart",
         element: <LineChart />,
+    },
+    {
+        path: "/bar",
+        element: <BarChart />,
     },
 ]);
 
