@@ -5,6 +5,8 @@ import {
 import UICalender from "./components/Calender";
 import { LineChart } from "./components/LineChart";
 import { BarChart } from "./components/BarChart";
+import { BasicChart } from "./components/BasicChart";
+import { AccordionTable } from "./components/Table";
 
 const router = createBrowserRouter([
     {
@@ -23,6 +25,14 @@ const router = createBrowserRouter([
         path: "/bar",
         element: <BarChart />,
     },
+    {
+        path: "/test/test",
+        element: <BasicChart/>
+    },
+    {
+        path: "/table",
+        element: <AccordionTable />
+    }
 ]);
 
 export {

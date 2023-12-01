@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Line } from '@ant-design/charts';
 
-const LineChart: React.FC = () => {
+const BasicChart: React.FC = () => {
   const data = [
     { name: '1991', age: 3 },
     { name: '1992', age: 4 },
@@ -46,16 +47,8 @@ const LineChart: React.FC = () => {
 
   return (
     <div>
-      {/* <button type="button" onClick={downloadImage} style={{ marginRight: 24 }}>
-        Export Image
-      </button>
-      <button type="button" onClick={toDataURL}>
-        Get base64
-      </button> */}
-      <Line {...config}
-      // onReady={(chartInstance) => (chart = chartInstance)} 
-      />
+      <h1>Helloo Keerthana</h1>
     </div>
   );
 };
-export { LineChart };
+export { BasicChart };
