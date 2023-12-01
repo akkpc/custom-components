@@ -36,3 +36,20 @@
     transform: rotate(360deg);
   }
 }
+
+
+/* row data */
+.ant-table-tbody > tr > td {
+  height: 5px;
+  padding: 0px;
+}
+
+.ant-table-thead > tr > th {
+  height: 5px;
+  padding: 0px;
+}
+
+
+.hide-row {
+  display: none;
+}

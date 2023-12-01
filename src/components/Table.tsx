@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Checkbox, Space, Switch, Table } from 'antd';
+import { Checkbox, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { TableRowSelection } from 'antd/es/table/interface';
-import { DownOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { getColorCode } from '../helpers';
+
+const lineItemsKeys = "1314";
 
 interface DataType {
     key: React.ReactNode;
@@ -11,37 +13,6 @@ interface DataType {
     sup_02: number;
     children?: DataType[];
 }
-
-function getColorCode(number: number) {
-    if (number >= 0 && number <= 4) {
-        const startColor = [255, 90, 90];
-        const endColor = [253, 213, 207];
-        const step = 1 / 4;
-        const rgb = startColor.map((channel, index) =>
-            Math.round(channel - step * number * (startColor[index] - endColor[index]))
-        );
-        return `rgb(${rgb.join(', ')})`;
-    } else if (number >= 5 && number <= 7) {
-        const startColor = [255, 253, 211];
-        const endColor = [251, 245, 44];
-        const step = 1 / 2;
-        const rgb = startColor.map((channel, index) =>
-            Math.round(channel - step * (number - 5) * (startColor[index] - endColor[index]))
-        );
-        return `rgb(${rgb.join(', ')})`;
-    } else if (number >= 8 && number <= 10) {
-        const startColor = [220, 255, 215]
-        const endColor = [120, 255, 60]
-        const step = 1 / 2;
-        const rgb = startColor.map((channel, index) =>
-            Math.round(channel - step * (number - 8) * (startColor[index] - endColor[index]))
-        );
-        return `rgb(${rgb.join(', ')})`;
-    } else {
-        return "white"
-    }
-}
-
 
 const data: DataType[] = [
     {
@@ -174,6 +145,10 @@ const rowSelection: TableRowSelection<DataType> = {
     onSelectAll: (selected, selectedRows, changeRows) => {
         console.log(selected, selectedRows, changeRows);
     },
+    getCheckboxProps: (record) => ({
+        className: record.key?.toString().includes(lineItemsKeys) ? "" : "hide-row"
+    }),
+    hideSelectAll: true,
 };
 
 
@@ -191,7 +166,7 @@ const AccordionTable: React.FC = () => {
 
     const columns: ColumnsType<DataType> = [
         {
-            title: getTitleWithCheckbox('parameters', "Parameters"),
+            title: "Parameters",
             dataIndex: 'parameters',
             key: 'parameters'
         },
@@ -199,29 +174,47 @@ const AccordionTable: React.FC = () => {
             title: getTitleWithCheckbox('sup_01', "Sup - 01"),
             dataIndex: 'sup_01',
             key: 'sup_01',
-            render: (text) => (
-                <div style={{ backgroundColor: getColorCode(text), height: "100%" }} >
-                    <p>{text}</p>
-                </div>
-            ),
+            render: rowRender,
+            width: "20%"
         },
         {
             // title: 'Address',
             title: getTitleWithCheckbox('sup_02', "Sup - 02"),
             dataIndex: 'sup_02',
             key: 'sup_02',
+            width: "20%",
+            render: rowRender
         },
     ];
 
     return (
-        <>
+        <div style={{display:"flex",alignItems:"center", justifyContent:"center"}} >
             <Table
                 columns={columns}
                 rowSelection={{ ...rowSelection }}
                 dataSource={data}
+                style={{ width: "50%", borderColor:"red"}}
+                bordered
+                pagination={false}
+                className="custom-table"
             />
-        </>
+        </div>
     );
 };
 
+// function rowRender(text: any) {
+//     return (
+//         <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
+//             <Tag color={getColorCode(text)} style={{ fontWeight: "bold", width: 40, display: "flex", alignItems: "center", justifyContent: "center", paddingLeft:4, paddingRight:4 }} >
+//                 <p style={{ color: "black", fontWeight: "bold", padding: 0, margin: 0 }} >{text}</p>
+//             </Tag>
+//         </div>
+//     )
+// }
+function rowRender(text: any) {
+    return (
+        <div style={{ backgroundColor: getColorCode(text), display: "flex", alignItems: "center", justifyContent: "center" }} >
+            <p style={{ fontWeight: "bold" }} >{text}</p>
+        </div>)
+}
 export { AccordionTable };
