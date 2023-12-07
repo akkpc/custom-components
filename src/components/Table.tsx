@@ -193,7 +193,7 @@ const AccordionTable: React.FC = () => {
                 columns={columns}
                 rowSelection={{ ...rowSelection }}
                 dataSource={data}
-                style={{ width: "50%", borderColor:"red"}}
+                style={{ width: "50%"}}
                 bordered
                 pagination={false}
                 className="custom-table"
