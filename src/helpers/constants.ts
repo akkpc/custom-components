@@ -1,0 +1,1 @@
+export const baseUrl = `https://development-lcnc-kpc.kissflow.com`
