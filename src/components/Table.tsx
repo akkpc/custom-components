@@ -124,7 +124,8 @@ const AccordionTable: React.FC = () => {
         _id: "Pk8LrjrVGBG7",
         Supplier_Name: "Wonderla Solutions",
         sections: []
-    }]
+    }
+]
 
     const sourcingEventId = "Pk8LrgSigCnz";
 
@@ -141,7 +142,8 @@ const AccordionTable: React.FC = () => {
         const columns: any = [{
             title: "Parameters",
             dataIndex: 'parameters',
-            key: 'parameters'
+            key: 'parameters',
+            width: `${70/suppliers.length}%`
         }];
         suppliers.forEach(({ _id, Supplier_Name }) => {
             columns.push({
@@ -151,7 +153,7 @@ const AccordionTable: React.FC = () => {
                         title: "Response",
                         dataIndex: getResponseKey(_id),
                         key: getResponseKey(_id),
-                        width: "20%",
+                        // width: "20%",
                         render: (text: string, record: any) => ({
                             children: <RowRender text={text} />,
                             props: {
@@ -164,8 +166,8 @@ const AccordionTable: React.FC = () => {
                         dataIndex: _id,
                         key: _id,
                         // render: rowRender,
-                        width: "10%",
-                        render: (text: string, record: any, index: number) => ({
+                        // width: "10%",
+                        render: (text: string, record: any) => ({
                             children: <RowRender text={text} />,
                             props: {
                                 colSpan: record.mergeCell ? 2 : 1, // No colSpan for this column
