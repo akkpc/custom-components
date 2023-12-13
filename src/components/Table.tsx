@@ -146,10 +146,32 @@ const AccordionTable: React.FC = () => {
         suppliers.forEach(({ _id, Supplier_Name }) => {
             columns.push({
                 title: getTitleWithCheckbox(_id, Supplier_Name),
-                dataIndex: _id,
-                key: _id,
-                width: "20%",
-                render: rowRender
+                children: [
+                    {
+                        title: "Response",
+                        dataIndex: getResponseKey(_id),
+                        key: getResponseKey(_id),
+                        width: "20%",
+                        render: (text: string, record: any) => ({
+                            children: <RowRender text={text} />,
+                            props: {
+                                colSpan: record.mergeCell ? 0 : 1, // No colSpan for this column
+                            },
+                        }),
+                    },
+                    {
+                        title: "Score",
+                        dataIndex: _id,
+                        key: _id,
+                        // render: rowRender,
+                        width: "10%",
+                        render: (text: string, record: any, index: number) => ({
+                            children: <RowRender text={text} />,
+                            props: {
+                                colSpan: record.mergeCell ? 2 : 1, // No colSpan for this column
+                            },
+                        }),
+                    }],
             })
         })
         setColumns(columns)
@@ -231,6 +253,10 @@ const AccordionTable: React.FC = () => {
         return questionsWithSection;
     }
 
+    function getResponseKey(id: string) {
+        return `${id}_response`
+    }
+
 
     const getSupplierQuestions = async (sourcing_event_id: string) => {
         console.log("supplier questions triggered")
@@ -247,6 +273,7 @@ const AccordionTable: React.FC = () => {
                         key: question.Supplier__Question_ID,
                         parameters: question.Questions,
                         [question.Supplier_name._id]: question.Score || 0,
+                        [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
                     }
                 )
             } else {
@@ -258,7 +285,9 @@ const AccordionTable: React.FC = () => {
                         key: question.Supplier__Question_ID,
                         parameters: question.Questions,
                         [question.Supplier_name._id]: question.Score || 0,
-                    }]
+                        [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
+                    }],
+                    mergeCell: true
                 }
                 sections.push(newSection)
             }
@@ -267,24 +296,28 @@ const AccordionTable: React.FC = () => {
         let overallData: any = {
             key: 1,
             parameters: 'OverAll Score',
+            mergeCell: true,
         }
 
         let technicalData: any = {
             key: 2,
             parameters: 'Technial Score',
-            children: sections
+            children: sections,
+            mergeCell: true,
         }
 
         let commercialData: any = {
             key: 3,
             parameters: 'Commercial Score',
-            children: []
+            children: [],
+            mergeCell: true,
         }
 
         let lineItemsData: any = {
             key: 4,
             parameters: 'Line Items',
-            children: []
+            children: [],
+            mergeCell: true,
         }
 
         const lineItems = await getSupplierLineItems(sourcing_event_id);
@@ -294,6 +327,7 @@ const AccordionTable: React.FC = () => {
                 key: lineItem._id,
                 parameters: lineItem.Item,
                 [lineItem.Supplier_name._id]: lineItem.Score || 0,
+                [getResponseKey(lineItem.Supplier_name._id)]: lineItem.Amount,
                 showCheckBox: true
             })
             lineItemsData[lineItem.Supplier_name._id] = (lineItemsData[lineItem.Supplier_name._id] || 0) + lineItem.Score || 0
@@ -337,7 +371,7 @@ const AccordionTable: React.FC = () => {
     );
 };
 
-function rowRender(text: any) {
+function RowRender({ text }: any) {
     return (
         <div style={{ backgroundColor: getColorCode(text), display: "flex", alignItems: "center", justifyContent: "center" }} >
             <p style={{ fontWeight: "bold" }} >{text}</p>
