@@ -121,13 +121,14 @@ const AccordionTable: React.FC = () => {
     const [data, setData] = useState<any[]>([])
 
     const suppliers: SupplierSection[] = [{
-        _id: "Pk8LrjrVGBG7",
-        Supplier_Name: "Wonderla Solutions",
+        // _id: "Pk8LrjrVGBG7",
+        _id:"Pk7jU0eTPlK0",
+        Supplier_Name: "Imagine Solution",
         sections: []
     }
 ]
-
-    const sourcingEventId = "Pk8LrgSigCnz";
+    // const sourcingEventId = "Pk8LrgSigCnz";
+    const sourcingEventId = "Pk7jTdS53KL9";
 
     function getTitleWithCheckbox(key: string, title: string) {
         return <div style={{ display: "flex" }} >
@@ -186,6 +187,10 @@ const AccordionTable: React.FC = () => {
             await getSupplierQuestions(sourcingEventId);
             buildColumns();
             setContentLoaded(true);
+
+            KFSDK.context.watchParams(function (data:any) {
+                console.log("Params Received : ",data);
+            });
         })()
     }, [])
 
@@ -267,9 +272,9 @@ const AccordionTable: React.FC = () => {
 
         technicalItems.forEach((question) => {
             const sectionIndex = sections.findIndex((section: any) => question.Sourcing_event__Section_ID == section.key)
+            
             if (sectionIndex >= 0) {
-                sections[sectionIndex][question.Supplier_name._id] = sections[sectionIndex][question.Supplier_name._id] + question.Score || 0
-
+                sections[sectionIndex][question.Supplier_name._id] += question?.Score || 0
                 sections[sectionIndex].children.push(
                     {
                         key: question.Supplier__Question_ID,
@@ -320,7 +325,8 @@ const AccordionTable: React.FC = () => {
             parameters: 'Line Items',
             children: [],
             mergeCell: true,
-        }
+        } 
+
 
         const lineItems = await getSupplierLineItems(sourcing_event_id);
         let lineItemsScores: any[] = []
@@ -343,15 +349,15 @@ const AccordionTable: React.FC = () => {
         suppliers.forEach((supplier) => {
             sections = sections.map((section) => ({
                 ...section,
-                [supplier._id]: section[supplier._id] / section.children.length
+                [supplier._id]: section[supplier._id]
             }))
-            technicalData[supplier._id] = sections.reduce((prev, section) => prev + section[supplier._id], 0) / sections.length
+            technicalData[supplier._id] = sections.reduce((prev, section) => prev + section[supplier._id], 0)
 
-            lineItemsData[supplier._id] = lineItemsData[supplier._id] / lineItemsData.children.length
+            lineItemsData[supplier._id] = lineItemsData[supplier._id] || 0
 
-            commercialData[supplier._id] = commercialData.children.reduce((prev: number, sec: any) => prev + sec[supplier._id], 0) / commercialData.children.length
+            commercialData[supplier._id] = commercialData.children.reduce((prev: number, sec: any) => prev + sec[supplier._id] || 0, 0)
 
-            overallData[supplier._id] = (technicalData[supplier._id] + commercialData[supplier._id]) / 2
+            overallData[supplier._id] = (technicalData[supplier._id] + commercialData[supplier._id])
         })
 
         setData([overallData, technicalData, commercialData])

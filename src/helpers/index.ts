@@ -16,7 +16,7 @@ function getColorCode(number: number) {
             Math.round(channel - step * (number - 4) * (startColor[index] - endColor[index]))
         );
         return `rgb(${rgb.join(', ')})`;
-    } else if (number >= 8 && number <= 10) {
+    } else if (number >= 8) {
         const startColor = [220, 255, 215]
         const endColor = [120, 255, 60]
         const step = 1 / 2;
