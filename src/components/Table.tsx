@@ -1,12 +1,9 @@
 import { Checkbox, Table } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import type { TableRowSelection } from 'antd/es/table/interface';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getColorCode } from '../helpers';
 import { baseUrl } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
-
-const lineItemsKeys = "1314";
 
 interface SupplierSection {
     _id: string;
@@ -29,10 +26,11 @@ interface Sections {
 interface DataType {
     key: React.ReactNode;
     parameters: string;
-    sup_01: number;
+    Pk8LrjrVGBG7: number;
     sup_02: number;
     children?: DataType[];
     childUrl?: string;
+    showCheckBox?: boolean;
 }
 interface SupplierData {
     Sourcing_event__Section_look_up: {
@@ -71,54 +69,33 @@ interface SupplierData {
     _id: string;
 }
 
-const data: DataType[] = [
-    {
-        key: 1,
-        parameters: 'OverAll Score',
-        sup_01: 8,
-        sup_02: 10,
-    },
-    {
-        key: 3,
-        parameters: 'Technial Score',
-        sup_01: 9,
-        sup_02: 8,
-        children: []
-    },
-    {
-        key: 13,
-        parameters: 'Commercials',
-        sup_01: 6,
-        sup_02: 4,
-        children: [
-            {
-                key: 1311,
-                parameters: 'PT',
-                sup_01: 8,
-                sup_02: 5,
-            },
-            {
-                key: 1312,
-                parameters: 'ST',
-                sup_01: 8,
-                sup_02: 6,
-            },
-            {
-                key: 1313,
-                parameters: 'SC',
-                sup_01: 8,
-                sup_02: 6,
-            },
-            {
-                key: 1314,
-                parameters: 'Lines',
-                sup_01: 8,
-                sup_02: 6,
-                children: []
-            }
-        ],
-    },
-];
+interface SourcingData {
+    Sourcing_line_items_look_up: {
+        _id: string;
+        Name: string;
+        Item: string;
+        Item_description: string;
+        Quantity: number;
+        UOM: string;
+    };
+    Supplier_name: {
+        _id: string;
+        Name: string;
+        Supplier_Name: string;
+    };
+    Item: string;
+    Item_Description: string;
+    Sourcing_event_ID: string;
+    Supplier_Line_ID: string;
+    Score: number;
+    UOM: string;
+    Sourcing_line_items_id: string;
+    Quantity: number;
+    Price: string;
+    Amount: string;
+    Price_1: string;
+    _id: string;
+}
 
 const rowSelection: TableRowSelection<DataType> = {
     onChange: (selectedRowKeys, selectedRows) => {
@@ -131,7 +108,7 @@ const rowSelection: TableRowSelection<DataType> = {
         console.log(selected, selectedRows, changeRows);
     },
     getCheckboxProps: (record) => ({
-        className: record.key?.toString().includes(lineItemsKeys) ? "" : "hide-row"
+        className: record.showCheckBox ? "" : "hide-row"
     }),
     hideSelectAll: true,
 };
@@ -139,18 +116,89 @@ const rowSelection: TableRowSelection<DataType> = {
 
 const AccordionTable: React.FC = () => {
     const [selectedColumn, setSelectedColumn] = useState<string>();
+    const [contentLoaded, setContentLoaded] = useState(false);
+    const [columns, setColumns] = useState<any[]>([])
+    const [data, setData] = useState<any[]>([])
 
-    // let kf: any = useRef(null);
-    let kf = ["Pk7jlvyCwcHa", "Pk7jlvzfM_yn"]
+    const suppliers: SupplierSection[] = [{
+        _id: "Pk8LrjrVGBG7",
+        Supplier_Name: "Wonderla Solutions",
+        sections: []
+    }]
+
+    const sourcingEventId = "Pk8LrgSigCnz";
+
+    function getTitleWithCheckbox(key: string, title: string) {
+        return <div style={{ display: "flex" }} >
+            <Checkbox disabled={selectedColumn ? selectedColumn !== key : false}
+                onChange={(event) => event.target.checked ? setSelectedColumn(key) : setSelectedColumn("")} style={{ marginRight: 5 }} ></Checkbox>
+            <p>{title}</p>
+        </div>
+    }
+
+
+    function buildColumns() {
+        const columns: any = [{
+            title: "Parameters",
+            dataIndex: 'parameters',
+            key: 'parameters'
+        }];
+        suppliers.forEach(({ _id, Supplier_Name }) => {
+            columns.push({
+                title: getTitleWithCheckbox(_id, Supplier_Name),
+                dataIndex: _id,
+                key: _id,
+                width: "20%",
+                render: rowRender
+            })
+        })
+        setColumns(columns)
+    }
+
+
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            const questions = await getSupplierQuestions();
+            await getSupplierQuestions(sourcingEventId);
+            buildColumns();
+            setContentLoaded(true);
         })()
     }, [])
 
+    const getSupplierLineItems = async (sourcing_event_id: string) => {
+        const queries = `page_number=1&page_size=100000&_application_id=Sourcing_App_A00`
 
-    const getSupplierQuestions = async () => {
+        const payload =
+        {
+            "Filter": {
+                "AND": [
+                    {
+                        "OR": [
+                            {
+                                "LHSField": "Sourcing_event_ID",
+                                "Operator": "EQUAL_TO",
+                                "RHSType": "Value",
+                                "RHSValue": sourcing_event_id,
+                                "RHSField": null,
+                                "RHSParam": "",
+                                "LHSAttribute": null,
+                                "RHSAttribute": null
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+
+        const lineItems: SourcingData[] = (await KFSDK.api(`${baseUrl}/form/2/AcS4izpPbKF37/Price_Details_A00/view/Pricing_Details_Evaluator_Page_A00/preview?${queries}`, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })).Data
+
+        return lineItems;
+    }
+
+    const getSupplierTechninalItems = async (sourcing_event_id: string) => {
         const queries = `page_number=1&page_size=1000000&_application_id=Sourcing_App_A00`
 
         const payload =
@@ -163,7 +211,7 @@ const AccordionTable: React.FC = () => {
                                 "LHSField": "Sourcing_event_ID",
                                 "Operator": "EQUAL_TO",
                                 "RHSType": "Value",
-                                "RHSValue": "Pk8LrgSigCnz",
+                                "RHSValue": sourcing_event_id,
                                 "RHSField": null,
                                 "RHSParam": "",
                                 "LHSAttribute": null,
@@ -180,79 +228,103 @@ const AccordionTable: React.FC = () => {
             body: JSON.stringify(payload)
         })).Data
 
-        const suppliers: SupplierSection[] = [{
-            _id: "Pk8LrjrVGBG7",
-            Supplier_Name: "Wonderla Solutions",
-            sections: []
-        }]
-
-        suppliers.forEach((supplier) => {
-            const questions = questionsWithSection.filter((q) => q.Supplier_name._id == supplier._id);
-            const sections: Sections[] = []
-            questions.forEach((question) => {
-                const sectionIndex = sections.findIndex((section: any) => section.Sourcing_event__Section_ID == question.Sourcing_event__Section_ID)
-                const newQuestion = {
-                    _id: question._id,
-                    Questions: question.Questions,
-                    Score: question?.Score || 0,
-                    Text_response: question.Text_response,
-                    Response_type: question.Response_type
-                }
-                if (sectionIndex >= 0) {
-                    sections[sectionIndex].questions.push(newQuestion);
-                } else {
-                    sections.push({
-                        _id: question.Sourcing_event__Section_ID,
-                        Section_name: question.Sourcing_event__Section_name,
-                        questions: [newQuestion]
-                    })
-                }
-            })
-            supplier.sections = sections
-        })
-
         return questionsWithSection;
     }
 
-    function getTitleWithCheckbox(key: string, title: string) {
-        return <div style={{ display: "flex" }} >
-            <Checkbox disabled={selectedColumn ? selectedColumn !== key : false}
-                onChange={(event) => event.target.checked ? setSelectedColumn(key) : setSelectedColumn("")} style={{ marginRight: 5 }} ></Checkbox>
-            <p>{title}</p>
-        </div>
-    }
 
-    async function getDataByURL(dataUrl: string) {
-        const data = await KFSDK.api(`${baseUrl}/${dataUrl}`);
-        return data
-    }
+    const getSupplierQuestions = async (sourcing_event_id: string) => {
+        console.log("supplier questions triggered")
+        const technicalItems = await getSupplierTechninalItems(sourcing_event_id);
+        let sections: any[] = []
 
-    const columns: ColumnsType<DataType> = [
-        {
-            title: "Parameters",
-            dataIndex: 'parameters',
-            key: 'parameters'
-        },
-        {
-            title: getTitleWithCheckbox('sup_01', "Sup - 01"),
-            dataIndex: 'sup_01',
-            key: 'sup_01',
-            render: rowRender,
-            width: "20%"
-        },
-        {
-            // title: 'Address',
-            title: getTitleWithCheckbox('sup_02', "Sup - 02"),
-            dataIndex: 'sup_02',
-            key: 'sup_02',
-            width: "20%",
-            render: rowRender
-        },
-    ];
+        technicalItems.forEach((question) => {
+            const sectionIndex = sections.findIndex((section: any) => question.Sourcing_event__Section_ID == section.key)
+            if (sectionIndex >= 0) {
+                sections[sectionIndex][question.Supplier_name._id] = sections[sectionIndex][question.Supplier_name._id] + question.Score || 0
+
+                sections[sectionIndex].children.push(
+                    {
+                        key: question.Supplier__Question_ID,
+                        parameters: question.Questions,
+                        [question.Supplier_name._id]: question.Score || 0,
+                    }
+                )
+            } else {
+                const newSection = {
+                    key: question.Sourcing_event__Section_ID,
+                    parameters: question.Sourcing_event__Section_name,
+                    [question.Supplier_name._id]: question.Score || 0,
+                    children: [{
+                        key: question.Supplier__Question_ID,
+                        parameters: question.Questions,
+                        [question.Supplier_name._id]: question.Score || 0,
+                    }]
+                }
+                sections.push(newSection)
+            }
+        })
+
+        let overallData: any = {
+            key: 1,
+            parameters: 'OverAll Score',
+        }
+
+        let technicalData: any = {
+            key: 2,
+            parameters: 'Technial Score',
+            children: sections
+        }
+
+        let commercialData: any = {
+            key: 3,
+            parameters: 'Commercial Score',
+            children: []
+        }
+
+        let lineItemsData: any = {
+            key: 4,
+            parameters: 'Line Items',
+            children: []
+        }
+
+        const lineItems = await getSupplierLineItems(sourcing_event_id);
+        let lineItemsScores: any[] = []
+        lineItems.forEach((lineItem) => {
+            lineItemsScores.push({
+                key: lineItem._id,
+                parameters: lineItem.Item,
+                [lineItem.Supplier_name._id]: lineItem.Score || 0,
+                showCheckBox: true
+            })
+            lineItemsData[lineItem.Supplier_name._id] = (lineItemsData[lineItem.Supplier_name._id] || 0) + lineItem.Score || 0
+        })
+
+        lineItemsData.children = lineItemsScores
+        commercialData.children.push(lineItemsData)
+
+
+        // Calculate Find Overall Score
+        suppliers.forEach((supplier) => {
+            sections = sections.map((section) => ({
+                ...section,
+                [supplier._id]: section[supplier._id] / section.children.length
+            }))
+            technicalData[supplier._id] = sections.reduce((prev, section) => prev + section[supplier._id], 0) / sections.length
+
+            lineItemsData[supplier._id] = lineItemsData[supplier._id] / lineItemsData.children.length
+
+            commercialData[supplier._id] = commercialData.children.reduce((prev: number, sec: any) => prev + sec[supplier._id], 0) / commercialData.children.length
+
+            overallData[supplier._id] = (technicalData[supplier._id] + commercialData[supplier._id]) / 2
+        })
+
+        setData([overallData, technicalData, commercialData])
+        return suppliers;
+    }
 
     return (
         <div>
-            <Table
+            {contentLoaded ? <Table
                 columns={columns}
                 rowSelection={{ ...rowSelection }}
                 dataSource={data}
@@ -260,28 +332,7 @@ const AccordionTable: React.FC = () => {
                 bordered
                 pagination={false}
                 className="custom-table"
-            // expandable={{
-            //     async onExpand(expanded, record) {
-            //         console.log("record.childUrl", record.childUrl)
-            //         if (record.childUrl) {
-            //             let data = await getDataByURL(record.childUrl);
-            //             let sections = data.Data.map((section: any, index: number) => {
-            //                 console.log("section" , section)
-            //                 return ({
-            //                 key: 3 + index,
-            //                 parameters: section.Section_name,
-            //                 sup_01: 9,
-            //                 sup_02: 8,
-            //                 children: [],
-            //             })})
-            //             console.log("Data", sections)
-            //             record.children?.push(...sections)
-            //         }
-            //         // console.log("Expanded Row : " , expanded, record)
-
-            //     },
-            // }}
-            />
+            /> : "Loading..."}
         </div>
     );
 };
