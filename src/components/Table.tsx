@@ -1,4 +1,4 @@
-import { Checkbox, Table } from 'antd';
+import { Checkbox, Table, Tag } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { getColorCode } from '../helpers';
@@ -122,11 +122,17 @@ const AccordionTable: React.FC = () => {
 
     const suppliers: SupplierSection[] = [{
         // _id: "Pk8LrjrVGBG7",
-        _id:"Pk7jU0eTPlK0",
+        _id: "Pk7jU0eTPlK0",
+        Supplier_Name: "Imagine Solution",
+        sections: []
+    },
+    {
+        // _id: "Pk8LrjrVGBG7",
+        _id: "Pk7jU0eTPlK0",
         Supplier_Name: "Imagine Solution",
         sections: []
     }
-]
+    ]
     // const sourcingEventId = "Pk8LrgSigCnz";
     const sourcingEventId = "Pk7jTdS53KL9";
 
@@ -144,7 +150,7 @@ const AccordionTable: React.FC = () => {
             title: "Parameters",
             dataIndex: 'parameters',
             key: 'parameters',
-            width: `${70/suppliers.length}%`
+            width: `${70 / suppliers.length}%`
         }];
         suppliers.forEach(({ _id, Supplier_Name }) => {
             columns.push({
@@ -156,10 +162,10 @@ const AccordionTable: React.FC = () => {
                         key: getResponseKey(_id),
                         // width: "20%",
                         render: (text: string, record: any) => ({
-                            children: <RowRender text={text} />,
-                            props: {
-                                colSpan: record.mergeCell ? 0 : 1, // No colSpan for this column
-                            },
+                            children: <RowRender text={text} mergeCell={record.mergeCell} />,
+                            // props: {
+                            //     colSpan: record.mergeCell ? 0 : 1, // No colSpan for this column
+                            // },
                         }),
                     },
                     {
@@ -169,10 +175,10 @@ const AccordionTable: React.FC = () => {
                         // render: rowRender,
                         // width: "10%",
                         render: (text: string, record: any) => ({
-                            children: <RowRender text={text} />,
-                            props: {
-                                colSpan: record.mergeCell ? 2 : 1, // No colSpan for this column
-                            },
+                            children: <RowRender text={text} mergeCell={record.mergeCell} />,
+                            // props: {
+                            //     colSpan: record.mergeCell ? 2 : 1, // No colSpan for this column
+                            // },
                         }),
                     }],
             })
@@ -188,8 +194,8 @@ const AccordionTable: React.FC = () => {
             buildColumns();
             setContentLoaded(true);
 
-            KFSDK.context.watchParams(function (data:any) {
-                console.log("Params Received : ",data);
+            KFSDK.context.watchParams(function (data: any) {
+                console.log("Params Received : ", data);
             });
         })()
     }, [])
@@ -272,7 +278,7 @@ const AccordionTable: React.FC = () => {
 
         technicalItems.forEach((question) => {
             const sectionIndex = sections.findIndex((section: any) => question.Sourcing_event__Section_ID == section.key)
-            
+
             if (sectionIndex >= 0) {
                 sections[sectionIndex][question.Supplier_name._id] += question?.Score || 0
                 sections[sectionIndex].children.push(
@@ -325,7 +331,7 @@ const AccordionTable: React.FC = () => {
             parameters: 'Line Items',
             children: [],
             mergeCell: true,
-        } 
+        }
 
 
         const lineItems = await getSupplierLineItems(sourcing_event_id);
@@ -379,10 +385,17 @@ const AccordionTable: React.FC = () => {
     );
 };
 
-function RowRender({ text }: any) {
+function RowRender({ text, mergeCell }: any) {
     return (
-        <div style={{ backgroundColor: getColorCode(text), display: "flex", alignItems: "center", justifyContent: "center" }} >
-            <p style={{ fontWeight: "bold" }} >{text}</p>
+        <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center", height: "100%"
+        }} >
+            {isNaN(text) ? <>{text}</> :
+                <div style={{ border: `0.5px solid grey`, padding: 3, width: "100%", backgroundColor: getColorCode(text), display: "flex", alignItems: "center", justifyContent: "center", height: "90%" }} >
+                    {text}
+                </div>
+
+            }
         </div>)
 }
 export { AccordionTable };
