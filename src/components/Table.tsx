@@ -265,13 +265,15 @@ const AccordionTable: React.FC = () => {
             const sectionIndex = sections.findIndex((section: any) => question.Sourcing_event__Section_ID == section.key)
 
             if (sectionIndex >= 0) {
-                sections[sectionIndex][question.Supplier_name._id] += (question?.Score || 0)
                 const questionIndex = sections[sectionIndex].children.findIndex((existQuestion: any) => existQuestion.parameters == question.Questions);
                 if (questionIndex >= 0) {
-                    sections[sectionIndex].children[questionIndex] = {
-                        ...sections[sectionIndex].children[questionIndex],
-                        [question.Supplier_name._id]: question.Score || 0,
-                        [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
+                    if (!(question.Supplier_name._id in sections[sectionIndex].children[questionIndex])) {
+                        sections[sectionIndex].children[questionIndex] = {
+                            ...sections[sectionIndex].children[questionIndex],
+                            [question.Supplier_name._id]: question.Score || 0,
+                            [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
+                        }
+                        sections[sectionIndex][question.Supplier_name._id] += (question?.Score || 0)
                     }
                 } else {
                     sections[sectionIndex].children.push(
@@ -282,6 +284,7 @@ const AccordionTable: React.FC = () => {
                             [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
                         }
                     )
+                    sections[sectionIndex][question.Supplier_name._id] += (question?.Score || 0)
                 }
             } else {
                 const newSection = {
@@ -331,14 +334,26 @@ const AccordionTable: React.FC = () => {
         const lineItems = await getSupplierLineItems(sourcing_event_id);
         let lineItemsScores: any[] = []
         lineItems.forEach((lineItem) => {
-            lineItemsScores.push({
-                key: lineItem._id,
-                parameters: lineItem.Item,
-                [lineItem.Supplier_name._id]: lineItem.Score || 0,
-                [getResponseKey(lineItem.Supplier_name._id)]: lineItem.Amount,
-                showCheckBox: true
-            })
-            lineItemsData[lineItem.Supplier_name._id] = (lineItemsData[lineItem.Supplier_name._id] || 0) + lineItem.Score || 0
+            const lineItemIndex = lineItemsScores.findIndex((line) => line.parameters == lineItem.Item)
+            if (lineItemIndex >= 0) {
+                if (!(lineItem.Supplier_name._id in lineItemsScores[lineItemIndex])) {
+                    lineItemsScores[lineItemIndex] = {
+                        ...lineItemsScores[lineItemIndex],
+                        [lineItem.Supplier_name._id]: lineItem.Score || 0,
+                        [getResponseKey(lineItem.Supplier_name._id)]: lineItem.Amount,
+                    }
+                    lineItemsData[lineItem.Supplier_name._id] = (lineItemsData[lineItem.Supplier_name._id] || 0) + lineItem.Score || 0
+                }
+            } else {
+                lineItemsScores.push({
+                    key: lineItem._id,
+                    parameters: lineItem.Item,
+                    [lineItem.Supplier_name._id]: lineItem.Score || 0,
+                    [getResponseKey(lineItem.Supplier_name._id)]: lineItem.Amount,
+                    showCheckBox: true
+                })
+                lineItemsData[lineItem.Supplier_name._id] = (lineItemsData[lineItem.Supplier_name._id] || 0) + lineItem.Score || 0
+            }
         })
 
         lineItemsData.children = lineItemsScores
