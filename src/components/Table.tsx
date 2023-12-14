@@ -155,7 +155,7 @@ const AccordionTable: React.FC = () => {
                         dataIndex: _id,
                         key: _id,
                         render: (text: string, record: any) => ({
-                            children: <RowRender text={text} mergeCell={record.mergeCell} />
+                            children: <RowRender text={text || 0} mergeCell={record.mergeCell} />
                         }),
                     }],
             })
@@ -265,15 +265,24 @@ const AccordionTable: React.FC = () => {
             const sectionIndex = sections.findIndex((section: any) => question.Sourcing_event__Section_ID == section.key)
 
             if (sectionIndex >= 0) {
-                sections[sectionIndex][question.Supplier_name._id] += question?.Score || 0
-                sections[sectionIndex].children.push(
-                    {
-                        key: question.Supplier__Question_ID,
-                        parameters: question.Questions,
+                sections[sectionIndex][question.Supplier_name._id] += (question?.Score || 0)
+                const questionIndex = sections[sectionIndex].children.findIndex((existQuestion: any) => existQuestion.parameters == question.Questions);
+                if (questionIndex >= 0) {
+                    sections[sectionIndex].children[questionIndex] = {
+                        ...sections[sectionIndex].children[questionIndex],
                         [question.Supplier_name._id]: question.Score || 0,
                         [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
                     }
-                )
+                } else {
+                    sections[sectionIndex].children.push(
+                        {
+                            key: question.Supplier__Question_ID,
+                            parameters: question.Questions,
+                            [question.Supplier_name._id]: question.Score || 0,
+                            [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
+                        }
+                    )
+                }
             } else {
                 const newSection = {
                     key: question.Sourcing_event__Section_ID,
@@ -342,7 +351,7 @@ const AccordionTable: React.FC = () => {
                 ...section,
                 [supplier._id]: section[supplier._id]
             }))
-            technicalData[supplier._id] = sections.reduce((prev, section) => prev + section[supplier._id], 0)
+            technicalData[supplier._id] = sections.reduce((prev, section) => prev + section[supplier._id] || 0, 0)
 
             lineItemsData[supplier._id] = lineItemsData[supplier._id] || 0
 
@@ -375,7 +384,7 @@ function RowRender({ text, mergeCell }: any) {
         <div style={{
             display: "flex", alignItems: "center", justifyContent: "center", height: "100%"
         }} >
-            {isNaN(text) ? <>{text}</> :
+            {
                 <div style={{ border: `0.5px solid grey`, padding: 3, width: "100%", backgroundColor: getColorCode(text), display: "flex", alignItems: "center", justifyContent: "center", height: "90%" }} >
                     {text}
                 </div>
