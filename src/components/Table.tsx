@@ -1,4 +1,4 @@
-import { Checkbox, Table, Tag } from 'antd';
+import { Checkbox, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { getColorCode } from '../helpers';
@@ -273,7 +273,7 @@ const AccordionTable: React.FC = () => {
                             [question.Supplier_name._id]: question.Score || 0,
                             [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
                         }
-                        sections[sectionIndex][question.Supplier_name._id] += (question?.Score || 0)
+                        sections[sectionIndex][question.Supplier_name._id] = (sections[sectionIndex][question.Supplier_name._id] || 0) + (question?.Score || 0)
                     }
                 } else {
                     sections[sectionIndex].children.push(
@@ -284,7 +284,7 @@ const AccordionTable: React.FC = () => {
                             [getResponseKey(question.Supplier_name._id)]: question.Text_response || `No response`
                         }
                     )
-                    sections[sectionIndex][question.Supplier_name._id] += (question?.Score || 0)
+                    sections[sectionIndex][question.Supplier_name._id] = (sections[sectionIndex][question.Supplier_name._id] || 0) + (question?.Score || 0)
                 }
             } else {
                 const newSection = {
