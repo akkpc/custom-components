@@ -117,24 +117,10 @@ const rowSelection: TableRowSelection<DataType> = {
 const AccordionTable: React.FC = () => {
     const [selectedColumn, setSelectedColumn] = useState<string>();
     const [contentLoaded, setContentLoaded] = useState(false);
+    const [suppliers, setSuppliers] = useState<any[]>([]);
+    const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
-
-    const suppliers: SupplierSection[] = [{
-        // _id: "Pk8LrjrVGBG7",
-        _id: "Pk7jU0eTPlK0",
-        Supplier_Name: "Imagine Solution",
-        sections: []
-    },
-    {
-        // _id: "Pk8LrjrVGBG7",
-        _id: "Pk7jU0eTPlK0",
-        Supplier_Name: "Imagine Solution",
-        sections: []
-    }
-    ]
-    // const sourcingEventId = "Pk8LrgSigCnz";
-    const sourcingEventId = "Pk7jTdS53KL9";
 
     function getTitleWithCheckbox(key: string, title: string) {
         return <div style={{ display: "flex" }} >
@@ -160,25 +146,16 @@ const AccordionTable: React.FC = () => {
                         title: "Response",
                         dataIndex: getResponseKey(_id),
                         key: getResponseKey(_id),
-                        // width: "20%",
                         render: (text: string, record: any) => ({
-                            children: <RowRender text={text} mergeCell={record.mergeCell} />,
-                            // props: {
-                            //     colSpan: record.mergeCell ? 0 : 1, // No colSpan for this column
-                            // },
+                            children: <p style={{ marginLeft: 8 }} >{text}</p>
                         }),
                     },
                     {
                         title: "Score",
                         dataIndex: _id,
                         key: _id,
-                        // render: rowRender,
-                        // width: "10%",
                         render: (text: string, record: any) => ({
-                            children: <RowRender text={text} mergeCell={record.mergeCell} />,
-                            // props: {
-                            //     colSpan: record.mergeCell ? 2 : 1, // No colSpan for this column
-                            // },
+                            children: <RowRender text={text} mergeCell={record.mergeCell} />
                         }),
                     }],
             })
@@ -188,15 +165,24 @@ const AccordionTable: React.FC = () => {
 
 
     useEffect(() => {
+        if (sourcingEventId && suppliers) {
+            (async () => {
+                await getSupplierQuestions(sourcingEventId);
+                buildColumns();
+                setContentLoaded(true);
+            })()
+        }
+    }, [suppliers])
+
+    useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            await getSupplierQuestions(sourcingEventId);
-            buildColumns();
-            setContentLoaded(true);
+            let allParams = await KFSDK.app.page.getAllParameters();
+            const sourcing_event_id = allParams.sourcing_event_id;
+            const suppliers: any[] = JSON.parse(allParams.suppliers)
 
-            KFSDK.context.watchParams(function (data: any) {
-                console.log("Params Received : ", data);
-            });
+            setSuppliers(suppliers)
+            setSourcingEventId(sourcing_event_id)
         })()
     }, [])
 
@@ -272,7 +258,6 @@ const AccordionTable: React.FC = () => {
 
 
     const getSupplierQuestions = async (sourcing_event_id: string) => {
-        console.log("supplier questions triggered")
         const technicalItems = await getSupplierTechninalItems(sourcing_event_id);
         let sections: any[] = []
 
