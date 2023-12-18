@@ -63,3 +63,35 @@
 th.ant-table-cell {
   padding: 10px !important;
 }
+
+/* .ant-table {
+  border: 1px solid grey !important;
+}
+
+.ant-table-thead > tr > th, .ant-table-thead > tr > th > .ant-table-column-sorter {
+  border: 1px solid grey;
+}
+
+.ant-table-tbody > tr > td {
+  border: 1px solid grey;
+  border-left: 0px;
+}
+
+.ant-table tfoot > tr > th, .ant-table tfoot > tr > td {
+  border: 1px solid grey;
+} */
+
+/* .ant-table-row > tr {
+  border-left: 0px solid grey;
+} */
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: black !important; 
+  font-weight: 500;
+}
+
+.ant-tabs-ink-bar {
+  position: absolute;
+  background: black !important;
+  pointer-events: none;
+}

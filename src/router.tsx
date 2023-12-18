@@ -7,11 +7,13 @@ import { LineChart } from "./components/LineChart";
 import { BarChart } from "./components/BarChart";
 import { BasicChart } from "./components/BasicChart";
 import { AccordionTable } from "./components/Table";
+import { QuestionTab } from "./components/QuestionTab";
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <div>hello</div>,
+        // element: <div>hello</div>,
+        element: <AccordionTable />
     },
     {
         path: "/calendar",
@@ -32,6 +34,10 @@ const router = createBrowserRouter([
     {
         path: "/table",
         element: <AccordionTable />
+    },
+    {
+        path: "qna_tab",
+        element: <QuestionTab/>
     }
 ]);
 
