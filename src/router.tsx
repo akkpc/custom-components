@@ -8,6 +8,7 @@ import { BarChart } from "./components/BarChart";
 import { BasicChart } from "./components/BasicChart";
 import { AccordionTable } from "./components/Table";
 import { QuestionTab } from "./components/QuestionTab";
+import { Grid } from "./components/Grid";
 
 const router = createBrowserRouter([
     {
@@ -36,7 +37,7 @@ const router = createBrowserRouter([
         element: <AccordionTable />
     },
     {
-        path: "qna_tab",
+        path: "/qna_tab",
         element: <QuestionTab/>
     }
 ]);
