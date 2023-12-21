@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Checkbox, Grid, Typography } from 'antd'
+import { Button, Checkbox, Grid, Tag, Typography } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
 import moment from 'moment'
 import { useEffect } from 'react'
@@ -21,15 +21,15 @@ export function QnASection({ questions, ...rest }: Props) {
         console.log("breakPoints", breakPoints.md)
     }, [])
     return (
-        <div style={{ border: "0.6px solid grey", borderRadius: 5 }} >
+        questions.length > 0 ? <div style={{ border: "0.6px solid grey", borderRadius: 5 }} >
             {
                 questions.map((q, index) => {
                     return (
                         <div key={index}>
                             <div style={{ padding: 10 }} >
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }} >
-                                    {/* <Tag style={{ backgroundColor: "#F2F2F2" }} >{q.toLocaleUpperCase()}</Tag> */}
-                                    <p style={{ color: "#BFBFBF" }} >on {moment(new Date()).format('MM/DD/YYYY h:mm A')}</p>
+                                    <Tag style={{ backgroundColor: "#F2F2F2" }} >{q["Column_82SF6ZHv1v"].Name}</Tag>
+                                    {q["Column_PWT5GT6Xc4"] && <p style={{ color: "#BFBFBF" }} >on {moment(new Date(q["Column_PWT5GT6Xc4"])).format('MM/DD/YYYY h:mm A')}</p>}
                                 </div>
                                 <div style={{ fontWeight: "bold", fontSize: 16 }} >
                                     {q["Column-7V9JJbYOJ9"]}
@@ -38,7 +38,7 @@ export function QnASection({ questions, ...rest }: Props) {
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginLeft: 2, marginBottom: 4 }} >
                                         <Typography>{"Answer"}</Typography>
                                         <Typography style={{ color: "#BFBFBF" }} >
-                                            on {moment(new Date()).format('MM/DD/YYYY h:mm A')}
+                                            on {moment(q["Column_xZsD2lBToY"]).format('MM/DD/YYYY h:mm A')}
                                             {/* on {moment(q.respondedCreated).format('MM/DD/YYYY h:mm A')} */}
                                         </Typography>
                                     </div>
@@ -73,7 +73,7 @@ export function QnASection({ questions, ...rest }: Props) {
                     )
                 })
             }
-        </div>
+        </div> : <div>No data found</div>
     )
 }
 
