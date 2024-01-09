@@ -41,11 +41,13 @@ export function QuestionTab() {
             },
             {
                 label: "My Questions",
-                filter: (questions: any) => questions.filter((record: any) => record["Column_w2Oc0EUSch"])
+                // filter: (questions: any) => questions.filter((record: any) => record["Column_w2Oc0EUSch"])
+                filter: (questions: any) => questions
             },
             {
                 label: "Others Questions",
-                filter: (questions: any) => questions.filter((record: any) => record["Column_w2Oc0EUSch"])
+                // filter: (questions: any) => questions.filter((record: any) => record["Column_w2Oc0EUSch"])
+                filter: (questions: any) => questions
             }],
             disableAnswer: true,
             hideSupplierName: true,
@@ -59,46 +61,60 @@ export function QuestionTab() {
                 },
                 {
                     label: "Answered",
-                    filter: (questions: any) => questions.filter((record: any) => record["Column_w2Oc0EUSch"])
+                    // filter: (questions: any) => questions.filter((record: any) => record["Column_w2Oc0EUSch"])
+                    filter: (questions: any) => questions
                 },
                 {
                     label: "UnAnswered",
-                    filter: (questions: any) => questions.filter((record: any) => !record["Column_w2Oc0EUSch"])
+                    // filter: (questions: any) => questions.filter((record: any) => !record["Column_w2Oc0EUSch"])
+                    filter: (questions: any) => questions
                 }],
             hideSearch: true
         }
     }
-    const currentTab = tabs["buyer"]
+    const currentTab = tabs["supplier"]
     const [questionDetails, setQuestionDetails] = useState([])
-    const [columnDetails, setColumnDetails] = useState<Record<string, ColumnDetail>>({});
+    // const [columnDetails, setColumnDetails] = useState<Record<string, ColumnDetail>>({});
+    const [searchText, setSearchText] = useState("")
 
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
             console.log("process.env.REACT_APP_API_URL", process.env.REACT_APP_API_URL)
-            const response = await KFSDK.api(`${process.env.REACT_APP_API_URL}/case-report/2/AcS4izpPbKF37/Sourcing_Clarifications_A00/Sourcing_Clarifications_A00_All_Items?apply_preference=true&page_number=1&page_size=10&_application_id=Sourcing_App_A00`);
-            const columns: Record<string, ColumnDetail> = {}
-            response.Columns.forEach((column: ColumnDetail) => {
-                columns[column.Id] = column
-            })
-
+            const response = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/allitems/list?q=${searchText}`, {
+                method: "POST"
+            });
+            console.log("data : " , response.Data)
             setQuestionDetails(response.Data)
-            setColumnDetails(columns)
         })()
-    }, [])
+    }, [searchText])
+
+    async function createSupplierData(data: any) {
+        const createdResponse = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/draft_Us6vkpe22I75?_application_id=Kissflow_Procurement_Cloud_A01`, {
+            method: "POST",
+            body: {
+                ...data
+            }
+        })
+    }
+
     return (
         <div style={{ padding: 20 }} >
-            {!currentTab.hideSearch && <Input placeholder={"Enter Your Question Here"}
-                suffix={
-                    <Button style={{ backgroundColor: '#dfeafd', color: "#0043B2", fontWeight: "bold" }} >
-                        Post Question
-                    </Button>
-                }
-                style={{ color: "red", height: 60 }}
-            />}
+            {!currentTab.hideSearch &&
+                <Input
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder={"Enter Your Question Here"}
+                    suffix={
+                        <Button style={{ backgroundColor: '#dfeafd', color: "#0043B2", fontWeight: "bold" }} >
+                            Post Question
+                        </Button>
+                    }
+                    style={{ color: "red", height: 60 }}
+                    value={searchText}
+                />}
             <Tabs
                 defaultActiveKey="1"
-                items={currentTab.tabs.map((record:any, index: number) => {
+                items={currentTab.tabs.map((record: any, index: number) => {
                     return {
                         key: index.toString(),
                         label: record.label,

@@ -17,9 +17,7 @@ interface Props {
 export function QnASection({ questions, ...rest }: Props) {
 
     const breakPoints = useBreakpoint()
-    useEffect(() => {
-        console.log("breakPoints", breakPoints.md)
-    }, [])
+
     return (
         questions.length > 0 ? <div style={{ border: "0.6px solid grey", borderRadius: 5 }} >
             {
@@ -28,29 +26,29 @@ export function QnASection({ questions, ...rest }: Props) {
                         <div key={index}>
                             <div style={{ padding: 10 }} >
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }} >
-                                    <Tag style={{ backgroundColor: "#F2F2F2" }} >{q["Column_82SF6ZHv1v"].Name}</Tag>
-                                    {q["Column_PWT5GT6Xc4"] && <p style={{ color: "#BFBFBF" }} >on {moment(new Date(q["Column_PWT5GT6Xc4"])).format('MM/DD/YYYY h:mm A')}</p>}
+                                    {q["Created_By_1"] && <Tag style={{ backgroundColor: "#F2F2F2" }} >{q["Created_By_1"]}</Tag>}
+                                    {q["CreatedAt"] && <p style={{ color: "#BFBFBF" }} >on {moment(new Date(q["CreatedAt"])).format('MM/DD/YYYY h:mm A')}</p>}
                                 </div>
                                 <div style={{ fontWeight: "bold", fontSize: 16 }} >
-                                    {q["Column-7V9JJbYOJ9"]}
+                                    {q["Question"]}
                                 </div>
                                 <div style={{ border: "0.6px solid grey", borderRadius: 5, margin: 20, padding: 10, backgroundColor: "#fbfbfb" }} >
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginLeft: 2, marginBottom: 4 }} >
                                         <Typography>{"Answer"}</Typography>
                                         <Typography style={{ color: "#BFBFBF" }} >
-                                            on {moment(q["Column_xZsD2lBToY"]).format('MM/DD/YYYY h:mm A')}
+                                            on {moment(q["Created_At"]).format('MM/DD/YYYY h:mm A')}
                                             {/* on {moment(q.respondedCreated).format('MM/DD/YYYY h:mm A')} */}
                                         </Typography>
                                     </div>
                                     <div style={{ display: "flex", alignItems: "center" }} >
-                                        <TextArea
+                                        {q["Procurement_Team_response"] ? <TextArea
                                             // onChange={(e) => setValue(e.target.value)}
-                                            placeholder="Response"
+                                            // placeholder="Response"
                                             autoSize={{ minRows: 3, maxRows: 5 }}
                                             style={{ width: "100%", marginRight: 10 }}
-                                            value={q["Column_w2Oc0EUSch"]}
+                                            value={q["Procurement_Team_response"]}
                                             disabled={rest.disableAnswer}
-                                        />
+                                        /> : <p>Not yet answered</p>}
                                         {!rest.disableAnswer && <div style={{ display: "flex", justifyContent: "space-between", flexDirection: "column" }} >
                                             <Button disabled type="primary" style={{ backgroundColor: "#003c9c", color: "white", fontWeight: "bold", marginBottom: 5 }}>Post</Button>
                                             <div style={{ display: "flex" }} >
