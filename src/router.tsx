@@ -9,8 +9,14 @@ import { BasicChart } from "./components/BasicChart";
 import { AccordionTable } from "./components/Table";
 import { QuestionTab } from "./components/QuestionTab";
 import { Grid } from "./components/Grid";
+import { SideBar } from "./components/SideBar";
 
 const router = createBrowserRouter([
+    {
+        path: "/custom-components",
+        element: <AccordionTable />
+    },
+
     {
         path: "/",
         // element: <div>hello</div>,
@@ -39,6 +45,10 @@ const router = createBrowserRouter([
     {
         path: "/qna_tab",
         element: <QuestionTab/>
+    },
+    {
+        path: "/sidebar",
+        element: <SideBar/>
     }
 ]);
 
