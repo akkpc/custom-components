@@ -13,7 +13,8 @@ interface Props {
     hidePrivateCheckBox?: boolean,
     hideSearch?: boolean,
     enableAnswer?: boolean,
-    KFSDK: any
+    KFSDK: any,
+    refetch: () => any
 }
 
 export function QnASection({ questions, ...rest }: Props) {
@@ -57,6 +58,15 @@ function QuestionArea(props: { question: any, index: number, rest: any, KFSDK: a
                 })
             })
     }
+    async function deleteResponse(_id: string) {
+        await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Supplier_QnA_Clarification_A00/batch/delete`,
+            {
+                method: "POST",
+                body: JSON.stringify([{
+                    _id
+                }])
+            })
+    }
 
     return (
         <div key={index}>
@@ -66,7 +76,7 @@ function QuestionArea(props: { question: any, index: number, rest: any, KFSDK: a
                     {q["CreatedAt"] && <p style={{ color: "#BFBFBF" }} >on {moment(new Date(q["CreatedAt"])).format('MM/DD/YYYY h:mm A')}</p>}
                 </div>
                 <div style={{ fontWeight: "bold", fontSize: 16 }} >
-                    {q["Question"]} {q["_id"]}
+                    {q["Question"]}
                 </div>
                 {
                     <div style={{ border: "0.6px solid grey", borderRadius: 5, margin: 20, padding: 10, backgroundColor: "#fbfbfb" }} >
@@ -86,15 +96,21 @@ function QuestionArea(props: { question: any, index: number, rest: any, KFSDK: a
                                 disabled={currentAnswer === q["_id"] ? false : true}
                             />
                             {!rest.disableAnswer && <div style={{ display: "flex", justifyContent: "space-between", flexDirection: "column" }} >
-                                <Button onClick={async () => {
+                                {currentAnswer === q["_id"] && <Button onClick={async () => {
                                     await postResponse(answer, q["_id"])
                                     setCurrentAnswer("")
-                                }} type="primary" style={{ backgroundColor: "#003c9c", color: "white", fontWeight: "bold", marginBottom: 5 }}>Post</Button>
+                                }} type="primary" style={{ backgroundColor: "#003c9c", color: "white", fontWeight: "bold", marginBottom: 5 }}>Post</Button>}
                                 <div style={{ display: "flex" }} >
-                                    <Button onClick={() => setCurrentAnswer(q["_id"])} type='dashed' >
+                                    <Button onClick={() => {
+                                        setCurrentAnswer(q["_id"])
+                                        rest.refetch()
+                                    }} type='dashed' >
                                         <EditOutlined style={{ fontSize: 20, color: "grey" }} />
                                     </Button>
-                                    <Button type='text' >
+                                    <Button onClick={() => {
+                                        deleteResponse(q["_id"])
+                                        rest.refetch()
+                                    }} type='text' >
                                         <DeleteOutlined style={{ fontSize: 20, color: "red" }} />
                                     </Button>
                                 </div>
@@ -109,8 +125,4 @@ function QuestionArea(props: { question: any, index: number, rest: any, KFSDK: a
             </div>
         </div>
     )
-}
-
-const styles = {
-
 }

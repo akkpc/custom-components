@@ -127,23 +127,7 @@ export function QuestionTab() {
 
     useEffect(() => {
         (async () => {
-
-            const response = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/allitems/list?q=${searchText}&page_size=1000`, {
-                method: "POST",
-                body: JSON.stringify({
-                    Filter: {
-                        "AND": [
-                            {
-                                "OR": [
-                                    ...filter
-                                ]
-                            }
-                        ]
-                    }
-                })
-            });
-            setQuestionDetails(response.Data)
-
+            await getQuestions();
         })()
     }, [searchText, filter])
 
@@ -155,6 +139,24 @@ export function QuestionTab() {
             setCurrentUserEmail(allParams.buyer_email)
         })()
     }, [])
+
+    async function getQuestions() {
+        const response = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/allitems/list?q=${searchText}&page_size=1000`, {
+            method: "POST",
+            body: JSON.stringify({
+                Filter: {
+                    "AND": [
+                        {
+                            "OR": [
+                                ...filter
+                            ]
+                        }
+                    ]
+                }
+            })
+        });
+        setQuestionDetails(() => response.Data)
+    }
 
     async function postQuestions(data: any) {
         // const createdResponse = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/draft_Us6vkpe22I75?_application_id=Kissflow_Procurement_Cloud_A01`, {
@@ -198,7 +200,7 @@ export function QuestionTab() {
                     return {
                         key: index.toString(),
                         label: record.label,
-                        children: <QnASection KFSDK={KFSDK} {...currentTab} questions={(questionDetails)} />
+                        children: <QnASection KFSDK={KFSDK} {...currentTab} questions={(questionDetails)} refetch={async () => await getQuestions()} />
                     }
                 })}
                 onChange={(e) => {
