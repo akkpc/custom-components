@@ -36,11 +36,11 @@ const tabs: Record<string, any> = {
     supplier: {
         tabs: [{
             label: "All",
-            filter: () => ({})
+            filter: () => ([{}])
         },
         {
             label: "My Questions",
-            filter: (query_value: string) => ({
+            filter: (query_value: string) => ([{
                 "LHSField": "Created_By_2",
                 "Operator": "EQUAL_TO",
                 "RHSType": "Value",
@@ -49,11 +49,11 @@ const tabs: Record<string, any> = {
                 "RHSParam": "",
                 "LHSAttribute": null,
                 "RHSAttribute": null
-            })
+            }])
         },
         {
             label: "Others Questions",
-            filter: (query_value: string) => ({
+            filter: (query_value: string) => ([{
                 "LHSField": "Created_By_2",
                 "Operator": "NOT_EQUAL_TO",
                 "RHSType": "Value",
@@ -62,7 +62,7 @@ const tabs: Record<string, any> = {
                 "RHSParam": "",
                 "LHSAttribute": null,
                 "RHSAttribute": null
-            })
+            }])
 
         }],
         disableAnswer: true,
@@ -74,11 +74,11 @@ const tabs: Record<string, any> = {
         tabs: [
             {
                 label: "All",
-                filter: () => { }
+                filter: () => ([{}])
             },
             {
                 label: "Answered",
-                filter: () => ({
+                filter: () => ([{
                     "LHSField": "Procurement_Team_response",
                     "Operator": "NOT_EMPTY",
                     "RHSType": "",
@@ -87,11 +87,11 @@ const tabs: Record<string, any> = {
                     "RHSParam": "",
                     "LHSAttribute": null,
                     "RHSAttribute": null
-                })
+                }])
             },
             {
                 label: "UnAnswered",
-                filter: () => ({
+                filter: () => ([{
                     "LHSField": "Procurement_Team_response",
                     "Operator": "EMPTY",
                     "RHSType": "",
@@ -100,9 +100,20 @@ const tabs: Record<string, any> = {
                     "RHSParam": "",
                     "LHSAttribute": null,
                     "RHSAttribute": null
-                })
+                },
+                {
+                    "LHSField": "Procurement_Team_response",
+                    "Operator": "EQUAL_TO",
+                    "RHSType": "Value",
+                    "RHSValue": "",
+                    "RHSField": null,
+                    "RHSParam": "",
+                    "LHSAttribute": null,
+                    "RHSAttribute": null
+                }])
             }],
-        hideSearch: true
+        hideSearch: true,
+        disableAnswer: false
     }
 }
 
@@ -111,7 +122,7 @@ export function QuestionTab() {
     const [questionDetails, setQuestionDetails] = useState([])
     // const [columnDetails, setColumnDetails] = useState<Record<string, ColumnDetail>>({});
     const [searchText, setSearchText] = useState("")
-    const [filter, setFilter] = useState({})
+    const [filter, setFilter] = useState([{}])
     const [currentUserEmail, setCurrentUserEmail] = useState("");
 
     useEffect(() => {
@@ -124,7 +135,7 @@ export function QuestionTab() {
                         "AND": [
                             {
                                 "OR": [
-                                    filter
+                                    ...filter
                                 ]
                             }
                         ]
@@ -187,7 +198,7 @@ export function QuestionTab() {
                     return {
                         key: index.toString(),
                         label: record.label,
-                        children: <QnASection {...currentTab} questions={(questionDetails)} />
+                        children: <QnASection KFSDK={KFSDK} {...currentTab} questions={(questionDetails)} />
                     }
                 })}
                 onChange={(e) => {
