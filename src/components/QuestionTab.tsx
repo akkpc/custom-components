@@ -80,7 +80,7 @@ const tabs: Record<string, any> = {
                 label: "Answered",
                 filter: () => ({
                     "LHSField": "Procurement_Team_response",
-                    "Operator": "EMPTY",
+                    "Operator": "NOT_EMPTY",
                     "RHSType": "",
                     "RHSValue": "",
                     "RHSField": null,
@@ -93,7 +93,7 @@ const tabs: Record<string, any> = {
                 label: "UnAnswered",
                 filter: () => ({
                     "LHSField": "Procurement_Team_response",
-                    "Operator": "NOT_EMPTY",
+                    "Operator": "EMPTY",
                     "RHSType": "",
                     "RHSValue": "",
                     "RHSField": null,
