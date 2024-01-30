@@ -95,3 +95,14 @@ th.ant-table-cell {
   background: black !important;
   pointer-events: none;
 }
+
+
+/* Assuming you have a class for the step indicator bar */
+.ant-steps-item-process .ant-steps-item-process-icon {
+  /* Set the width of the bar for the active step */
+  width: 10px; /* Adjust this value based on your requirements */
+}
+
+.ant-card-body {
+  padding: 10px !important;
+}
