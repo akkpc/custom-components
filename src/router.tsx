@@ -1,15 +1,14 @@
 import {
-    Link,
     createBrowserRouter
 } from "react-router-dom";
-import UICalender from "./components/Calender";
-import { LineChart } from "./components/LineChart";
 import { BarChart } from "./components/BarChart";
 import { BasicChart } from "./components/BasicChart";
-import { AccordionTable } from "./components/Table";
+import UICalender from "./components/Calender";
+import { LineChart } from "./components/LineChart";
 import { QuestionTab } from "./components/QuestionTab";
-import { Grid } from "./components/Grid";
 import { SideBar } from "./components/SideBar";
+import { Stepper } from "./components/Stepper";
+import { AccordionTable } from "./components/Table";
 
 const router = createBrowserRouter([
     {
@@ -49,9 +48,13 @@ const router = createBrowserRouter([
     {
         path: "/sidebar",
         element: <SideBar/>
+    },
+    {
+        path: "/stepper",
+        element: <Stepper/>
     }
 ]);
 
 export {
     router
-}
+};
