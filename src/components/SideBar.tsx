@@ -27,14 +27,25 @@ export function SideBar() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [editActiveIndex, setEditActiveIndex] = useState<string>();
   const [activeSection, setActiveSection] = useState<string>();
-  const templateId = "Pk8XCpwQvBq_";
+  const [templateId, setTemplateId] = useState("");
 
   useEffect(() => {
     (async () => {
       await KFSDK.initialize();
-      await getSectionsByTemplate()
+      let allParams = await KFSDK.app.page.popup.getAllParameters();
+      if (allParams.template_id) {
+        setTemplateId(allParams.template_id)
+      }
     })()
   }, [])
+
+  useEffect(() => {
+    (async () => {
+      if (templateId) {
+        await getSectionsByTemplate();
+      }
+    })()
+  }, [templateId])
 
   useEffect(() => {
     (async () => {
@@ -180,7 +191,7 @@ export function SideBar() {
 
 
   return (
-    <Row>
+    templateId ? <Row>
       <Col span={6}>
         <div style={{ margin: 10 }} >
           <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
@@ -241,7 +252,7 @@ export function SideBar() {
             style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Questionnaire</Button>
         </div>
       </Col>
-    </Row>
+    </Row> : <div>Loading....</div>
   )
 }
 
