@@ -1,24 +1,183 @@
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Input, Row, Typography } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QuestionCard } from './QuestionCard';
+const KFSDK = require('@kissflow/lowcode-client-sdk')
 
-const sections = [
-  { id: 0, text: 'One', color: '#616AFF' },
-  { id: 1, text: 'Two', color: '#2DBAE7' },
-  { id: 2, text: 'Three', color: '#fd4e4e' }
-]
+export type Section = {
+  Section_ID: string;
+  Section_Name: string;
+  Section_Sequence: number;
+  Template_ID: string;
+  _id: string;
+};
 
-const questions = [
-  { id: 0, text: 'Question 1', color: '#616AFF' },
-  { id: 1, text: 'Question 2', color: '#2DBAE7' },
-  { id: 2, text: 'Question 3', color: '#fd4e4e' }
-]
+export type Question = {
+  Question_ID: string;
+  Question: string;
+  Response_Type: string;
+  Weightage: number;
+  Section_ID: string;
+  _id: string;
+};
+
 
 export function SideBar() {
-  const [items, setItems] = useState(sections)
-  const [editActiveIndex, setEditActiveIndex] = useState<number>();
-  const [activeSection, setActiveSection] = useState(0);
+  const [items, setItems] = useState<Section[]>([])
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [editActiveIndex, setEditActiveIndex] = useState<string>();
+  const [activeSection, setActiveSection] = useState<string>();
+  const templateId = "Pk8XCpwQvBq_";
+
+  useEffect(() => {
+    (async () => {
+      await KFSDK.initialize();
+      await getSectionsByTemplate()
+    })()
+  }, [])
+
+  useEffect(() => {
+    (async () => {
+      if (activeSection) {
+        await getQuestionsBySection();
+      }
+    })()
+  }, [activeSection])
+
+  async function getSectionsByTemplate() {
+    const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          Filter: {
+            "AND": [
+              {
+                "OR": [
+                  {
+                    "LHSField": "Template_ID",
+                    "Operator": "EQUAL_TO",
+                    "RHSType": "Value",
+                    "RHSValue": templateId,
+                    "RHSField": null,
+                    "LHSAttribute": null,
+                    "RHSAttribute": null
+                  }
+                ]
+              }
+            ]
+          }
+        })
+      }).catch((err: any) => console.log("cannot fetch", err))
+    const sections: Section[] = sectionResponse.Data;
+    setItems(sections)
+  }
+
+  async function getQuestionsBySection() {
+    const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/allitems/list?&page_number=1&page_size=10000`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          Filter: {
+            "AND": [
+              {
+                "OR": [
+                  {
+                    "LHSField": "Section_ID",
+                    "Operator": "EQUAL_TO",
+                    "RHSType": "Value",
+                    "RHSValue": activeSection,
+                    "RHSField": null,
+                    "LHSAttribute": null,
+                    "RHSAttribute": null
+                  }
+                ]
+              }
+            ]
+          }
+        })
+      }).catch((err: any) => console.log("cannot fetch", err))
+    const questions: Question[] = questionResponse.Data;
+    setQuestions(questions)
+  }
+
+  async function createSection(sectionName: string) {
+    const newSection = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/batch`,
+      {
+        method: "POST",
+        body: JSON.stringify([{
+          Section_Name: sectionName,
+          Section_Sequence: items.length + 1,
+          Template_ID: templateId,
+          _is_created: true
+        }])
+      }).catch((err: any) => console.log("cannot fetch", err))
+    await getSectionsByTemplate();
+    setActiveSection(newSection[0]._id)
+    setEditActiveIndex(newSection[0]._id)
+  }
+
+  async function createQuestion(questionName: string, responseType: string) {
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch`,
+      {
+        method: "POST",
+        body: JSON.stringify([{
+          Question: questionName,
+          Response_Type: responseType,
+          Weightage: 0,
+          Section_ID: activeSection,
+          _is_created: true
+        }])
+      }).catch((err: any) => console.log("cannot fetch", err))
+    await getQuestionsBySection();
+  }
+
+  async function updateSection(sectionId: string, sectionName: Question) {
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/${sectionId}`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          Section_Name: sectionName,
+          _id: sectionId
+        })
+      }).catch((err: any) => console.log("cannot fetch", err))
+    await getSectionsByTemplate();
+  }
+
+  async function updateQuestion(questionId: string, questionName: string, responseType: string) {
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/${questionId}`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          Question: questionName,
+          Response_Type: responseType
+        })
+      }).catch((err: any) => console.log("cannot fetch", err))
+    await getSectionsByTemplate();
+  }
+
+  async function deleteSection(sectionId: string) {
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/batch/delete`,
+      {
+        method: "POST",
+        body: JSON.stringify([{
+          _id: sectionId
+        }])
+      }).catch((err: any) => console.log("cannot fetch", err))
+    await getSectionsByTemplate();
+  }
+
+  async function deleteQuestion(questionId: string) {
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch/delete`,
+      {
+        method: "POST",
+        body: JSON.stringify([{
+          _id: questionId
+        }])
+      }).catch((err: any) => console.log("cannot fetch", err))
+    await getSectionsByTemplate();
+  }
+
+
 
   return (
     <Row>
@@ -29,41 +188,33 @@ export function SideBar() {
             items.map((section, index) =>
               <div style={{ marginTop: 5 }} >
                 <Section
-                  index={index}
-                  section_name={section.text}
+                  index={index + 1}
+                  section_name={section.Section_Name}
                   rest={section}
-                  isEditActive={section.id == editActiveIndex}
-                  isActive={activeSection == section.id}
-                  onClick={() => setActiveSection(section.id)}
-                  onPressEnter={(e) => {
-                    let value = e.currentTarget.value
-
-                    setEditActiveIndex(-1)
-                    let newItem = items.map((item) => {
-                      if (item.id == editActiveIndex) {
-                        return {
-                          ...item,
-                          text: value
-                        }
-                      }
-                      return item
-                    })
-                    setItems(newItem)
+                  isEditActive={section.Section_ID == editActiveIndex}
+                  isActive={activeSection == section.Section_ID}
+                  onClick={() => setActiveSection(section.Section_ID)}
+                  onPressEnter={async (e) => {
+                    let sectionName = e.currentTarget.value
+                    await updateSection(section.Section_ID, sectionName);
+                    setEditActiveIndex("")
                   }}
-                  onEdit={() => setEditActiveIndex(section.id)}
-                  onDelete={() => { }}
+                  onEdit={() => setEditActiveIndex(section.Section_ID)}
+                  onDelete={async () => deleteSection(section.Section_ID)}
                 />
               </div>
             )
           }
           <Button
-            onClick={() => {
-              setItems((oldItems) => ([...oldItems, {
-                id: items.length + 1,
-                text: 'fndjf',
-                color: '#616AFF',
-              }]))
-              setEditActiveIndex(items.length + 1);
+            onClick={async () => {
+              // setItems((oldItems) => ([...oldItems, {
+              //   _id: tempId,
+              //   Section_ID: tempId,
+              //   Section_Name: "",
+              //   Section_Sequence: 0,
+              //   Template_ID: ""
+              // }]))
+              await createSection("");
             }}
             style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Section</Button>
         </div>
@@ -72,12 +223,17 @@ export function SideBar() {
         <div style={{ margin: 10 }} >
           <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>
           {
-            questions.map((question, index) => (
+            questions.length > 0 && questions.map((question, index) => (
               <div style={{ marginTop: 5 }} >
-                <QuestionCard index={index} />
+                <QuestionCard index={index} question={question} />
               </div>
             ))
           }
+          <Button
+            onClick={async () => {
+              await createQuestion("", "");
+            }}
+            style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Questionnaire</Button>
         </div>
       </Col>
     </Row>
@@ -91,22 +247,20 @@ function Section(props: { index: number, section_name: string, rest: any, isEdit
       <Card style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 0, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "transparent" }}
         onClick={onClick}
       >
-        <Typography style={{ fontSize: 12 }}  >Section {index}</Typography>
-        {
-          isEditActive ?
-            <Input onBlur={onPressEnter} onPressEnter={onPressEnter} placeholder={section_name} style={{ fontSize: 15 }} /> :
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} >
-              <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
-              <div style={{ display: "flex", justifyContent: "space-between" }} >
-                <RoundedIcon onClick={onEdit} >
-                  <EditOutlined style={{ color: "blue", margin: 5 }} />
-                </RoundedIcon>
-                <RoundedIcon onClick={onDelete}>
-                  <DeleteOutlined style={{ color: "red", margin: 5 }} />
-                </RoundedIcon>
+        <div>
+          <Typography style={{ fontSize: 12 }}  >Section {index}</Typography>
+          {
+            isEditActive ?
+              <Input onBlur={onPressEnter} onPressEnter={onPressEnter} placeholder={section_name} style={{ fontSize: 15 }} /> :
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} >
+                <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
+                <div style={{ display: "flex" }} >
+                  <Button onClick={onEdit} style={{ marginRight: 3 }} shape="circle" icon={<EditOutlined style={{ color: "blue" }} />} />
+                  <Button onClick={onDelete} shape="circle" icon={<DeleteOutlined style={{ color: "red" }} />} />
+                </div>
               </div>
-            </div>
-        }
+          }
+        </div>
       </Card>
     </div>
   )
@@ -116,7 +270,7 @@ function Section(props: { index: number, section_name: string, rest: any, isEdit
 export function RoundedIcon(props: { children: any, onClick: () => void }) {
   const { children, onClick } = props;
   return (
-    <div onClick={onClick} style={{ backgroundColor: "rgba(222, 234, 255, 1)", borderRadius: 60, padding: 3, cursor: "pointer" }} >
+    <div onClick={onClick} style={{ backgroundColor: "rgba(222, 234, 255, 1)", borderRadius: "100%", padding: 3, cursor: "pointer" }} >
       {children}
     </div>
   )
