@@ -174,7 +174,7 @@ export function SideBar() {
           _id: questionId
         }])
       }).catch((err: any) => console.log("cannot fetch", err))
-    await getSectionsByTemplate();
+    await getQuestionsBySection();
   }
 
 
@@ -225,7 +225,12 @@ export function SideBar() {
           {
             questions.length > 0 && questions.map((question, index) => (
               <div style={{ marginTop: 5 }} >
-                <QuestionCard index={index} question={question} />
+                <QuestionCard
+                  index={index}
+                  question={question}
+                  updateQuestion={updateQuestion}
+                  deleteQuestion={deleteQuestion}
+                />
               </div>
             ))
           }
