@@ -81,6 +81,9 @@ export function SideBar() {
       }).catch((err: any) => console.log("cannot fetch", err))
     const sections: Section[] = sectionResponse.Data;
     setItems(sections)
+    if (sections.length > 0) {
+      setActiveSection(sections[0].Section_ID)
+    }
   }
 
   async function getQuestionsBySection() {
