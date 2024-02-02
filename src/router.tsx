@@ -9,6 +9,7 @@ import { QuestionTab } from "./components/QuestionTab";
 import { SideBar } from "./components/SideBar";
 import { Stepper } from "./components/Stepper";
 import { AccordionTable } from "./components/Table";
+import { AccordionTableWeightage } from "./components/Table_Weightage";
 
 const router = createBrowserRouter([
     {
@@ -35,7 +36,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/test/test",
-        element: <BasicChart/>
+        element: <BasicChart />
     },
     {
         path: "/table",
@@ -43,15 +44,19 @@ const router = createBrowserRouter([
     },
     {
         path: "/qna_tab",
-        element: <QuestionTab/>
+        element: <QuestionTab />
     },
     {
         path: "/sidebar",
-        element: <SideBar/>
+        element: <SideBar />
     },
     {
         path: "/stepper",
-        element: <Stepper/>
+        element: <Stepper />
+    },
+    {
+        path: "/weightage",
+        element: <AccordionTableWeightage />
     }
 ]);
 
