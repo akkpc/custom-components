@@ -1,7 +1,7 @@
-import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
-import { Button, Card, Col, Input, Row, Select } from 'antd'
-import React, { useState } from 'react'
-import { Question, RoundedIcon } from './SideBar';
+import { DeleteOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Input, Row, Select } from 'antd';
+import { useEffect, useState } from 'react';
+import { Question } from './SideBar';
 
 interface Props {
     index: number;
@@ -33,10 +33,19 @@ const types = [
 export function QuestionCard(props: Props) {
     const { index, question: { Question_ID, Question, Response_Type }, deleteQuestion, updateQuestion } = props;
     const [question, setQuestion] = useState(Question);
-    const [responseType, setResponseType] = useState(Response_Type ?? "short_text");
+    const [responseType, setResponseType] = useState("short_text");
+
+    useEffect(() => {
+        if (Question) {
+            setQuestion(Question);
+        }
+        if (Response_Type) {
+            setResponseType(Response_Type)
+        }
+    }, [Question, Response_Type])
     return (
-        <div style={{}} >
-            <Card style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 0 }}>
+        <div key={index} style={{}} >
+            <Card key={index} style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 0 }}>
                 <Row>
                     {/* <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} > */}
                     <Col span={22} >

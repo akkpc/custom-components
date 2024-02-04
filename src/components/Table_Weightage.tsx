@@ -1,8 +1,10 @@
-import { Button, InputNumber, Table } from 'antd';
+import { Button, InputNumber, Table, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
+
+const { Text } = Typography;
 
 interface DataType {
     key: React.ReactNode;
@@ -35,6 +37,18 @@ type SourcingEventQuestion = {
     _id: string;
 };
 
+type Data = {
+    key: string;
+    parameters: string;
+    Weightage: number;
+    type: "section" | "question",
+    children: any[]
+}
+
+type TableDataType = {
+    _id: string;
+    Weightage: number;
+}
 
 const rowSelection: TableRowSelection<DataType> = {
     onChange: (selectedRowKeys, selectedRows) => {
@@ -52,6 +66,7 @@ const rowSelection: TableRowSelection<DataType> = {
     hideSelectAll: true,
 };
 
+const totalWeightageLimit = 100;
 
 const AccordionTableWeightage: React.FC = () => {
     const [selectedColumn, setSelectedColumn] = useState<string>();
@@ -60,8 +75,34 @@ const AccordionTableWeightage: React.FC = () => {
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
-    const [sectionWeightage, setSectionWeightage] = useState([])
-    const [questionWeightage, setQuestionWeightage] = useState([])
+    const [sectionWeightage, setSectionWeightage] = useState<TableDataType[]>([])
+    const [questionWeightage, setQuestionWeightage] = useState<TableDataType[]>([])
+    const [showWeightageError, setWeightageError] = useState(false)
+
+    function validateWeightage() {
+        let newSectionWeightage = 0
+        let newQuestionWeightages: any[] = []
+        data.map((section) => {
+            let modifiedIndex = sectionWeightage.findIndex((sec) => sec._id == section.key)
+            let newQuestionWeightage = 0
+            if (modifiedIndex >= 0) {
+                newSectionWeightage += sectionWeightage[modifiedIndex].Weightage;
+            } else {
+                newSectionWeightage += section.Weightage ?? 0;
+            }
+            section.children.map((question: any) => {
+                let modifiedIndex = questionWeightage.findIndex((q) => q._id == question.key)
+                if (modifiedIndex >= 0) {
+                    newQuestionWeightage += questionWeightage[modifiedIndex].Weightage;
+                } else {
+                    newQuestionWeightage += question.Weightage;
+                }
+            })
+            newQuestionWeightages.push(newQuestionWeightage)
+        })
+        console.log("newQuestionWeightages", newQuestionWeightages, newSectionWeightage)
+        return newSectionWeightage <= 100 && newQuestionWeightages.filter((w) => w > 100).length == 0;
+    }
 
 
     function buildColumns() {
@@ -85,8 +126,9 @@ const AccordionTableWeightage: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let allParams = await KFSDK.app.page.getAllParameters();
-            const sourcing_event_id = allParams.sourcing_event_id;
+            let sourcing_event_id = await KFSDK.app.page.popup.getAllParameters();
+
+            console.log("sourcing_event_id :dsdsd ", sourcing_event_id)
 
             await getSectiondetailsBySourcingEvent(sourcing_event_id);
             buildColumns();
@@ -127,23 +169,23 @@ const AccordionTableWeightage: React.FC = () => {
 
         const questions: SourcingEventQuestion[] = await getQuestionDetails(sourcing_event_id);
 
-        let technicalData = sections.map((section) => ({
+        let technicalData: Data[] = sections.map((section) => ({
             key: section._id,
             parameters: section.Section_Name,
             Weightage: section.Weightage,
             type: "section",
-            children: questions.filter((q) => q.Section_ID == section.Section_ID).length > 0 ?
-                questions.map((question) => {
-                    if (question.Section_ID == section.Section_ID) {
-                        return ({
-                            key: question._id,
-                            parameters: question.Question,
-                            Weightage: question.Weightage,
-                            type: "question",
-                        })
-                    }
-                }) : []
+            showCheckBox: false,
+            children: questions.filter((q) => q.Section_ID == section.Section_ID).map((question) => {
+                return ({
+                    key: question._id,
+                    parameters: question.Question,
+                    Weightage: question.Weightage,
+                    type: "question",
+                    showCheckBox: false
+                })
+            })
         }))
+        console.log("technicalData", technicalData)
         setData(technicalData)
     }
 
@@ -195,15 +237,22 @@ const AccordionTableWeightage: React.FC = () => {
 
     return (
         <div>
-            <div style={{ display: "flex", justifyContent: "flex-end", margin: 3 }} >
+            <div style={{ display: "flex", justifyContent: "flex-end", margin: 3, alignItems: "center" }} >
+                {showWeightageError && <Text type="danger" style={{ fontSize: 16, marginRight: 5 }} >Weightage should not exceed 100%</Text>}
                 <Button
                     type='primary'
                     onClick={async () => {
-                        if (sectionWeightage.length > 0) {
-                            await updateWeightage(sectionWeightage, sourcing_section_dataform);
-                        }
-                        if (questionWeightage.length > 0) {
-                            await updateWeightage(questionWeightage, sourcing_question_dataform);
+                        let isValid = validateWeightage()
+                        if (isValid) {
+                            setWeightageError(false)
+                            if (sectionWeightage.length > 0) {
+                                await updateWeightage(sectionWeightage, sourcing_section_dataform);
+                            }
+                            if (questionWeightage.length > 0) {
+                                await updateWeightage(questionWeightage, sourcing_question_dataform);
+                            }
+                        } else {
+                            setWeightageError(true)
                         }
                     }}
                 >Save</Button>
@@ -230,32 +279,30 @@ function RowRender({ record, setQuestionWeightage, setSectionWeightage, Weightag
     }, [])
 
     const onChangeValue = (value: number) => {
-        if (value) {
-            console.log("Value : ", value, record.type)
-            if (record.type == "section") {
-                setSectionWeightage((section: any) => {
-                    let newSection = section
-                    let sectionIndex = newSection.findIndex((s: any) => s._id == record.key)
-                    if (sectionIndex >= 0) {
-                        newSection[sectionIndex].Weightage = value
-                    } else {
-                        newSection = [...newSection, { _id: record.key, Weightage: value }]
-                    }
-                    return [...newSection]
-                })
-            }
-            if (record.type == "question") {
-                setQuestionWeightage((question: any) => {
-                    let newQuestion = question
-                    let questionIndex = newQuestion.findIndex((s: any) => s._id == record.key)
-                    if (questionIndex >= 0) {
-                        newQuestion[questionIndex].Weightage = value
-                    } else {
-                        newQuestion = [...newQuestion, { _id: record.key, Weightage: value }]
-                    }
-                    return [...newQuestion]
-                })
-            }
+        console.log("Value : ", value, record.type)
+        if (record.type == "section") {
+            setSectionWeightage((section: any) => {
+                let newSection = section
+                let sectionIndex = newSection.findIndex((s: any) => s._id == record.key)
+                if (sectionIndex >= 0) {
+                    newSection[sectionIndex].Weightage = value
+                } else {
+                    newSection = [...newSection, { _id: record.key, Weightage: value }]
+                }
+                return [...newSection]
+            })
+        }
+        if (record.type == "question") {
+            setQuestionWeightage((question: any) => {
+                let newQuestion = question
+                let questionIndex = newQuestion.findIndex((s: any) => s._id == record.key)
+                if (questionIndex >= 0) {
+                    newQuestion[questionIndex].Weightage = value
+                } else {
+                    newQuestion = [...newQuestion, { _id: record.key, Weightage: value }]
+                }
+                return [...newQuestion]
+            })
         }
         setValue(value);
     }
@@ -267,6 +314,7 @@ function RowRender({ record, setQuestionWeightage, setSectionWeightage, Weightag
             {
                 <div style={{ padding: 3, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", height: "90%" }} >
                     <InputNumber
+                        // status='error'
                         value={value}
                         min={0}
                         max={100}

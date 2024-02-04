@@ -139,6 +139,7 @@ export function SideBar() {
           Response_Type: responseType,
           Weightage: 0,
           Section_ID: activeSection,
+          Template_ID: templateId,
           _is_created: true
         }])
       }).catch((err: any) => console.log("cannot fetch", err))
@@ -237,8 +238,8 @@ export function SideBar() {
         <div style={{ margin: 10 }} >
           <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>
           {
-            questions.length > 0 && questions.map((question, index) => (
-              <div style={{ marginTop: 5 }} >
+            questions && questions.map((question, index) => (
+              <div key={index} style={{ marginTop: 5 }} >
                 <QuestionCard
                   index={index}
                   question={question}
@@ -262,7 +263,7 @@ export function SideBar() {
 function Section(props: { index: number, section_name: string, rest: any, isEditActive: boolean, isActive: boolean, onPressEnter: (e: any) => void, onEdit: () => void, onDelete: () => void, onClick: () => void }) {
   const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick } = props;
   return (
-    <div>
+    <div key={index} >
       <Card style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 0, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "transparent" }}
         onClick={onClick}
       >
