@@ -106,3 +106,11 @@ th.ant-table-cell {
 .ant-card-body {
   padding: 10px !important;
 }
+
+.ant-input-number-group-addon {
+  background: white !important;
+}
+
+.newclass {
+  background: rgba(240, 243, 247, 1);
+}

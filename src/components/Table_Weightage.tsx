@@ -1,14 +1,14 @@
-import { Button, InputNumber, Space, Table, Tooltip, Typography } from 'antd';
+import { PauseOutlined } from '@ant-design/icons';
+import { Button, InputNumber, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
-import { PauseOutlined } from '@ant-design/icons';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
 
 interface DataType {
-    key: React.ReactNode;
+    key: string;
     parameters: string;
     Pk8LrjrVGBG7: number;
     sup_02: number;
@@ -79,6 +79,7 @@ const AccordionTableWeightage: React.FC = () => {
     const [sectionWeightage, setSectionWeightage] = useState<TableDataType[]>([])
     const [questionWeightage, setQuestionWeightage] = useState<TableDataType[]>([])
     const [showWeightageError, setWeightageError] = useState(false)
+    const [expandedRows, setExpandedRows] = useState<string[]>([])
 
     function validateWeightage() {
         let newSectionWeightage = 0
@@ -143,6 +144,12 @@ const AccordionTableWeightage: React.FC = () => {
             setSourcingEventId(sourcing_event_id)
         })()
     }, [])
+
+    useEffect(() => {
+        if (expandedRows) {
+            console.log("expandedRows", expandedRows)
+        }
+    }, [expandedRows])
 
     const getSectiondetailsBySourcingEvent = async (sourcing_event_id: string) => {
         const queries = `page_number=1&page_size=1000000&_application_id=Sourcing_App_A00`
@@ -289,7 +296,24 @@ const AccordionTableWeightage: React.FC = () => {
                     bordered
                     pagination={false}
                     className="custom-table"
-                    expandable={{expandedRowClassName:() => "newclass"}}
+                    expandable={{
+                        onExpand(expanded, record) {
+                            console.log("expanded", expanded, record)
+                            if (expanded) {
+                                setExpandedRows((rows: string[]) => [...rows, record.key]);
+                            } else {
+                                setExpandedRows((rows) => [...rows.filter((r) => r != record.key)])
+                            }
+                        },
+                    }}
+                    rowClassName={(record) => {
+                        if (expandedRows.includes(record.key)) {
+                            return "newclass"
+                        }
+                        return ""
+                    }
+                    }
+                // rowClassName={() => "newclass"}
                 /> : "Loading..."}
         </div>
     );
