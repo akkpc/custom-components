@@ -1,7 +1,8 @@
-import { Button, InputNumber, Table, Typography } from 'antd';
+import { Button, InputNumber, Space, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
+import { PauseOutlined } from '@ant-design/icons';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
@@ -110,7 +111,13 @@ const AccordionTableWeightage: React.FC = () => {
             title: "Parameters",
             dataIndex: 'parameters',
             key: 'parameters',
-            width: "70%"
+            width: "70%",
+            render: (text: string, record: any, index: any) => (
+                <Typography>
+                    {record.type == "question" && <span style={{ fontWeight: "bold" }} >Q{index + 1}: </span>}
+                    {text}
+                </Typography>
+            ),
         }];
         columns.push({
             title: "Weightage",
@@ -175,7 +182,7 @@ const AccordionTableWeightage: React.FC = () => {
             Weightage: section.Weightage,
             type: "section",
             showCheckBox: false,
-            children: questions.filter((q) => q.Section_ID == section.Section_ID).map((question) => {
+            children: questions.filter((q) => q.Section_ID == section.Section_ID).map((question, index) => {
                 return ({
                     key: question._id,
                     parameters: question.Question,
@@ -185,8 +192,25 @@ const AccordionTableWeightage: React.FC = () => {
                 })
             })
         }))
-        console.log("technicalData", technicalData)
-        setData(technicalData)
+        let q = [
+            {
+                key: "questionnaire",
+                parameters: "Questionnaire",
+                Weightage: 0,
+                type: "questionnaire",
+                showCheckBox: false,
+                children: technicalData
+            },
+            {
+                key: "line_items",
+                parameters: "Line Items",
+                Weightage: 0,
+                type: "line_items",
+                showCheckBox: false,
+                children: []
+            }
+        ]
+        setData(q)
     }
 
     const getQuestionDetails = async (sourcing_event_id: string) => {
@@ -257,14 +281,16 @@ const AccordionTableWeightage: React.FC = () => {
                     }}
                 >Save</Button>
             </div>
-            {contentLoaded ? <Table
-                columns={columns}
-                rowSelection={{ ...rowSelection }}
-                dataSource={data}
-                bordered
-                pagination={false}
-                className="custom-table"
-            /> : "Loading..."}
+            {contentLoaded ?
+                <Table
+                    columns={columns}
+                    rowSelection={{ ...rowSelection }}
+                    dataSource={data}
+                    bordered
+                    pagination={false}
+                    className="custom-table"
+                    expandable={{expandedRowClassName:() => "newclass"}}
+                /> : "Loading..."}
         </div>
     );
 };
@@ -314,13 +340,32 @@ function RowRender({ record, setQuestionWeightage, setSectionWeightage, Weightag
             {
                 <div style={{ padding: 3, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", height: "90%" }} >
                     <InputNumber
-                        // status='error'
+                        style={{
+                            width: 120,
+                            background: "transparent"
+                        }}
                         value={value}
                         min={0}
                         max={100}
                         formatter={(value) => `${value}%`}
                         parser={(value: any) => value!.replace('%', '')}
                         onChange={(value: any) => onChangeValue(value)}
+                        controls={false}
+                        addonAfter={
+                            record.type != "question" && <Button
+                                onClick={() => console.log("controls")}
+                                style={{ display: "flex", height: 14, width: 18, fontSize: 5, alignItems: "center", justifyContent: "center", color: "rgba(0, 60, 156, 1)", borderColor: "rgba(0, 60, 156, 1)", borderRadius: 3 }}
+                                type='primary'
+                                size='small'
+                                ghost
+                                icon={
+                                    <Tooltip title="Split equally" >
+                                        <PauseOutlined style={{ transform: "rotate(90deg)" }} />
+                                    </Tooltip>
+                                }
+                            />
+                        }
+
                     />
                 </div>
 
