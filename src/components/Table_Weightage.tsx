@@ -112,7 +112,7 @@ const AccordionTableWeightage: React.FC = () => {
             title: "Parameters",
             dataIndex: 'parameters',
             key: 'parameters',
-            width: "70%",
+            width: "80%",
             render: (text: string, record: any, index: any) => (
                 <Typography>
                     {record.type == "question" && <span style={{ fontWeight: "bold" }} >Q{index + 1}: </span>}
@@ -314,6 +314,7 @@ const AccordionTableWeightage: React.FC = () => {
                     }
                     }
                 // rowClassName={() => "newclass"}
+                rootClassName='root'
                 /> : "Loading..."}
         </div>
     );
@@ -362,7 +363,7 @@ function RowRender({ record, setQuestionWeightage, setSectionWeightage, Weightag
             display: "flex", alignItems: "center", justifyContent: "center", height: "100%"
         }} key={record.key} >
             {
-                <div style={{ padding: 3, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", height: "90%" }} >
+                <div style={{ padding: 3, width: "100%", display: "flex", alignItems: "center", height: "90%", marginLeft: 10 }} >
                     <InputNumber
                         style={{
                             width: 120,
