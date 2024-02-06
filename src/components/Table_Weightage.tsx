@@ -2,6 +2,7 @@ import { Button, InputNumber, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 import { calculateSplitValue } from '../helpers';
+import { sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
@@ -62,8 +63,6 @@ const AccordionTableWeightage: React.FC = () => {
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
-    const [sectionWeightage, setSectionWeightage] = useState<TableDataType[]>([])
-    const [questionWeightage, setQuestionWeightage] = useState<TableDataType[]>([])
     const [showWeightageError, setWeightageError] = useState(false)
     const [expandedRows, setExpandedRows] = useState<string[]>([])
     const prevData = useRef<any>([]);
@@ -89,7 +88,7 @@ const AccordionTableWeightage: React.FC = () => {
                     weightage[keyname] = obj[i].Weightage ?? 0;
                 }
             }
-            obj.map((newObj) =>  validateWeightage(newObj.children, weightage, newObj.key))
+            obj.map((newObj) => validateWeightage(newObj.children, weightage, newObj.key))
         }
         return weightage
     }
@@ -139,8 +138,6 @@ const AccordionTableWeightage: React.FC = () => {
                 <RowRender
                     key={record.key}
                     record={record}
-                    setSectionWeightage={setSectionWeightage}
-                    setQuestionWeightage={setQuestionWeightage}
                     setData={setData}
                 />
             ),
@@ -267,16 +264,17 @@ const AccordionTableWeightage: React.FC = () => {
                 <Button
                     type='primary'
                     onClick={async () => {
-                        let isValid = validateWeightage(data, {}, "root")
-                        console.log("isValid" , data, isValid)
+                        let weightages = validateWeightage(data, {}, "root")
+                        let isValid = Object.values(weightages).every((w: any) => (w <= 100))
+                        let delta = calculateDelta(data, prevData.current, []);
                         if (isValid) {
                             setWeightageError(false)
-                            // if (sectionWeightage.length > 0) {
-                            //     await updateWeightage(sectionWeightage, sourcing_section_dataform);
-                            // }
-                            // if (questionWeightage.length > 0) {
-                            //     await updateWeightage(questionWeightage, sourcing_question_dataform);
-                            // }
+                            if (delta["section"] && delta["section"].length > 0) {
+                                await updateWeightage(delta["section"], sourcing_section_dataform);
+                            }
+                            if (delta["question"] && delta["question"].length > 0) {
+                                await updateWeightage(delta["question"], sourcing_question_dataform);
+                            }
                         } else {
                             setWeightageError(true)
                         }
