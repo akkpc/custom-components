@@ -427,11 +427,7 @@ function RowRender({ record, setData }: any) {
                                 ghost
                                 icon={
                                     <Tooltip title="Split equally" >
-                                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <rect x="0.5" y="0.5" width="17" height="17" rx="1.5" fill="#EEF5FF" stroke="#003C9C" />
-                                            <rect x="5.625" y="6.75" width="6.75" height="1.6875" fill="#003C9C" />
-                                            <rect x="5.625" y="9.5625" width="6.75" height="1.6875" fill="#003C9C" />
-                                        </svg>
+                                        <img src={process.env.PUBLIC_URL + "/svgs/split_equally_icon.svg"} alt="image" />
                                     </Tooltip>
                                 }
                             />

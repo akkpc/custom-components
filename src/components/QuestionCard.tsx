@@ -1,5 +1,4 @@
-import { DeleteOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Input, Row, Select } from 'antd';
+import { Card, Col, Input, Row, Select } from 'antd';
 import { useEffect, useState } from 'react';
 import { Question } from './SideBar';
 
@@ -44,9 +43,9 @@ export function QuestionCard(props: Props) {
         }
     }, [Question, Response_Type])
     return (
-        <div key={index} style={{}} >
-            <Card key={index} style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 0 }}>
-                <Row>
+        <div key={index} >
+            <Card key={index} style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 10 }}>
+                <Row align={"middle"} >
                     {/* <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} > */}
                     <Col span={22} >
                         <Input
@@ -59,7 +58,7 @@ export function QuestionCard(props: Props) {
                     </Col>
                     <Col span={2} >
                         <div style={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }} >
-                            <Button shape="circle" icon={<DeleteOutlined style={{ color: "red" }} />} />
+                            <img onClick={async () => await deleteQuestion(Question_ID)} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
                         </div>
                     </Col>
                     {/* </div> */}
@@ -81,13 +80,6 @@ export function QuestionCard(props: Props) {
                     <div>
                         <p style={{ color: "rgba(175, 183, 199, 1)" }} >Options</p>
                     </div>}
-                <div style={{ display: "flex", justifyContent: "flex-end" }} >
-                    <Button style={{ marginRight: 3 }} onClick={async () => await deleteQuestion(Question_ID)} >Discard</Button>
-                    <Button
-                        type='primary'
-                        onClick={async () => await updateQuestion(Question_ID, question, responseType)}
-                    >Save</Button>
-                </div>
             </Card>
         </div>
     )

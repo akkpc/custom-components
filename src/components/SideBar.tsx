@@ -1,7 +1,8 @@
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Input, Row, Typography } from 'antd';
 import { useEffect, useState } from 'react';
+import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { QuestionCard } from './QuestionCard';
+import { template } from 'lodash';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 export type Section = {
@@ -21,7 +22,7 @@ export type Question = {
   _id: string;
 };
 
-
+const appBarHeight = 50;
 export function SideBar() {
   const [items, setItems] = useState<Section[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
@@ -195,68 +196,86 @@ export function SideBar() {
 
 
   return (
-    templateId ? <Row>
-      <Col span={6}>
-        <div style={{ margin: 10 }} >
-          <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
-          {
-            items.map((section, index) =>
-              <div style={{ marginTop: 5 }} >
-                <Section
-                  index={index + 1}
-                  section_name={section.Section_Name}
-                  rest={section}
-                  isEditActive={section.Section_ID == editActiveIndex}
-                  isActive={activeSection == section.Section_ID}
-                  onClick={() => setActiveSection(section.Section_ID)}
-                  onPressEnter={async (e) => {
-                    let sectionName = e.currentTarget.value
-                    await updateSection(section.Section_ID, sectionName);
-                    setEditActiveIndex("")
-                  }}
-                  onEdit={() => setEditActiveIndex(section.Section_ID)}
-                  onDelete={async () => deleteSection(section.Section_ID)}
-                />
-              </div>
-            )
-          }
+    <div>
+      {templateId ?
+        <div style={{
+          display: "flex",
+          flexDirection: "row",
+          height: window.innerHeight - appBarHeight,
+        }} >
+          <div className='scrollable-container'
+            style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "35%", borderRight: `1px solid ${borderColor}`, backgroundColor: primaryBackground, padding: 5 }} >
+            <div style={{ margin: 10 }} >
+              <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
+              {
+                items.map((section, index) =>
+                  <div style={{ marginTop: 10 }} >
+                    <Section
+                      index={index + 1}
+                      section_name={section.Section_Name}
+                      rest={section}
+                      isEditActive={section.Section_ID == editActiveIndex}
+                      isActive={activeSection == section.Section_ID}
+                      onClick={() => setActiveSection(section.Section_ID)}
+                      onPressEnter={async (e) => {
+                        let sectionName = e.currentTarget.value
+                        await updateSection(section.Section_ID, sectionName);
+                        setEditActiveIndex("")
+                      }}
+                      onEdit={() => setEditActiveIndex(section.Section_ID)}
+                      onDelete={async () => deleteSection(section.Section_ID)}
+                    />
+                  </div>
+                )
+              }
+              <Button
+                onClick={async () => {
+                  await createSection("");
+                }}
+                style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Section</Button>
+            </div>
+          </div>
+          <div className='scrollable-container' style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "100%", backgroundColor: questionnaireBackground }}>
+            <div style={{ margin: 10 }} >
+              <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>
+              {
+                questions && questions.map((question, index) => (
+                  <div key={index} style={{ marginTop: 10 }} >
+                    <QuestionCard
+                      index={index}
+                      question={question}
+                      updateQuestion={updateQuestion}
+                      deleteQuestion={deleteQuestion}
+                    />
+                  </div>
+                ))
+              }
+              <Button
+                onClick={async () => {
+                  await createQuestion("", "");
+                }}
+                style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Questionnaire</Button>
+            </div>
+          </div>
+        </div> : <div>Loading....</div>}
+      <div style={{
+        backgroundColor: "white",
+        position: "fixed",
+        bottom: 0,
+        width: "100%",
+        height: appBarHeight,
+        display: "flex",
+        justifyContent: "flex-end",
+        alignItems: "center"
+      }} >
+        <div style={{ padding: 20 }} >
+          <Button style={{ marginRight: 3, backgroundColor: primaryBackground }}  >Discard</Button>
           <Button
-            onClick={async () => {
-              // setItems((oldItems) => ([...oldItems, {
-              //   _id: tempId,
-              //   Section_ID: tempId,
-              //   Section_Name: "",
-              //   Section_Sequence: 0,
-              //   Template_ID: ""
-              // }]))
-              await createSection("");
-            }}
-            style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Section</Button>
+            style={{ backgroundColor: buttonDarkBlue, color: "white" }}
+          >Save</Button>
         </div>
-      </Col>
-      <Col span={18}>
-        <div style={{ margin: 10 }} >
-          <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>
-          {
-            questions && questions.map((question, index) => (
-              <div key={index} style={{ marginTop: 5 }} >
-                <QuestionCard
-                  index={index}
-                  question={question}
-                  updateQuestion={updateQuestion}
-                  deleteQuestion={deleteQuestion}
-                />
-              </div>
-            ))
-          }
-          <Button
-            onClick={async () => {
-              await createQuestion("", "");
-            }}
-            style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Questionnaire</Button>
-        </div>
-      </Col>
-    </Row> : <div>Loading....</div>
+      </div>
+    </div>
   )
 }
 
@@ -264,7 +283,7 @@ function Section(props: { index: number, section_name: string, rest: any, isEdit
   const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick } = props;
   return (
     <div key={index} >
-      <Card style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 0, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "transparent" }}
+      <Card style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 5, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "white" }}
         onClick={onClick}
       >
         <div>
@@ -274,9 +293,9 @@ function Section(props: { index: number, section_name: string, rest: any, isEdit
               <Input onBlur={onPressEnter} onPressEnter={onPressEnter} placeholder={section_name} style={{ fontSize: 15 }} /> :
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} >
                 <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
-                <div style={{ display: "flex" }} >
-                  <Button onClick={onEdit} style={{ marginRight: 3 }} shape="circle" icon={<EditOutlined style={{ color: "blue" }} />} />
-                  <Button onClick={onDelete} shape="circle" icon={<DeleteOutlined style={{ color: "red" }} />} />
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
+                  <img style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
+                  <img style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
                 </div>
               </div>
           }
