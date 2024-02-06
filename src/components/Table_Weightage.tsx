@@ -2,7 +2,6 @@ import { Button, InputNumber, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 import { calculateSplitValue } from '../helpers';
-import { sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
@@ -67,7 +66,7 @@ const AccordionTableWeightage: React.FC = () => {
     const [questionWeightage, setQuestionWeightage] = useState<TableDataType[]>([])
     const [showWeightageError, setWeightageError] = useState(false)
     const [expandedRows, setExpandedRows] = useState<string[]>([])
-    const prevData = useRef(data);
+    const prevData = useRef<any>([]);
 
     useEffect(() => {
         (async () => {
@@ -81,28 +80,41 @@ const AccordionTableWeightage: React.FC = () => {
         })()
     }, [])
 
-    function validateWeightage() {
-        let newSectionWeightage = 0
-        let newQuestionWeightages: any[] = []
-        data.map((section) => {
-            let modifiedIndex = sectionWeightage.findIndex((sec) => sec._id == section.key)
-            let newQuestionWeightage = 0
-            if (modifiedIndex >= 0) {
-                newSectionWeightage += sectionWeightage[modifiedIndex].Weightage;
-            } else {
-                newSectionWeightage += section.Weightage ?? 0;
-            }
-            section.children.map((question: any) => {
-                let modifiedIndex = questionWeightage.findIndex((q) => q._id == question.key)
-                if (modifiedIndex >= 0) {
-                    newQuestionWeightage += questionWeightage[modifiedIndex].Weightage;
+    function validateWeightage(obj: any[], weightage: any, keyname: string) {
+        if (obj && obj.length > 0) {
+            for (let i = 0; i < obj.length; i++) {
+                if (weightage.hasOwnProperty(keyname)) {
+                    weightage[keyname] += obj[i].Weightage ?? 0;
                 } else {
-                    newQuestionWeightage += question.Weightage;
+                    weightage[keyname] = obj[i].Weightage ?? 0;
                 }
-            })
-            newQuestionWeightages.push(newQuestionWeightage)
-        })
-        return newSectionWeightage <= 100 && newQuestionWeightages.filter((w) => w > 100).length == 0;
+            }
+            obj.map((newObj) =>  validateWeightage(newObj.children, weightage, newObj.key))
+        }
+        return weightage
+    }
+
+    /* Important Logic to compare delta value between actual data and modified data */
+    function calculateDelta(obj1: any[], obj2: any[], res: any) {
+        for (let i = 0; i < obj1.length; i++) {
+            if (obj1[i].Weightage != obj2[i].Weightage) {
+                if (res[obj1[i].type]) {
+                    res[obj1[i].type].push({
+                        _id: obj1[i].key,
+                        Weightage: obj1[i].Weightage
+                    })
+                } else {
+                    res[obj1[i].type] = [{
+                        _id: obj1[i].key,
+                        Weightage: obj1[i].Weightage
+                    }]
+                }
+            }
+            if (obj1[i].children && obj1[i].children.length > 0) {
+                calculateDelta(obj1[i].children, obj2[i].children, res);
+            }
+        }
+        return res;
     }
 
 
@@ -203,7 +215,7 @@ const AccordionTableWeightage: React.FC = () => {
             }
         ]
         setData(q)
-        prevData.current = q;
+        prevData.current = JSON.parse(JSON.stringify(q));
     }
 
     async function getQuestionDetails(sourcing_event_id: string) {
@@ -239,10 +251,6 @@ const AccordionTableWeightage: React.FC = () => {
         return questions
     }
 
-    function getResponseKey(id: string) {
-        return `${id}_response`
-    }
-
     async function updateWeightage(sectionWeightage: any[], dataformName: string) {
         const questions: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataformName}/batch`, {
             method: "POST",
@@ -259,15 +267,16 @@ const AccordionTableWeightage: React.FC = () => {
                 <Button
                     type='primary'
                     onClick={async () => {
-                        let isValid = validateWeightage()
+                        let isValid = validateWeightage(data, {}, "root")
+                        console.log("isValid" , data, isValid)
                         if (isValid) {
                             setWeightageError(false)
-                            if (sectionWeightage.length > 0) {
-                                await updateWeightage(sectionWeightage, sourcing_section_dataform);
-                            }
-                            if (questionWeightage.length > 0) {
-                                await updateWeightage(questionWeightage, sourcing_question_dataform);
-                            }
+                            // if (sectionWeightage.length > 0) {
+                            //     await updateWeightage(sectionWeightage, sourcing_section_dataform);
+                            // }
+                            // if (questionWeightage.length > 0) {
+                            //     await updateWeightage(questionWeightage, sourcing_question_dataform);
+                            // }
                         } else {
                             setWeightageError(true)
                         }
