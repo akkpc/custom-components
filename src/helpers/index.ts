@@ -29,6 +29,9 @@ function getColorCode(number: number) {
     }
 }
 
+export function calculateSplitValue(value: number) {
+    return Math.round((100 / value + Number.EPSILON) * 100) / 100;
+}
 
 export {
     getColorCode

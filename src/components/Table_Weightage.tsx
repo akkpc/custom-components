@@ -1,7 +1,7 @@
-import { PauseOutlined } from '@ant-design/icons';
 import { Button, InputNumber, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { calculateSplitValue } from '../helpers';
 import { sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
@@ -52,27 +52,14 @@ type TableDataType = {
 }
 
 const rowSelection: TableRowSelection<DataType> = {
-    onChange: (selectedRowKeys, selectedRows) => {
-        console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
-    },
-    onSelect: (record, selected, selectedRows) => {
-        console.log(record, selected, selectedRows);
-    },
-    onSelectAll: (selected, selectedRows, changeRows) => {
-        console.log(selected, selectedRows, changeRows);
-    },
     getCheckboxProps: (record) => ({
         className: record.showCheckBox ? "" : "hide-row"
     }),
     hideSelectAll: true,
 };
 
-const totalWeightageLimit = 100;
-
 const AccordionTableWeightage: React.FC = () => {
-    const [selectedColumn, setSelectedColumn] = useState<string>();
     const [contentLoaded, setContentLoaded] = useState(false);
-    const [suppliers, setSuppliers] = useState<any[]>([]);
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
@@ -80,6 +67,19 @@ const AccordionTableWeightage: React.FC = () => {
     const [questionWeightage, setQuestionWeightage] = useState<TableDataType[]>([])
     const [showWeightageError, setWeightageError] = useState(false)
     const [expandedRows, setExpandedRows] = useState<string[]>([])
+    const prevData = useRef(data);
+
+    useEffect(() => {
+        (async () => {
+            await KFSDK.initialize();
+
+            const sourcing_event_id = await KFSDK.app.page.popup.getAllParameters();
+            await getSectiondetailsBySourcingEvent(sourcing_event_id);
+            buildColumns();
+            setContentLoaded(true);
+            setSourcingEventId(sourcing_event_id)
+        })()
+    }, [])
 
     function validateWeightage() {
         let newSectionWeightage = 0
@@ -102,7 +102,6 @@ const AccordionTableWeightage: React.FC = () => {
             })
             newQuestionWeightages.push(newQuestionWeightage)
         })
-        console.log("newQuestionWeightages", newQuestionWeightages, newSectionWeightage)
         return newSectionWeightage <= 100 && newQuestionWeightages.filter((w) => w > 100).length == 0;
     }
 
@@ -125,33 +124,19 @@ const AccordionTableWeightage: React.FC = () => {
             dataIndex: "weightage",
             key: "weightage",
             render: (text: string, record: any) => (
-                <RowRender key={record.key} record={record} setSectionWeightage={setSectionWeightage} setQuestionWeightage={setQuestionWeightage} />
+                <RowRender
+                    key={record.key}
+                    record={record}
+                    setSectionWeightage={setSectionWeightage}
+                    setQuestionWeightage={setQuestionWeightage}
+                    setData={setData}
+                />
             ),
         })
         setColumns(columns)
     }
 
-    useEffect(() => {
-        (async () => {
-            await KFSDK.initialize();
-            let sourcing_event_id = await KFSDK.app.page.popup.getAllParameters();
-
-            console.log("sourcing_event_id :dsdsd ", sourcing_event_id)
-
-            await getSectiondetailsBySourcingEvent(sourcing_event_id);
-            buildColumns();
-            setContentLoaded(true);
-            setSourcingEventId(sourcing_event_id)
-        })()
-    }, [])
-
-    useEffect(() => {
-        if (expandedRows) {
-            console.log("expandedRows", expandedRows)
-        }
-    }, [expandedRows])
-
-    const getSectiondetailsBySourcingEvent = async (sourcing_event_id: string) => {
+    async function getSectiondetailsBySourcingEvent(sourcing_event_id: string) {
         const queries = `page_number=1&page_size=1000000&_application_id=Sourcing_App_A00`
 
         const payload =
@@ -218,9 +203,10 @@ const AccordionTableWeightage: React.FC = () => {
             }
         ]
         setData(q)
+        prevData.current = q;
     }
 
-    const getQuestionDetails = async (sourcing_event_id: string) => {
+    async function getQuestionDetails(sourcing_event_id: string) {
         const queries = `page_number=1&page_size=1000000&_application_id=Sourcing_App_A00`
 
         const payload =
@@ -288,7 +274,7 @@ const AccordionTableWeightage: React.FC = () => {
                     }}
                 >Save</Button>
             </div>
-            {contentLoaded ?
+            {contentLoaded && data ?
                 <Table
                     columns={columns}
                     rowSelection={{ ...rowSelection }}
@@ -298,7 +284,6 @@ const AccordionTableWeightage: React.FC = () => {
                     className="custom-table"
                     expandable={{
                         onExpand(expanded, record) {
-                            console.log("expanded", expanded, record)
                             if (expanded) {
                                 setExpandedRows((rows: string[]) => [...rows, record.key]);
                             } else {
@@ -313,49 +298,97 @@ const AccordionTableWeightage: React.FC = () => {
                         return ""
                     }
                     }
-                // rowClassName={() => "newclass"}
-                rootClassName='root'
+                    rootClassName='root'
+                    rowKey={(record) => record.key}
                 /> : "Loading..."}
         </div>
     );
 };
 
-function RowRender({ record, setQuestionWeightage, setSectionWeightage, Weightage }: any) {
+function RowRender({ record, setData }: any) {
     const [value, setValue] = useState(0)
 
     useEffect(() => {
         if (record.Weightage) {
             setValue(record.Weightage)
         }
-    }, [])
+    }, [record.Weightage])
 
-    const onChangeValue = (value: number) => {
-        console.log("Value : ", value, record.type)
-        if (record.type == "section") {
-            setSectionWeightage((section: any) => {
-                let newSection = section
-                let sectionIndex = newSection.findIndex((s: any) => s._id == record.key)
-                if (sectionIndex >= 0) {
-                    newSection[sectionIndex].Weightage = value
-                } else {
-                    newSection = [...newSection, { _id: record.key, Weightage: value }]
-                }
-                return [...newSection]
-            })
-        }
-        if (record.type == "question") {
-            setQuestionWeightage((question: any) => {
-                let newQuestion = question
-                let questionIndex = newQuestion.findIndex((s: any) => s._id == record.key)
-                if (questionIndex >= 0) {
-                    newQuestion[questionIndex].Weightage = value
-                } else {
-                    newQuestion = [...newQuestion, { _id: record.key, Weightage: value }]
-                }
-                return [...newQuestion]
-            })
-        }
+    function onChangeValue(value: number) {
         setValue(value);
+    }
+
+    function onBlur() {
+        switch (record.type) {
+            case "questionnaire":
+                setData((data: any) => {
+                    data[0].Weightage = value;
+                    return [...data]
+                })
+                break;
+            case "section":
+                setData((data: any) => {
+                    let sections = data[0].children;
+                    let sectionIndex = sections.findIndex((s: any) => s.key == record.key)
+                    if (sectionIndex >= 0) {
+                        sections[sectionIndex].Weightage = value
+                    }
+                    data[0].children = sections;
+                    return [...data]
+                })
+                break;
+            case "question":
+                setData((data: any) => {
+                    let sections = data[0].children;
+                    sections = sections.map((s: any) => {
+                        s.children = s.children.map((question: any) => {
+                            if (question.key == record.key) {
+                                return {
+                                    ...question,
+                                    Weightage: value
+                                }
+                            }
+                            return question;
+                        })
+                        return s
+                    })
+                    data[0].children = sections;
+                    return [...data]
+                })
+                break;
+        }
+    }
+
+    function splitWeightage(type: string, key: string) {
+        switch (type) {
+            case "questionnaire":
+                setData((data: any) => {
+                    let sectionLength = data[0].children.length;
+                    let sectionSplWeightage = calculateSplitValue(sectionLength)
+                    let sections = data[0].children;
+
+                    sections = sections.map((section: any) => {
+                        section.Weightage = sectionSplWeightage;
+                        return section;
+                    })
+                    data[0].children = sections;
+                    return [...data]
+                })
+                break;
+            case "section":
+                setData((data: any) => {
+                    let index = data[0].children.findIndex((question: any) => question.key == key);
+                    let questions = data[0].children[index].children
+                    let questionSplWeightage = calculateSplitValue(questions.length);
+                    questions = questions.map((question: any) => {
+                        question.Weightage = questionSplWeightage;
+                        return question
+                    })
+                    data[0].children[index].children = questions;
+                    return [...data]
+                })
+                break;
+        }
     }
 
     return (
@@ -378,22 +411,27 @@ function RowRender({ record, setQuestionWeightage, setSectionWeightage, Weightag
                         controls={false}
                         addonAfter={
                             record.type != "question" && <Button
-                                onClick={() => console.log("controls")}
+                                onClick={() => {
+                                    splitWeightage(record.type, record.key)
+                                }}
                                 style={{ display: "flex", height: 14, width: 18, fontSize: 5, alignItems: "center", justifyContent: "center", color: "rgba(0, 60, 156, 1)", borderColor: "rgba(0, 60, 156, 1)", borderRadius: 3 }}
                                 type='primary'
                                 size='small'
                                 ghost
                                 icon={
                                     <Tooltip title="Split equally" >
-                                        <PauseOutlined style={{ transform: "rotate(90deg)" }} />
+                                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="0.5" y="0.5" width="17" height="17" rx="1.5" fill="#EEF5FF" stroke="#003C9C" />
+                                            <rect x="5.625" y="6.75" width="6.75" height="1.6875" fill="#003C9C" />
+                                            <rect x="5.625" y="9.5625" width="6.75" height="1.6875" fill="#003C9C" />
+                                        </svg>
                                     </Tooltip>
                                 }
                             />
                         }
-
+                        onBlur={onBlur}
                     />
                 </div>
-
             }
         </div>)
 }
