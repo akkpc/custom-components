@@ -1,8 +1,7 @@
-import { Button, Card, Col, Input, Row, Typography } from 'antd';
+import { Button, Card, Input, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { QuestionCard } from './QuestionCard';
-import { template } from 'lodash';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 export type Section = {
