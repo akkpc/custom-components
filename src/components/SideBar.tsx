@@ -13,12 +13,16 @@ export type Section = {
 };
 
 export type Question = {
+  _id: string;
   Question_ID: string;
   Question: string;
   Response_Type: string;
   Weightage: number;
   Section_ID: string;
-  _id: string;
+  Dropdown_options?: {
+    Name: string;
+    _id: string;
+  }[]
 };
 
 const appBarHeight = 50;
@@ -292,10 +296,10 @@ function Section(props: { index: number, section_name: string, rest: any, isEdit
               <Input onBlur={onPressEnter} onPressEnter={onPressEnter} placeholder={section_name} style={{ fontSize: 15 }} /> :
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} >
                 <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
+                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
                   <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
                   <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
-                </div>
+                </div>}
               </div>
           }
         </div>
