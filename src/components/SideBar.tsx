@@ -1,5 +1,6 @@
-import { Button, Card, Input, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+import { Button, Card, Input, Modal, Typography, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { getUniqueString } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { QuestionCard } from './QuestionCard';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
@@ -18,7 +19,6 @@ export type Question = {
   Question: string;
   Response_Type: string;
   Weightage: number;
-  Section_ID: string;
   Dropdown_options?: {
     Name: string;
     _id: string;
@@ -32,6 +32,9 @@ export function SideBar() {
   const [editActiveIndex, setEditActiveIndex] = useState<string>();
   const [activeSection, setActiveSection] = useState<string>();
   const [templateId, setTemplateId] = useState("");
+  const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
+  const prevQuestionState = useRef(questions);
 
   useEffect(() => {
     (async () => {
@@ -54,7 +57,9 @@ export function SideBar() {
   useEffect(() => {
     (async () => {
       if (activeSection) {
-        await getQuestionsBySection();
+        const newQuestions = await getQuestionsBySection();
+        prevQuestionState.current = [...newQuestions];
+        setQuestions(newQuestions);
       }
     })()
   }, [activeSection])
@@ -115,7 +120,7 @@ export function SideBar() {
         })
       }).catch((err: any) => console.log("cannot fetch", err))
     const questions: Question[] = questionResponse.Data;
-    setQuestions(questions)
+    return questions;
   }
 
   async function createSection(sectionName: string) {
@@ -134,21 +139,78 @@ export function SideBar() {
     setEditActiveIndex(newSection[0]._id)
   }
 
-  async function createQuestion(questionName: string, responseType: string) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch`,
-      {
-        method: "POST",
-        body: JSON.stringify([{
-          Question: questionName,
-          Response_Type: responseType,
-          Weightage: 0,
-          Section_ID: activeSection,
-          Template_ID: templateId,
-          _is_created: true
-        }])
-      }).catch((err: any) => console.log("cannot fetch", err))
-    await getQuestionsBySection();
+  function calculateDelta(current: Question[], prev: Question[]) {
+    const delta = []
+    for (let i = 0; i < current.length; i++) {
+      const currentQ = current[i]
+      const index = prev.findIndex((q) => q.Question_ID == currentQ.Question_ID);
+      if (index >= 0) {
+        const prevState = prev[index];
+        let changed = false;
+
+        if (prevState.Question == currentQ.Question && prevState.Response_Type == currentQ.Response_Type) {
+          if (prevState.Response_Type == "single_select" && currentQ.Dropdown_options) {
+            if (prevState.Dropdown_options?.length == currentQ.Dropdown_options?.length) {
+              for (let j = 0; j < prevState.Dropdown_options?.length; j++) {
+                if (prevState.Dropdown_options[i].Name != currentQ.Dropdown_options[i].Name) {
+                  changed = true;
+                  break;
+                }
+              }
+            } else {
+              changed = true;
+            }
+          }
+        } else {
+          changed = true;
+        }
+        if (changed) {
+          delta.push(currentQ);
+        }
+      } else {
+        delta.push(currentQ);
+      }
+    }
+
+    return delta;
   }
+
+  function validateInput(current: Question[]) {
+    const invalidIds = []
+    for (let i = 0; i < current.length; i++) {
+      const currentQ = current[i]
+      let valid = false;
+      if (currentQ.Question && currentQ.Response_Type) {
+        if (currentQ.Response_Type == "single_select") {
+          if (currentQ.Dropdown_options && currentQ.Dropdown_options?.length > 0) {
+            valid = true
+          }
+        } else {
+          valid = true;
+        }
+      }
+      if (!valid) {
+        invalidIds.push(currentQ.Question_ID);
+      }
+    }
+    return invalidIds;
+  }
+
+  // async function createQuestion(questionName: string, responseType: string) {
+  //   await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch`,
+  //     {
+  //       method: "POST",
+  //       body: JSON.stringify([{
+  //         Question: questionName,
+  //         Response_Type: responseType,
+  //         Weightage: 0,
+  //         Section_ID: activeSection,
+  //         Template_ID: templateId,
+  //         _is_created: true
+  //       }])
+  //     }).catch((err: any) => console.log("cannot fetch", err))
+  //   await getQuestionsBySection();
+  // }
 
   async function updateSection(sectionId: string, sectionName: Question) {
     await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/${sectionId}`,
@@ -185,21 +247,39 @@ export function SideBar() {
     await getSectionsByTemplate();
   }
 
-  async function deleteQuestion(questionId: string) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch/delete`,
-      {
-        method: "POST",
-        body: JSON.stringify([{
-          _id: questionId
-        }])
-      }).catch((err: any) => console.log("cannot fetch", err))
-    await getQuestionsBySection();
+  function onSave() {
+    const invalidIds = validateInput(questions);
+    if (invalidIds.length > 0) {
+      showInvalidInputError();
+    } else {
+      const delta = calculateDelta(questions, prevQuestionState.current);
+      console.log("delta", delta)
+    }
   }
+
+  function showInvalidInputError() {
+    messageApi.open({
+      type: 'error',
+      content: 'Please fill all required fields.',
+    });
+  };
+
+  // async function deleteQuestion(questionId: string) {
+  //   await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch/delete`,
+  //     {
+  //       method: "POST",
+  //       body: JSON.stringify([{
+  //         _id: questionId
+  //       }])
+  //     }).catch((err: any) => console.log("cannot fetch", err))
+  //   await getQuestionsBySection();
+  // }
 
 
 
   return (
     <div>
+      {contextHolder}
       {templateId ?
         <div style={{
           display: "flex",
@@ -212,14 +292,21 @@ export function SideBar() {
               <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
               {
                 items.map((section, index) =>
-                  <div style={{ marginTop: 10 }} >
+                  <div key={index} style={{ marginTop: 10 }} >
                     <Section
                       index={index + 1}
                       section_name={section.Section_Name}
                       rest={section}
                       isEditActive={section.Section_ID == editActiveIndex}
                       isActive={activeSection == section.Section_ID}
-                      onClick={() => setActiveSection(section.Section_ID)}
+                      onClick={() => {
+                        const delta = calculateDelta(questions,prevQuestionState.current);
+                        if(delta.length > 0) {
+                          setOpenDiscardAlert(true);
+                        } else {
+                          setActiveSection(section.Section_ID)
+                        }
+                      }}
                       onPressEnter={async (e) => {
                         let sectionName = e.currentTarget.value
                         await updateSection(section.Section_ID, sectionName);
@@ -247,17 +334,28 @@ export function SideBar() {
                     <QuestionCard
                       index={index}
                       question={question}
-                      updateQuestion={updateQuestion}
-                      deleteQuestion={deleteQuestion}
+                      setQuestions={setQuestions}
                     />
                   </div>
                 ))
               }
-              <Button
-                onClick={async () => {
-                  await createQuestion("", "");
-                }}
-                style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Questionnaire</Button>
+              {
+                <Button
+                  onClick={async () => {
+                    // await createQuestion("", "");
+                    setQuestions((prevQuestions: any[]) => {
+                      return [...prevQuestions, {
+                        Question_ID: getUniqueString(),
+                        Response_Type: "short_text",
+                        Weightage: 0,
+                        Question: "",
+                        Section_ID: activeSection
+                      }]
+                    })
+                  }}
+                  style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }}
+                >Add Questionnaire</Button>
+              }
             </div>
           </div>
         </div> : <div>Loading....</div>}
@@ -272,12 +370,28 @@ export function SideBar() {
         alignItems: "center"
       }} >
         <div style={{ padding: 20 }} >
-          <Button style={{ marginRight: 3, backgroundColor: primaryBackground }}  >Discard</Button>
+          <Button onClick={() => setOpenDiscardAlert(true)} style={{ marginRight: 3, backgroundColor: primaryBackground }}  >Discard</Button>
           <Button
             style={{ backgroundColor: buttonDarkBlue, color: "white" }}
-          >Save</Button>
+            onClick={onSave}
+          >
+            Save
+          </Button>
         </div>
       </div>
+      <Modal
+        title="Discard Changes"
+        open={openDiscardAlert}
+        onOk={() => {
+          setQuestions(prevQuestionState.current)
+          setOpenDiscardAlert(false)
+        }}
+        onCancel={() => {
+          setOpenDiscardAlert(false)
+        }}
+      >
+        <p>Are you sure want to discard changes ?</p>
+      </Modal>
     </div>
   )
 }

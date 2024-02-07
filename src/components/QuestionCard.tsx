@@ -1,13 +1,13 @@
-import { Button, Card, Col, Input, Row, Select, Typography } from 'antd';
-import { useEffect, useState } from 'react';
-import { Question } from './SideBar';
+import { Card, Col, Input, Row, Select, Typography } from 'antd';
 import Link from 'antd/es/typography/Link';
+import { useEffect, useState } from 'react';
+import { getUniqueString } from '../helpers';
+import { Question } from './SideBar';
 
 interface Props {
     index: number;
     question: Question;
-    updateQuestion: (questionId: string, questionName: string, responseType: string) => Promise<void>;
-    deleteQuestion: (questionId: string) => Promise<void>;
+    setQuestions: React.Dispatch<React.SetStateAction<Question[]>>
 }
 interface OptionProps {
     _id: string,
@@ -36,20 +36,40 @@ const types = [
 ]
 
 export function QuestionCard(props: Props) {
-    const { index, question: { Question_ID, Question, Response_Type }, deleteQuestion, updateQuestion } = props;
-    const [question, setQuestion] = useState(Question);
-    const [responseType, setResponseType] = useState("short_text");
-    const [options, setOptions] = useState<OptionProps[]>([])
-    const [activeId, setActiveId] = useState("-1")
+    const { index, question: questionProps, setQuestions } = props;
+    const [question, setQuestion] = useState<Question>({} as any);
+    const [options, setOptions] = useState<{ Name: string, _id: string }[]>([])
+    const [activeOption, setActiveOption] = useState<string>("")
 
     useEffect(() => {
-        if (Question) {
-            setQuestion(Question);
+        if (questionProps) {
+            if (questionProps.Question_ID) {
+                setQuestion({ ...questionProps });
+            }
+            if (questionProps.Response_Type == "single_select" && questionProps.Dropdown_options) {
+                setOptions(questionProps.Dropdown_options)
+            }
         }
-        if (Response_Type) {
-            setResponseType(Response_Type)
+    }, [questionProps])
+
+    useEffect(() => {
+        if (options.length > 0) {
+            setQuestion((q) => ({ ...q, Dropdown_options: options }))
         }
-    }, [Question, Response_Type])
+    }, [options])
+
+    useEffect(() => {
+        if (question) {
+            setQuestions((prevQuestions) => {
+                const index = prevQuestions.findIndex((q) => q.Question_ID == question.Question_ID);
+                if (index >= 0) {
+                    prevQuestions[index] = question;
+                }
+                return prevQuestions
+            })
+        }
+    }, [question])
+
     return (
         <div key={index} >
             <Card key={index} style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 10 }}>
@@ -57,17 +77,23 @@ export function QuestionCard(props: Props) {
                     {/* <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} > */}
                     <Col span={22} >
                         <Input
-                            onPressEnter={async () => await props.updateQuestion(Question_ID, question, responseType)}
+                            // onPressEnter={async () => setQuestion((q) => {...q, Question: })}
                             style={{ height: 35, width: "80%", padding: 0, borderRadius: 0 }}
                             prefix={<div style={{ backgroundColor: "rgba(222, 234, 255, 1)", width: 40, height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }} >{index + 1}.</div>}
-                            value={question}
-                            onChange={(e) => setQuestion(e.target.value)}
+                            value={question.Question}
+                            onChange={(e) => setQuestion((q) => ({ ...q, Question: e.target.value }))}
                         />
                     </Col>
                     <Col span={2} >
                         <div style={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }} >
-                            <img onClick={async () => await deleteQuestion(Question_ID)} style={{ cursor: "pointer", marginRight: 5 }} src={process.env.PUBLIC_URL + '/svgs/copy_icon.svg'} />
-                            <img onClick={async () => await deleteQuestion(Question_ID)} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
+                            <img onClick={() => {
+
+                            }} style={{ cursor: "pointer", marginRight: 5 }} src={process.env.PUBLIC_URL + '/svgs/copy_icon.svg'} />
+                            <img onClick={() => {
+                                setQuestions((prevQuestions: Question[]) => {
+                                    return prevQuestions.filter((currQuestion) => currQuestion.Question_ID != question.Question_ID)
+                                });
+                            }} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
                         </div>
                     </Col>
                     {/* </div> */}
@@ -78,21 +104,22 @@ export function QuestionCard(props: Props) {
                         showSearch
                         placeholder="Select Field Type"
                         optionFilterProp="children"
-                        onChange={(value) => setResponseType(value)}
+                        onChange={(value) => setQuestion((q) => ({ ...q, Response_Type: value }))}
                         onSearch={() => { }}
                         options={types}
                         style={{ width: 300 }}
                         defaultValue={"short_text"}
+                        value={question.Response_Type}
                     />
                 </div>
-                {types.find((val) => val.value == responseType)?.enableOptions &&
+                {types.find((val) => val.value == question.Response_Type)?.enableOptions &&
                     <div>
                         <p style={{ color: "rgba(175, 183, 199, 1)" }} >Options</p>
                         <div>
                             {
-                                options.map((record) => {
+                                question?.Dropdown_options && question?.Dropdown_options.map((record) => {
                                     return <div style={{ marginTop: 3, marginBottom: 5 }} >
-                                        <Option activeId={activeId} record={record} setOptions={setOptions} />
+                                        <Option activeId={activeOption} record={record} setOptions={setOptions} />
                                     </div>
                                 })
                             }
@@ -100,11 +127,12 @@ export function QuestionCard(props: Props) {
                         <div style={{ marginTop: 2 }} >
                             <Link onClick={
                                 () => {
+                                    let id = getUniqueString();
                                     setOptions((options) => [...options, {
-                                        _id: (options.length + 1).toString(),
-                                        name: "",
+                                        _id: id,
+                                        Name: "",
                                     }])
-                                    setActiveId((options.length + 1).toString())
+                                    setActiveOption(id)
                                 }} >Add Option</Link>
                         </div>
                     </div>

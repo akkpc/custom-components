@@ -29,11 +29,21 @@ function getColorCode(number: number) {
     }
 }
 
-export function calculateSplitValue(value: number) {
+function calculateSplitValue(value: number) {
     return Math.round((100 / value + Number.EPSILON) * 100) / 100;
 }
 
+function getUniqueString() {
+    const timestamp = Math.floor(Date.now() / 1000).toString(16);
+    const randomPart = Math.floor(Math.random() * 16777215).toString(16);
+    const counter = Math.floor(Math.random() * 4095).toString(16).padStart(4, '0');
+    const mongoId = timestamp + randomPart + counter;
+
+    return mongoId;
+}
+
 export {
-    getColorCode
+    calculateSplitValue, getColorCode,
+    getUniqueString
 };
 
