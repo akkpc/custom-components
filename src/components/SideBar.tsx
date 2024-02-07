@@ -293,8 +293,8 @@ function Section(props: { index: number, section_name: string, rest: any, isEdit
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} >
                 <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
-                  <img style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
-                  <img style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
+                  <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
+                  <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
                 </div>
               </div>
           }
