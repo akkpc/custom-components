@@ -370,12 +370,16 @@ function RowRender({ record, setData }: any) {
         switch (type) {
             case "questionnaire":
                 setData((data: any) => {
-                    let sectionLength = data[0].children.length;
-                    let sectionSplWeightage = calculateSplitValue(sectionLength)
                     let sections = data[0].children;
+                    let sectionLength = sections.length;
+                    let { lastValue, value } = calculateSplitValue(sectionLength)
 
-                    sections = sections.map((section: any) => {
-                        section.Weightage = sectionSplWeightage;
+                    sections = sections.map((section: any, index: number) => {
+                        if (lastValue && (index == sections.length - 1)) {
+                            section.Weightage = lastValue;
+                        } else {
+                            section.Weightage = value;
+                        }
                         return section;
                     })
                     data[0].children = sections;
@@ -386,9 +390,13 @@ function RowRender({ record, setData }: any) {
                 setData((data: any) => {
                     let index = data[0].children.findIndex((question: any) => question.key == key);
                     let questions = data[0].children[index].children
-                    let questionSplWeightage = calculateSplitValue(questions.length);
-                    questions = questions.map((question: any) => {
-                        question.Weightage = questionSplWeightage;
+                    let {value,lastValue} = calculateSplitValue(questions.length);
+                    questions = questions.map((question: any, index: number) => {
+                        if(lastValue && (index == questions.length-1)){
+                            question.Weightage = lastValue;
+                        } else {
+                            question.Weightage = value;
+                        }
                         return question
                     })
                     data[0].children[index].children = questions;

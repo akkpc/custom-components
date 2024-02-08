@@ -30,7 +30,15 @@ function getColorCode(number: number) {
 }
 
 function calculateSplitValue(value: number) {
-    return Math.round((100 / value + Number.EPSILON) * 100) / 100;
+    let sValue = Math.round((100 / value + Number.EPSILON) * 100) / 100;
+    let lastValue;
+    if (sValue * value < 100) {
+        lastValue = (100 - sValue * (value - 1))
+    }
+    return {
+        value: sValue,
+        lastValue
+    };
 }
 
 function getUniqueString() {
@@ -44,13 +52,13 @@ function getUniqueString() {
 
 function parseJSON(jsonString: string) {
     try {
-      const parsedData = JSON.parse(jsonString);
-      return parsedData;
+        const parsedData = JSON.parse(jsonString);
+        return parsedData;
     } catch (error) {
-      console.error('Error parsing JSON:', error);
-      return null
+        console.error('Error parsing JSON:', error);
+        return null
     }
-  }
+}
 export {
     calculateSplitValue,
     getColorCode,

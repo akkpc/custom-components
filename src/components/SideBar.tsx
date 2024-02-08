@@ -1,7 +1,8 @@
-import { Button, Card, Input, Modal, Typography, message } from 'antd';
+import { Button, Card, Input, Modal, Typography } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { getUniqueString, parseJSON } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
+import { useAlert } from '../hooks/useAlert';
 import { QuestionCard } from './QuestionCard';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
@@ -35,7 +36,7 @@ export function SideBar() {
   const [activeSection, setActiveSection] = useState<string>();
   const [templateId, setTemplateId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
-  const [messageApi, invalidErrorAlert] = message.useMessage();
+  const {alertContext, showInvalidInputError, showSuccessInput} = useAlert();
   const prevQuestionState = useRef(questions);
 
   useEffect(() => {
@@ -284,7 +285,7 @@ export function SideBar() {
   async function onSave() {
     const invalidIds = validateInput(questions);
     if (invalidIds.length > 0) {
-      showInvalidInputError();
+      showInvalidInputError("Please fill all the empty fields");
     } else {
       const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
       console.log("delta", delta, deletedDelta)
@@ -295,27 +296,13 @@ export function SideBar() {
         await deleteQuestions(deletedDelta);
       }
       setActiveSection((val) => val);
-      showSuccessInput();
+      showSuccessInput("Question saved successfully");
     }
   }
 
-  function showInvalidInputError() {
-    messageApi.open({
-      type: 'error',
-      content: 'Please fill all required fields.',
-    });
-  };
-
-  function showSuccessInput() {
-    messageApi.open({
-      type: 'success',
-      content: 'Questions saved successfully',
-    });
-  };
-
   return (
     <div>
-      {invalidErrorAlert}
+      {alertContext}
       {templateId ?
         <div style={{
           display: "flex",
