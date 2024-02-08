@@ -42,8 +42,19 @@ function getUniqueString() {
     return mongoId;
 }
 
+function parseJSON(jsonString: string) {
+    try {
+      const parsedData = JSON.parse(jsonString);
+      return parsedData;
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return null
+    }
+  }
 export {
-    calculateSplitValue, getColorCode,
-    getUniqueString
+    calculateSplitValue,
+    getColorCode,
+    getUniqueString,
+    parseJSON
 };
 

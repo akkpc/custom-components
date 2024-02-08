@@ -11,7 +11,7 @@ interface Props {
 }
 interface OptionProps {
     _id: string,
-    name: string,
+    Name: string,
     order?: number,
 }
 
@@ -46,15 +46,15 @@ export function QuestionCard(props: Props) {
             if (questionProps.Question_ID) {
                 setQuestion({ ...questionProps });
             }
-            if (questionProps.Response_Type == "single_select" && questionProps.Dropdown_options) {
-                setOptions(questionProps.Dropdown_options)
+            if (questionProps.Response_Type == "single_select" && questionProps.Dropdown_options_field) {
+                setOptions(questionProps.Dropdown_options_field)
             }
         }
     }, [questionProps])
 
     useEffect(() => {
         if (options.length > 0) {
-            setQuestion((q) => ({ ...q, Dropdown_options: options }))
+            setQuestion((q) => ({ ...q, Dropdown_options_field: options }))
         }
     }, [options])
 
@@ -117,8 +117,8 @@ export function QuestionCard(props: Props) {
                         <p style={{ color: "rgba(175, 183, 199, 1)" }} >Options</p>
                         <div>
                             {
-                                question?.Dropdown_options && question?.Dropdown_options.map((record) => {
-                                    return <div style={{ marginTop: 3, marginBottom: 5 }} >
+                                question?.Dropdown_options_field && question?.Dropdown_options_field.map((record, index) => {
+                                    return <div key={index} style={{ marginTop: 3, marginBottom: 5 }} >
                                         <Option activeId={activeOption} record={record} setOptions={setOptions} />
                                     </div>
                                 })
@@ -151,7 +151,7 @@ export function Option({ record, setOptions, activeId }: any) {
         if (value) {
             setOptions((options: OptionProps[]) => {
                 let index = options.findIndex(({ _id: id }) => id == record._id)
-                options[index].name = value;
+                options[index].Name = value;
                 return [...options]
             })
         }

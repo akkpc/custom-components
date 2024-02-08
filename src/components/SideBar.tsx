@@ -1,6 +1,6 @@
 import { Button, Card, Input, Modal, Typography, message } from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import { getUniqueString } from '../helpers';
+import { getUniqueString, parseJSON } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { QuestionCard } from './QuestionCard';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
@@ -19,10 +19,11 @@ export type Question = {
   Question: string;
   Response_Type: string;
   Weightage: number;
-  Dropdown_options?: {
+  Dropdown_options_field?: {
     Name: string;
     _id: string;
-  }[]
+  }[],
+  "Table::Dropdown_options"?: any[]
 };
 
 const appBarHeight = 50;
@@ -33,7 +34,7 @@ export function SideBar() {
   const [activeSection, setActiveSection] = useState<string>();
   const [templateId, setTemplateId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
-  const [messageApi, contextHolder] = message.useMessage();
+  const [messageApi, invalidErrorAlert] = message.useMessage();
   const prevQuestionState = useRef(questions);
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export function SideBar() {
     (async () => {
       if (activeSection) {
         const newQuestions = await getQuestionsBySection();
-        prevQuestionState.current = [...newQuestions];
+        prevQuestionState.current = JSON.parse(JSON.stringify(newQuestions));
         setQuestions(newQuestions);
       }
     })()
@@ -119,7 +120,13 @@ export function SideBar() {
           }
         })
       }).catch((err: any) => console.log("cannot fetch", err))
-    const questions: Question[] = questionResponse.Data;
+    let questions: Question[] = questionResponse.Data;
+    questions = questions.map((question) => {
+      if (question.Dropdown_options_field) {
+        question.Dropdown_options_field = parseJSON(question.Dropdown_options_field as any);
+      }
+      return question;
+    })
     return questions;
   }
 
@@ -141,18 +148,25 @@ export function SideBar() {
 
   function calculateDelta(current: Question[], prev: Question[]) {
     const delta = []
+    let prevQuestionIndex: number[] = []
     for (let i = 0; i < current.length; i++) {
-      const currentQ = current[i]
+      let currentQ = current[i];
       const index = prev.findIndex((q) => q.Question_ID == currentQ.Question_ID);
+
+      if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options_field) {
+        currentQ = { ...currentQ, "Table::Dropdown_options": currentQ.Dropdown_options_field }
+      }
+
       if (index >= 0) {
         const prevState = prev[index];
+        prevQuestionIndex.push(index);
         let changed = false;
 
         if (prevState.Question == currentQ.Question && prevState.Response_Type == currentQ.Response_Type) {
-          if (prevState.Response_Type == "single_select" && currentQ.Dropdown_options) {
-            if (prevState.Dropdown_options?.length == currentQ.Dropdown_options?.length) {
-              for (let j = 0; j < prevState.Dropdown_options?.length; j++) {
-                if (prevState.Dropdown_options[i].Name != currentQ.Dropdown_options[i].Name) {
+          if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options_field) {
+            if (prevState.Dropdown_options_field?.length == currentQ.Dropdown_options_field?.length) {
+              for (let j = 0; j < prevState.Dropdown_options_field?.length; j++) {
+                if (prevState.Dropdown_options_field[i].Name != currentQ.Dropdown_options_field[i].Name) {
                   changed = true;
                   break;
                 }
@@ -165,14 +179,31 @@ export function SideBar() {
           changed = true;
         }
         if (changed) {
-          delta.push(currentQ);
+          delta.push({
+            ...currentQ,
+            "Table::Dropdown_options": currentQ.Dropdown_options_field,
+            Dropdown_options_field: JSON.stringify(currentQ.Dropdown_options_field)
+          })
         }
       } else {
-        delta.push(currentQ);
+        delta.push({
+          ...currentQ,
+          _id: undefined,
+          Question_ID: undefined,
+          _is_created: true,
+          "Table::Dropdown_options": currentQ.Dropdown_options_field,
+          Dropdown_options_field: JSON.stringify(currentQ.Dropdown_options_field)
+
+        })
       }
     }
 
-    return delta;
+    const deletedDelta = prev.filter((_, index) => !prevQuestionIndex.includes(index)).map(({ _id }) => ({ _id }))
+
+    return {
+      delta,
+      deletedDelta
+    };
   }
 
   function validateInput(current: Question[]) {
@@ -182,7 +213,7 @@ export function SideBar() {
       let valid = false;
       if (currentQ.Question && currentQ.Response_Type) {
         if (currentQ.Response_Type == "single_select") {
-          if (currentQ.Dropdown_options && currentQ.Dropdown_options?.length > 0) {
+          if (currentQ.Dropdown_options_field && currentQ.Dropdown_options_field?.length > 0) {
             valid = true
           }
         } else {
@@ -196,21 +227,14 @@ export function SideBar() {
     return invalidIds;
   }
 
-  // async function createQuestion(questionName: string, responseType: string) {
-  //   await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch`,
-  //     {
-  //       method: "POST",
-  //       body: JSON.stringify([{
-  //         Question: questionName,
-  //         Response_Type: responseType,
-  //         Weightage: 0,
-  //         Section_ID: activeSection,
-  //         Template_ID: templateId,
-  //         _is_created: true
-  //       }])
-  //     }).catch((err: any) => console.log("cannot fetch", err))
-  //   await getQuestionsBySection();
-  // }
+  async function saveQuestionChanges(data: any[]) {
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch`,
+      {
+        method: "POST",
+        body: JSON.stringify(data)
+      }).catch((err: any) => console.log("cannot fetch", err))
+    await getQuestionsBySection();
+  }
 
   async function updateSection(sectionId: string, sectionName: Question) {
     await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/${sectionId}`,
@@ -247,13 +271,28 @@ export function SideBar() {
     await getSectionsByTemplate();
   }
 
-  function onSave() {
+  async function deleteQuestions(data: any[]) {
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch/delete`,
+      {
+        method: "POST",
+        body: JSON.stringify(data)
+      }).catch((err: any) => console.log("cannot fetch", err))
+  }
+
+  async function onSave() {
     const invalidIds = validateInput(questions);
     if (invalidIds.length > 0) {
       showInvalidInputError();
     } else {
-      const delta = calculateDelta(questions, prevQuestionState.current);
-      console.log("delta", delta)
+      const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
+      console.log("delta", delta, deletedDelta)
+      if (delta.length > 0) {
+        await saveQuestionChanges(delta);
+      }
+      if (deletedDelta.length > 0) {
+        await deleteQuestions(deletedDelta);
+      }
+      setActiveSection((val) => val);
     }
   }
 
@@ -264,22 +303,16 @@ export function SideBar() {
     });
   };
 
-  // async function deleteQuestion(questionId: string) {
-  //   await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch/delete`,
-  //     {
-  //       method: "POST",
-  //       body: JSON.stringify([{
-  //         _id: questionId
-  //       }])
-  //     }).catch((err: any) => console.log("cannot fetch", err))
-  //   await getQuestionsBySection();
-  // }
-
-
+  function showSuccessInput() {
+    messageApi.open({
+      type: 'success',
+      content: 'Questions saved successfully',
+    });
+  };
 
   return (
     <div>
-      {contextHolder}
+      {invalidErrorAlert}
       {templateId ?
         <div style={{
           display: "flex",
@@ -300,8 +333,8 @@ export function SideBar() {
                       isEditActive={section.Section_ID == editActiveIndex}
                       isActive={activeSection == section.Section_ID}
                       onClick={() => {
-                        const delta = calculateDelta(questions,prevQuestionState.current);
-                        if(delta.length > 0) {
+                        const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
+                        if (delta.length > 0 || deletedDelta.length > 0) {
                           setOpenDiscardAlert(true);
                         } else {
                           setActiveSection(section.Section_ID)
@@ -329,15 +362,17 @@ export function SideBar() {
             <div style={{ margin: 10 }} >
               <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>
               {
-                questions && questions.map((question, index) => (
-                  <div key={index} style={{ marginTop: 10 }} >
-                    <QuestionCard
-                      index={index}
-                      question={question}
-                      setQuestions={setQuestions}
-                    />
-                  </div>
-                ))
+                questions && questions.map((question, index) => {
+                  return (
+                    <div key={index} style={{ marginTop: 10 }} >
+                      <QuestionCard
+                        index={index}
+                        question={question}
+                        setQuestions={setQuestions}
+                      />
+                    </div>
+                  )
+                })
               }
               {
                 <Button
