@@ -70,6 +70,15 @@ export function QuestionCard(props: Props) {
         }
     }, [question])
 
+    function createNewOption() {
+        let id = getUniqueString();
+        setOptions((options) => [...options, {
+            _id: id,
+            Name: "",
+        }])
+        setActiveOption(id)
+    }
+
     return (
         <div key={index} >
             <Card key={index} style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 10 }}>
@@ -119,21 +128,13 @@ export function QuestionCard(props: Props) {
                             {
                                 question?.Dropdown_options_field && question?.Dropdown_options_field.map((record, index) => {
                                     return <div key={index} style={{ marginTop: 3, marginBottom: 5 }} >
-                                        <Option setActiveId={setActiveOption} activeId={activeOption} record={record} setOptions={setOptions} />
+                                        <Option createNewOption={createNewOption} setActiveId={setActiveOption} activeId={activeOption} record={record} setOptions={setOptions} />
                                     </div>
                                 })
                             }
                         </div>
                         <div style={{ marginTop: 2 }} >
-                            <Link onClick={
-                                () => {
-                                    let id = getUniqueString();
-                                    setOptions((options) => [...options, {
-                                        _id: id,
-                                        Name: "",
-                                    }])
-                                    setActiveOption(id)
-                                }} >Add Option</Link>
+                            <Link onClick={createNewOption} >Add Option</Link>
                         </div>
                     </div>
                 }
@@ -144,7 +145,7 @@ export function QuestionCard(props: Props) {
 
 
 
-export function Option({ record, setOptions, activeId, setActiveId }: any) {
+export function Option({ record, setOptions, activeId, setActiveId, createNewOption }: any) {
     const [value, setValue] = useState("")
 
     useEffect(() => {
@@ -171,6 +172,7 @@ export function Option({ record, setOptions, activeId, setActiveId }: any) {
                             placeholder='Enter option content'
                             style={{ borderRadius: 2, width: 250 }}
                             onChange={(event) => setValue(event.target.value)}
+                            onPressEnter={createNewOption}
                         ></Input> :
                         <Typography
                             onClick={() => {
