@@ -23,7 +23,8 @@ export type Question = {
     Name: string;
     _id: string;
   }[],
-  "Table::Dropdown_options"?: any[]
+  "Table::Dropdown_options"?: any[],
+  Template_ID: string;
 };
 
 const appBarHeight = 50;
@@ -166,7 +167,7 @@ export function SideBar() {
           if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options_field) {
             if (prevState.Dropdown_options_field?.length == currentQ.Dropdown_options_field?.length) {
               for (let j = 0; j < prevState.Dropdown_options_field?.length; j++) {
-                if (prevState.Dropdown_options_field[i].Name != currentQ.Dropdown_options_field[i].Name) {
+                if (prevState.Dropdown_options_field[j].Name != currentQ.Dropdown_options_field[j].Name) {
                   changed = true;
                   break;
                 }
@@ -182,7 +183,8 @@ export function SideBar() {
           delta.push({
             ...currentQ,
             "Table::Dropdown_options": currentQ.Dropdown_options_field,
-            Dropdown_options_field: JSON.stringify(currentQ.Dropdown_options_field)
+            Dropdown_options_field: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options_field) : null,
+            Template_ID: templateId
           })
         }
       } else {
@@ -192,8 +194,8 @@ export function SideBar() {
           Question_ID: undefined,
           _is_created: true,
           "Table::Dropdown_options": currentQ.Dropdown_options_field,
-          Dropdown_options_field: JSON.stringify(currentQ.Dropdown_options_field)
-
+          Dropdown_options_field: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options_field) : null,
+          Template_ID: templateId
         })
       }
     }
@@ -293,6 +295,7 @@ export function SideBar() {
         await deleteQuestions(deletedDelta);
       }
       setActiveSection((val) => val);
+      showSuccessInput();
     }
   }
 

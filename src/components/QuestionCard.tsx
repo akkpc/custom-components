@@ -119,7 +119,7 @@ export function QuestionCard(props: Props) {
                             {
                                 question?.Dropdown_options_field && question?.Dropdown_options_field.map((record, index) => {
                                     return <div key={index} style={{ marginTop: 3, marginBottom: 5 }} >
-                                        <Option activeId={activeOption} record={record} setOptions={setOptions} />
+                                        <Option setActiveId={setActiveOption} activeId={activeOption} record={record} setOptions={setOptions} />
                                     </div>
                                 })
                             }
@@ -144,8 +144,14 @@ export function QuestionCard(props: Props) {
 
 
 
-export function Option({ record, setOptions, activeId }: any) {
+export function Option({ record, setOptions, activeId, setActiveId }: any) {
     const [value, setValue] = useState("")
+
+    useEffect(() => {
+        if (record.Name) {
+            setValue(record.Name)
+        }
+    }, [record.Name])
 
     useEffect(() => {
         if (value) {
@@ -166,7 +172,13 @@ export function Option({ record, setOptions, activeId }: any) {
                             style={{ borderRadius: 2, width: 250 }}
                             onChange={(event) => setValue(event.target.value)}
                         ></Input> :
-                        <Typography>{value}</Typography>
+                        <Typography
+                            onClick={() => {
+                                setActiveId(record._id)
+                            }}
+                            style={{ margin: 2, cursor: "pointer" }} >
+                            {value}
+                        </Typography>
                 }
             </div>
             <div>
