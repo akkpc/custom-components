@@ -112,7 +112,8 @@ th.ant-table-cell {
 }
 
 .newclass {
-  background: rgba(240, 243, 247, 1);
+  background: #f1f3f7;
+  border-bottom: solid 1px red !important
 }
 .scrollable-container::-webkit-scrollbar {
   width: 0.5em;
@@ -124,4 +125,26 @@ th.ant-table-cell {
 
 .scrollable-container::-webkit-scrollbar-track {
   background-color: transparent; /* Hide the track */
+}
+
+.custom-table-weightage {
+  border: 1px solid #e2ecff;
+  border-radius: 5px;
+}
+
+.row-class:hover {
+  background:unset;
+}
+
+.custom-table-weightage .ant-table-cell-row-hover {
+  background: transparent !important;
+}
+
+.row-class > td {
+  border-bottom: solid 1px #e2ecff !important;
+}
+
+.newclass > td {
+  border-bottom: solid 1px #dce0e7 !important;
+  border-top: solid 0.5px #dce0e7 !important;
 }

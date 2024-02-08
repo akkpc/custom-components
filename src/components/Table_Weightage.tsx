@@ -257,6 +257,25 @@ const AccordionTableWeightage: React.FC = () => {
         return questions
     }
 
+    function customExpandIcon(props: any) {
+        console.log("props", props)
+        if (props.record.children) {
+            if (props.expanded) {
+                return (<a style={{ color: 'black', position: "relative", float: "left", marginRight: 15 }} onClick={e => {
+                    props.onExpand(props.record, e);
+                }}>
+                    <img src={process.env.PUBLIC_URL + "/svgs/expand.svg"} ></img>
+                </a>)
+            } else {
+                return (<a style={{ color: 'black', position: "relative", float: "left", marginRight: 15 }} onClick={e => {
+                    props.onExpand(props.record, e);
+                }}>
+                    <img src={process.env.PUBLIC_URL + "/svgs/minimize.svg"} ></img>
+                </a>)
+            }
+        }
+    }
+
     return (
         <div>
             <div style={{ display: "flex", justifyContent: "flex-end", margin: 3, alignItems: "center" }} >
@@ -286,9 +305,9 @@ const AccordionTableWeightage: React.FC = () => {
                     columns={columns}
                     rowSelection={{ ...rowSelection }}
                     dataSource={data}
-                    bordered
+                    // bordered
                     pagination={false}
-                    className="custom-table"
+                    className="custom-table-weightage"
                     expandable={{
                         onExpand(expanded, record) {
                             if (expanded) {
@@ -297,12 +316,13 @@ const AccordionTableWeightage: React.FC = () => {
                                 setExpandedRows((rows) => [...rows.filter((r) => r != record.key)])
                             }
                         },
+                        expandIcon: customExpandIcon
                     }}
                     rowClassName={(record) => {
                         if (expandedRows.includes(record.key)) {
                             return "newclass"
                         }
-                        return ""
+                        return "row-class"
                     }
                     }
                     rootClassName='root'
@@ -390,9 +410,9 @@ function RowRender({ record, setData }: any) {
                 setData((data: any) => {
                     let index = data[0].children.findIndex((question: any) => question.key == key);
                     let questions = data[0].children[index].children
-                    let {value,lastValue} = calculateSplitValue(questions.length);
+                    let { value, lastValue } = calculateSplitValue(questions.length);
                     questions = questions.map((question: any, index: number) => {
-                        if(lastValue && (index == questions.length-1)){
+                        if (lastValue && (index == questions.length - 1)) {
                             question.Weightage = lastValue;
                         } else {
                             question.Weightage = value;
