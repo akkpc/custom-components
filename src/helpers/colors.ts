@@ -9,3 +9,7 @@ export const questionnaireBackground = "#f6f7fa"
 export const borderColor = "#dee9ff"
 
 export const tableBorderColor = "#e2ecff"
+
+export const tableFontColor = "rgba(21, 22, 23, 1)"
+
+export const headerColor = "rgba(113, 125, 145, 1)"

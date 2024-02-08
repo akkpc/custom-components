@@ -2,6 +2,7 @@ import { Button, InputNumber, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 import { calculateSplitValue } from '../helpers';
+import { tableFontColor } from '../helpers/colors';
 import { sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
@@ -119,16 +120,21 @@ const AccordionTableWeightage: React.FC = () => {
 
     function buildColumns() {
         const columns: any = [{
-            title: "Parameters",
+            title: "Type",
             dataIndex: 'parameters',
             key: 'parameters',
             width: "80%",
             render: (text: string, record: any, index: any) => (
-                <Typography>
-                    {record.type == "question" && <span style={{ fontWeight: "bold" }} >Q{index + 1}: </span>}
-                    {text}
-                </Typography>
+                <div style={{ display:"flex", color: tableFontColor }} >
+                    {record.type == "question" && 
+                    <Typography style={{ fontWeight: "bold", marginRight: 6, width: 30 }} >Q{index + 1}: </Typography>
+                    }
+                    <Typography style={{ width: "100%" }} >
+                        {text}
+                    </Typography>
+                </div>
             ),
+            className: "table-header"
         }];
         columns.push({
             title: "Weightage",
@@ -141,6 +147,7 @@ const AccordionTableWeightage: React.FC = () => {
                     setData={setData}
                 />
             ),
+            className: "table-header"
         })
         setColumns(columns)
     }
