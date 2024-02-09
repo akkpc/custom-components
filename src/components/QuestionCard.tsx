@@ -1,5 +1,5 @@
-import { Card, Col, Input, Row, Select, Typography } from 'antd';
-import Link from 'antd/es/typography/Link';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Input, Row, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { getUniqueString } from '../helpers';
 import { Question } from './SideBar';
@@ -79,6 +79,18 @@ export function QuestionCard(props: Props) {
         setActiveOption(id)
     }
 
+    function copyQuestion(index: number) {
+        let id = getUniqueString();
+        setQuestions((question) => {
+            question.splice(index, 0, {
+                ...question[index],
+                _id: id,
+                Question_ID: id
+            });
+            return [...question]
+        })
+    }
+
     return (
         <div key={index} >
             <Card key={index} style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 10 }}>
@@ -95,9 +107,11 @@ export function QuestionCard(props: Props) {
                     </Col>
                     <Col span={2} >
                         <div style={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }} >
-                            <img onClick={() => {
-
-                            }} style={{ cursor: "pointer", marginRight: 5 }} src={process.env.PUBLIC_URL + '/svgs/copy_icon.svg'} />
+                            <img
+                                onClick={() => copyQuestion(index)}
+                                style={{ cursor: "pointer", marginRight: 5 }}
+                                src={process.env.PUBLIC_URL + '/svgs/copy_icon.svg'}
+                            />
                             <img onClick={() => {
                                 setQuestions((prevQuestions: Question[]) => {
                                     return prevQuestions.filter((currQuestion) => currQuestion.Question_ID != question.Question_ID)
@@ -134,7 +148,12 @@ export function QuestionCard(props: Props) {
                             }
                         </div>
                         <div style={{ marginTop: 2 }} >
-                            <Link onClick={createNewOption} >Add Option</Link>
+                            <Button
+                                icon={<PlusOutlined style={{ fontWeight: "500" }} />}
+                                style={{ color: "#003c9c", fontWeight: "500" }}
+                                onClick={createNewOption}
+                                type="link"
+                            >Add Option</Button>
                         </div>
                     </div>
                 }

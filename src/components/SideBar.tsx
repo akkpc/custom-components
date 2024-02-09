@@ -236,7 +236,7 @@ export function SideBar() {
         method: "POST",
         body: JSON.stringify(data)
       }).catch((err: any) => console.log("cannot fetch", err))
-    await getQuestionsBySection();
+    // await getQuestionsBySection();
   }
 
   async function updateSection(sectionId: string, sectionName: Question) {
@@ -246,18 +246,6 @@ export function SideBar() {
         body: JSON.stringify({
           Section_Name: sectionName,
           _id: sectionId
-        })
-      }).catch((err: any) => console.log("cannot fetch", err))
-    await getSectionsByTemplate();
-  }
-
-  async function updateQuestion(questionId: string, questionName: string, responseType: string) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/${questionId}`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          Question: questionName,
-          Response_Type: responseType
         })
       }).catch((err: any) => console.log("cannot fetch", err))
     await getSectionsByTemplate();
