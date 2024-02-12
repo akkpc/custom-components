@@ -1,7 +1,7 @@
 import type { TabsProps } from 'antd';
 import { Button, Input, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
-import { QnASection } from './QnASection';
+import { QnASection } from '../components/QnASection';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 interface ColumnDetail {

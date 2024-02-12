@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getUniqueString, parseJSON } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { useAlert } from '../hooks/useAlert';
-import { QuestionCard } from './QuestionCard';
+import { QuestionCard } from '../components/QuestionCard';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 export type Section = {

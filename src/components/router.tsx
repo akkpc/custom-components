@@ -1,15 +1,27 @@
 import {
     createBrowserRouter
 } from "react-router-dom";
-import { BarChart } from "./components/BarChart";
-import { BasicChart } from "./components/BasicChart";
-import UICalender from "./components/Calender";
-import { LineChart } from "./components/LineChart";
-import { QuestionTab } from "./components/QuestionTab";
-import { SideBar } from "./components/SideBar";
-import { Stepper } from "./components/Stepper";
-import { AccordionTable } from "./components/Table";
-import { AccordionTableWeightage } from "./components/Table_Weightage";
+import { BarChart } from "../pages/BarChart";
+import { BasicChart } from "../pages/BasicChart";
+import UICalender from "../pages/Calender";
+import { LineChart } from "../pages/LineChart";
+import { QuestionTab } from "../pages/QuestionTab";
+import { SideBar } from "../pages/SideBar";
+import { Stepper } from "../pages/Stepper";
+import { AccordionTable } from "../pages/Table";
+import { AccordionTableWeightage } from "../pages/Table_Weightage";
+
+function Rest() {
+    return(
+        <div>
+            Hello
+            <button onClick={() => {
+                console.log("ndffnkjdbfhjkd ")
+                alert("Anfijdfns")
+            }} >fnkdfs</button>
+        </div>
+    )
+}
 
 const router = createBrowserRouter([
     {
@@ -57,6 +69,10 @@ const router = createBrowserRouter([
     {
         path: "/weightage",
         element: <AccordionTableWeightage />
+    },
+    {
+        path: "/a",
+        element: <Rest />
     }
 ]);
 
