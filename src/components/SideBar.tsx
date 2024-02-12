@@ -36,7 +36,7 @@ export function SideBar() {
   const [activeSection, setActiveSection] = useState<string>();
   const [templateId, setTemplateId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
-  const {alertContext, showInvalidInputError, showSuccessInput} = useAlert();
+  const { alertContext, showInvalidInputError, showSuccessInput } = useAlert();
   const prevQuestionState = useRef(questions);
 
   useEffect(() => {
@@ -66,6 +66,37 @@ export function SideBar() {
       }
     })()
   }, [activeSection])
+
+  useEffect(() => {
+    if (questions && KFSDK?.app) {
+      (async () => {
+        console.log("isUnsavedQuestion : ", await KFSDK.app.getVariable("isUnsavedQuestion"))
+        await KFSDK.app.setVariable({
+          isUnsavedQuestion: true
+        })
+      })()
+    }
+  }, [questions])
+
+  // useEffect(() => {
+  //   const { delta, deletedDelta } = calculateDelta(questions, prevQuestionState.current);
+  //   if (delta.length > 0 || deletedDelta.length > 0) {
+  //     window.addEventListener('beforeunload', handleBeforeUnload);
+  //     window.addEventListener('popstate', function (event) {
+  //       window.history.pushState(null, "", document.URL);
+  //     });
+  //   }
+
+  //   return () => {
+  //     window.removeEventListener('beforeunload', handleBeforeUnload);
+  //   };
+  // }, [questions]);
+
+  // const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  //   setOpenDiscardAlert(true);
+  //   event.preventDefault();
+  // };
+
 
   async function getSectionsByTemplate() {
     const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
@@ -283,7 +314,8 @@ export function SideBar() {
       if (deletedDelta.length > 0) {
         await deleteQuestions(deletedDelta);
       }
-      setActiveSection((val) => val);
+      // setActiveSection((val) => val);
+      prevQuestionState.current = questions;
       showSuccessInput("Question saved successfully");
     }
   }
