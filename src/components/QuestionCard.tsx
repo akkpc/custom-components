@@ -2,7 +2,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Input, Row, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { getUniqueString } from '../helpers';
-import { Question } from '../pages/SideBar';
+import { Question } from '../pages/TemplateQuestionnaire';
 
 interface Props {
     index: number;

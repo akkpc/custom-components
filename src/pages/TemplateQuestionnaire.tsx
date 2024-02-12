@@ -29,7 +29,7 @@ export type Question = {
 };
 
 const appBarHeight = 50;
-export function SideBar() {
+export function TemplateQuestionnaire() {
   const [items, setItems] = useState<Section[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [editActiveIndex, setEditActiveIndex] = useState<string>();

@@ -6,7 +6,7 @@ import { BasicChart } from "../pages/BasicChart";
 import UICalender from "../pages/Calender";
 import { LineChart } from "../pages/LineChart";
 import { QuestionTab } from "../pages/QuestionTab";
-import { SideBar } from "../pages/SideBar";
+import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
 import { Stepper } from "../pages/Stepper";
 import { AccordionTable } from "../pages/Table";
 import { AccordionTableWeightage } from "../pages/Table_Weightage";
@@ -59,8 +59,8 @@ const router = createBrowserRouter([
         element: <QuestionTab />
     },
     {
-        path: "/sidebar",
-        element: <SideBar />
+        path: "/add_template_question",
+        element: <TemplateQuestionnaire />
     },
     {
         path: "/stepper",
