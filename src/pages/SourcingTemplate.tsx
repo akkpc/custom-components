@@ -1,5 +1,5 @@
 import { CaretRightOutlined } from '@ant-design/icons';
-import { Button, Collapse, Modal, Typography } from 'antd';
+import { Button, Collapse, Modal, Typography, theme } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { QuestionCard } from '../components/QuestionCard';
 import { getUniqueString, parseJSON } from '../helpers';
@@ -62,17 +62,32 @@ type Dataform = {
 }
 
 const appBarHeight = 50;
+
 export function SourcingTemplate() {
   const [sections, setSections] = useState<EventSection[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
-  const [editActiveIndex, setEditActiveIndex] = useState<string>();
-  const [activeSection, setActiveSection] = useState<string>();
+  const [editActiveIndex, setEditActiveIndex] = useState<{
+    _id: string,
+    Section_ID: string
+  }>();
+  const [activeSection, setActiveSection] = useState<{
+    _id: string,
+    Section_ID: string
+  }>();
   const [activeTemplate, setActiveTemplate] = useState<string>();
   const [sourcingEventId, setSourcingEventId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
   const { alertContext, showInvalidInputError, showSuccessInput } = useAlert();
   const prevQuestionState = useRef(questions);
+  const { token } = theme.useToken();
+
+  const panelStyle: React.CSSProperties = {
+    marginBottom: 24,
+    background: token.colorFillAlter,
+    borderRadius: token.borderRadiusLG,
+    border: 'none',
+  };
 
   useEffect(() => {
     (async () => {
@@ -188,7 +203,10 @@ export function SourcingTemplate() {
     const sections: EventSection[] = sectionResponse.Data;
     setSections(sections)
     if (sections.length > 0) {
-      setActiveSection(sections[0].Section_ID)
+      setActiveSection({
+        _id: sections[0]._id,
+        Section_ID: sections[0].Section_ID
+      })
     }
   }
 
@@ -204,7 +222,7 @@ export function SourcingTemplate() {
                   "LHSField": "Section_ID",
                   "Operator": "EQUAL_TO",
                   "RHSType": "Value",
-                  "RHSValue": activeSection,
+                  "RHSValue": activeSection?.Section_ID,
                   "RHSField": null,
                   "LHSAttribute": null,
                   "RHSAttribute": null
@@ -249,8 +267,14 @@ export function SourcingTemplate() {
         }])
       }).catch((err: any) => console.log("cannot fetch", err))
     await getSectionsByTemplate();
-    setActiveSection(newSection[0]._id)
-    setEditActiveIndex(newSection[0]._id)
+    setActiveSection({
+      _id: newSection[0]._id,
+      Section_ID: newSection[0].Section_ID
+    })
+    setEditActiveIndex({
+      _id: newSection[0]._id,
+      Section_ID: newSection[0].Section_ID
+    })
   }
 
   function calculateDelta(current: Question[], prev: Question[]) {
@@ -400,18 +424,21 @@ export function SourcingTemplate() {
           <div className='scrollable-container'
             style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "35%", borderRight: `1px solid ${borderColor}`, backgroundColor: primaryBackground, padding: 5 }} >
             <Collapse
-              ghost
+              // ghost
+              style={{ backgroundColor: "transparent" }}
+              bordered={false}
               defaultActiveKey={activeTemplate}
               expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
               onChange={(templateId) => {
                 setSections([]);
-                setActiveTemplate(templateId[0]);
+                setActiveTemplate(templateId[templateId.length - 1]);
               }}
               activeKey={activeTemplate ? [activeTemplate] : activeTemplate}
               items={templates.map(({ Template_Name, Template_ID, _id }, index) => (
                 {
                   key: Template_ID,
                   label: Template_Name,
+                  style: panelStyle,
                   children: (
                     <div style={{ margin: 10 }} >
                       {/* <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography> */}
@@ -422,23 +449,32 @@ export function SourcingTemplate() {
                               index={index + 1}
                               section_name={section.Section_Name}
                               rest={section}
-                              isEditActive={section.Section_ID == editActiveIndex}
-                              isActive={activeSection == section.Section_ID}
+                              isEditActive={section._id == editActiveIndex?._id}
+                              isActive={activeSection?._id == section._id}
                               onClick={() => {
                                 const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
                                 if (delta.length > 0 || deletedDelta.length > 0) {
                                   setOpenDiscardAlert(true);
                                 } else {
-                                  setActiveSection(section.Section_ID)
+                                  setActiveSection({
+                                    _id: section._id,
+                                    Section_ID: section.Section_ID
+                                  })
                                 }
                               }}
                               onPressEnter={async (e) => {
                                 let sectionName = e.currentTarget.value
-                                await updateSection(section.Section_ID, sectionName);
-                                setEditActiveIndex("")
+                                await updateSection(section._id, sectionName);
+                                setEditActiveIndex({
+                                  _id: section._id,
+                                  Section_ID: section.Section_ID
+                                })
                               }}
-                              onEdit={() => setEditActiveIndex(section.Section_ID)}
-                              onDelete={async () => deleteSection(section.Section_ID)}
+                              onEdit={() => setEditActiveIndex({
+                                _id: section._id,
+                                Section_ID: section.Section_ID
+                              })}
+                              onDelete={async () => await deleteSection(section._id)}
                             />
                           </div>
                         )
@@ -476,12 +512,16 @@ export function SourcingTemplate() {
                   onClick={async () => {
                     // await createQuestion("", "");
                     setQuestions((prevQuestions: any[]) => {
+                      const n_id = getUniqueString();
                       return [...prevQuestions, {
-                        Question_ID: getUniqueString(),
+                        Question_ID: n_id,
                         Response_Type: "short_text",
                         Weightage: 0,
                         Question: "",
-                        Section_ID: activeSection
+                        Section_ID: activeSection?.Section_ID,
+                        Sourcing_Event_Question_ID: n_id,
+                        Template_ID: activeTemplate,
+                        Sourcing_Event_ID: sourcingEventId,
                       }]
                     })
                   }}

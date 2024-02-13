@@ -441,22 +441,26 @@ export function TemplateQuestionnaire() {
 
 export function Section(props: { index: number, section_name: string, rest: any, isEditActive: boolean, isActive: boolean, onPressEnter: (e: any) => void, onEdit: () => void, onDelete: () => void, onClick: () => void }) {
   const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick } = props;
+  const [hover, setHover] = useState(false)
   return (
     <div key={index} >
       <Card style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 5, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "white" }}
         onClick={onClick}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
       >
         <div>
           <Typography style={{ fontSize: 12 }}  >Section {index}</Typography>
           {
             isEditActive ?
               <Input onBlur={onPressEnter} onPressEnter={onPressEnter} placeholder={section_name} style={{ fontSize: 15 }} /> :
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 30 }} >
                 <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
-                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
-                  <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
-                  <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
-                </div>}
+                {hover &&
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
+                    <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
+                    <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
+                  </div>}
               </div>
           }
         </div>
