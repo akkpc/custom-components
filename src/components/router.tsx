@@ -10,6 +10,8 @@ import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
 import { Stepper } from "../pages/Stepper";
 import { AccordionTable } from "../pages/Table";
 import { AccordionTableWeightage } from "../pages/Table_Weightage";
+import { SourcingTemplate } from "../pages/SourcingTemplate";
+import { CollapseComponent } from "../pages/Collapse";
 
 function Rest() {
     return(
@@ -71,8 +73,12 @@ const router = createBrowserRouter([
         element: <AccordionTableWeightage />
     },
     {
-        path: "/a",
-        element: <Rest />
+        path: "/modify_sourcing_templates",
+        element: <SourcingTemplate />
+    },
+    {
+        path: "c",
+        element: <CollapseComponent/>
     }
 ]);
 
