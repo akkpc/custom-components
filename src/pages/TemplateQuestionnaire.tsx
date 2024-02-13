@@ -439,7 +439,7 @@ export function TemplateQuestionnaire() {
   )
 }
 
-function Section(props: { index: number, section_name: string, rest: any, isEditActive: boolean, isActive: boolean, onPressEnter: (e: any) => void, onEdit: () => void, onDelete: () => void, onClick: () => void }) {
+export function Section(props: { index: number, section_name: string, rest: any, isEditActive: boolean, isActive: boolean, onPressEnter: (e: any) => void, onEdit: () => void, onDelete: () => void, onClick: () => void }) {
   const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick } = props;
   return (
     <div key={index} >
@@ -461,16 +461,6 @@ function Section(props: { index: number, section_name: string, rest: any, isEdit
           }
         </div>
       </Card>
-    </div>
-  )
-}
-
-
-export function RoundedIcon(props: { children: any, onClick: () => void }) {
-  const { children, onClick } = props;
-  return (
-    <div onClick={onClick} style={{ backgroundColor: "rgba(222, 234, 255, 1)", borderRadius: "100%", padding: 3, cursor: "pointer" }} >
-      {children}
     </div>
   )
 }

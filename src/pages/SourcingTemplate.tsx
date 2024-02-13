@@ -1,10 +1,11 @@
-import { Button, Card, Collapse, Input, Modal, Typography } from 'antd';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { CaretRightOutlined } from '@ant-design/icons';
+import { Button, Collapse, Modal, Typography } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { QuestionCard } from '../components/QuestionCard';
 import { getUniqueString, parseJSON } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { useAlert } from '../hooks/useAlert';
-import { QuestionCard } from '../components/QuestionCard';
-import { CaretRightOutlined } from '@ant-design/icons';
+import { Section } from './TemplateQuestionnaire';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 type EventSection = {
@@ -187,7 +188,7 @@ export function SourcingTemplate() {
     const sections: EventSection[] = sectionResponse.Data;
     setSections(sections)
     if (sections.length > 0) {
-      setActiveSection(sections[0].Sourcing_Event_Section_ID)
+      setActiveSection(sections[0].Section_ID)
     }
   }
 
@@ -399,10 +400,11 @@ export function SourcingTemplate() {
           <div className='scrollable-container'
             style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "35%", borderRight: `1px solid ${borderColor}`, backgroundColor: primaryBackground, padding: 5 }} >
             <Collapse
+              ghost
               defaultActiveKey={activeTemplate}
               expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
               onChange={(templateId) => {
-                console.log("templateId" , templateId)
+                setSections([]);
                 setActiveTemplate(templateId[0]);
               }}
               activeKey={activeTemplate ? [activeTemplate] : activeTemplate}
@@ -412,7 +414,7 @@ export function SourcingTemplate() {
                   label: Template_Name,
                   children: (
                     <div style={{ margin: 10 }} >
-                      <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
+                      {/* <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography> */}
                       {
                         sections.map((section, index) =>
                           <div key={index} style={{ marginTop: 10 }} >
@@ -522,52 +524,6 @@ export function SourcingTemplate() {
       >
         <p>Are you sure want to discard changes ?</p>
       </Modal>
-    </div>
-  )
-}
-
-function Section(props: { index: number, section_name: string, rest: any, isEditActive: boolean, isActive: boolean, onPressEnter: (e: any) => void, onEdit: () => void, onDelete: () => void, onClick: () => void }) {
-  const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick } = props;
-  return (
-    <div key={index} >
-      <Card style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 5, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "white" }}
-        onClick={onClick}
-      >
-        <div>
-          <Typography style={{ fontSize: 12 }}  >Section {index}</Typography>
-          {
-            isEditActive ?
-              <Input onBlur={onPressEnter} onPressEnter={onPressEnter} placeholder={section_name} style={{ fontSize: 15 }} /> :
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} >
-                <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
-                {isActive && <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
-                  <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
-                  <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
-                </div>}
-              </div>
-          }
-        </div>
-      </Card>
-    </div>
-  )
-}
-
-function Template(props: { templateName: string, index: number, onClick: () => void }) {
-  const { index, templateName, onClick } = props;
-  return (
-    <Card onClick={onClick} key={index} >
-      <div>
-        <Typography>Template - {templateName}</Typography>
-      </div>
-    </Card>
-  )
-}
-
-export function RoundedIcon(props: { children: any, onClick: () => void }) {
-  const { children, onClick } = props;
-  return (
-    <div onClick={onClick} style={{ backgroundColor: "rgba(222, 234, 255, 1)", borderRadius: "100%", padding: 3, cursor: "pointer" }} >
-      {children}
     </div>
   )
 }
