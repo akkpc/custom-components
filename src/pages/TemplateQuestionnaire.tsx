@@ -1,9 +1,9 @@
 import { Button, Card, Input, Modal, Typography } from 'antd';
 import { useEffect, useRef, useState } from 'react';
+import { QuestionCard } from '../components/QuestionCard';
 import { getUniqueString, parseJSON } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { useAlert } from '../hooks/useAlert';
-import { QuestionCard } from '../components/QuestionCard';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 export type Section = {
@@ -20,11 +20,10 @@ export type Question = {
   Question: string;
   Response_Type: string;
   Weightage: number;
-  Dropdown_options_field?: {
+  Dropdown_options?: {
     Name: string;
     _id: string;
   }[],
-  "Table::Dropdown_options"?: any[],
   Template_ID: string;
 };
 
@@ -155,8 +154,8 @@ export function TemplateQuestionnaire() {
       }).catch((err: any) => console.log("cannot fetch", err))
     let questions: Question[] = questionResponse.Data;
     questions = questions.map((question) => {
-      if (question.Dropdown_options_field) {
-        question.Dropdown_options_field = parseJSON(question.Dropdown_options_field as any);
+      if (question.Dropdown_options) {
+        question.Dropdown_options = parseJSON(question.Dropdown_options as any);
       }
       return question;
     })
@@ -186,9 +185,9 @@ export function TemplateQuestionnaire() {
       let currentQ = current[i];
       const index = prev.findIndex((q) => q.Question_ID == currentQ.Question_ID);
 
-      if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options_field) {
-        currentQ = { ...currentQ, "Table::Dropdown_options": currentQ.Dropdown_options_field }
-      }
+      // if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options) {
+      //   currentQ = { ...currentQ, "Table::Dropdown_options": currentQ.Dropdown_options }
+      // }
 
       if (index >= 0) {
         const prevState = prev[index];
@@ -196,10 +195,10 @@ export function TemplateQuestionnaire() {
         let changed = false;
 
         if (prevState.Question == currentQ.Question && prevState.Response_Type == currentQ.Response_Type) {
-          if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options_field) {
-            if (prevState.Dropdown_options_field?.length == currentQ.Dropdown_options_field?.length) {
-              for (let j = 0; j < prevState.Dropdown_options_field?.length; j++) {
-                if (prevState.Dropdown_options_field[j].Name != currentQ.Dropdown_options_field[j].Name) {
+          if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options) {
+            if (prevState.Dropdown_options?.length == currentQ.Dropdown_options?.length) {
+              for (let j = 0; j < prevState.Dropdown_options?.length; j++) {
+                if (prevState.Dropdown_options[j].Name != currentQ.Dropdown_options[j].Name) {
                   changed = true;
                   break;
                 }
@@ -214,8 +213,8 @@ export function TemplateQuestionnaire() {
         if (changed) {
           delta.push({
             ...currentQ,
-            "Table::Dropdown_options": currentQ.Dropdown_options_field,
-            Dropdown_options_field: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options_field) : null,
+            // "Table::Dropdown_options": currentQ.Dropdown_options,
+            Dropdown_options: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options) : null,
             Template_ID: templateId
           })
         }
@@ -225,8 +224,7 @@ export function TemplateQuestionnaire() {
           _id: undefined,
           Question_ID: undefined,
           _is_created: true,
-          "Table::Dropdown_options": currentQ.Dropdown_options_field,
-          Dropdown_options_field: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options_field) : null,
+          Dropdown_options: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options) : null,
           Template_ID: templateId
         })
       }
@@ -247,7 +245,7 @@ export function TemplateQuestionnaire() {
       let valid = false;
       if (currentQ.Question && currentQ.Response_Type) {
         if (currentQ.Response_Type == "single_select") {
-          if (currentQ.Dropdown_options_field && currentQ.Dropdown_options_field?.length > 0) {
+          if (currentQ.Dropdown_options && currentQ.Dropdown_options?.length > 0) {
             valid = true
           }
         } else {
