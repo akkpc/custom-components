@@ -125,6 +125,8 @@ export function TemplateQuestionnaire() {
     setItems(sections)
     if (sections.length > 0) {
       setActiveSection(sections[0].Section_ID)
+    } else {
+      await createSection("");
     }
   }
 
@@ -281,6 +283,7 @@ export function TemplateQuestionnaire() {
   }
 
   async function deleteSection(sectionId: string) {
+    await deleteQuestions(questions.map((q) => ({ _id: q._id }))).catch((err) => console.log("error", err))
     await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/batch/delete`,
       {
         method: "POST",
