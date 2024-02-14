@@ -331,8 +331,8 @@ export function TemplateQuestionnaire() {
           height: window.innerHeight - appBarHeight,
         }} >
           <div className='scrollable-container'
-            style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "35%", borderRight: `1px solid ${borderColor}`, backgroundColor: primaryBackground, padding: 5 }} >
-            <div style={{ margin: 10 }} >
+            style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "35%", borderRight: `1px solid ${borderColor}`, backgroundColor: primaryBackground, padding: 15 }} >
+            <div>
               <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
               {
                 items.map((section, index) =>
@@ -377,10 +377,10 @@ export function TemplateQuestionnaire() {
             </div>
           </div>
           <div className='scrollable-container' style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "100%", backgroundColor: questionnaireBackground }}>
-            <div style={{ margin: 10 }} >
-              <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>
+            <div style={{ margin: 10, height: "100%" }} >
+              {questions.length > 0 && <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>}
               {
-                questions && questions.map((question, index) => {
+                questions.length ? questions.map((question, index) => {
                   return (
                     <div key={index} style={{ marginTop: 10 }} >
                       <QuestionCard
@@ -390,9 +390,31 @@ export function TemplateQuestionnaire() {
                       />
                     </div>
                   )
-                })
+                }) :
+                  <EmptyPage>
+                    <Button
+                      onClick={async () => {
+                        setQuestions((prevQuestions: any[]) => {
+                          return [...prevQuestions, {
+                            Question_ID: getUniqueString(),
+                            Response_Type: "short_text",
+                            Weightage: 0,
+                            Question: "",
+                            Section_ID: activeSection
+                          }]
+                        })
+                      }}
+                      style={{
+                        color: "rgba(0, 60, 156, 1)",
+                        backgroundColor: "rgba(238, 245, 255, 1)",
+                        borderColor: "rgba(0, 60, 156, 1)",
+                        // marginTop: 10
+                      }}
+                    >Add Questionnaire</Button>
+                  </EmptyPage>
               }
               {
+                questions.length > 0 &&
                 <Button
                   onClick={async () => {
                     // await createQuestion("", "");
@@ -406,7 +428,12 @@ export function TemplateQuestionnaire() {
                       }]
                     })
                   }}
-                  style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }}
+                  style={{
+                    color: "rgba(0, 60, 156, 1)",
+                    backgroundColor: "rgba(238, 245, 255, 1)",
+                    borderColor: "rgba(0, 60, 156, 1)",
+                    marginTop: 10
+                  }}
                 >Add Questionnaire</Button>
               }
             </div>
@@ -485,3 +512,22 @@ export function Section(props: { index: number, section_name: string, rest: any,
     </div>
   )
 }
+
+export function EmptyPage({ children }: any) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "column",
+      height: "100%"
+    }} >
+      <img src={process.env.PUBLIC_URL + "/svgs/empty_questions.svg"} ></img>
+      <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18, marginTop: 20 }} >Commodity enquiries questionnaires</Typography>
+      <div style={{ marginTop: 10 }} >
+        {children}
+      </div>
+    </div>
+  )
+}
+
