@@ -13,3 +13,7 @@ export const tableBorderColor = "#e2ecff"
 export const tableFontColor = "rgba(21, 22, 23, 1)"
 
 export const headerColor = "rgba(113, 125, 145, 1)"
+
+export const stepperEdgeColor = "#002157"
+
+export const stepperEdgeCompletedColor = "#8DCC8B"
