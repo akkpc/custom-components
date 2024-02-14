@@ -475,6 +475,15 @@ export function SourcingTemplate() {
                                 Section_ID: section.Section_ID
                               })}
                               onDelete={async () => await deleteSection(section._id)}
+                              onKeyUp={(e) => {
+                                e.preventDefault();
+                                if (e.key == "Escape") {
+                                  setEditActiveIndex({
+                                    _id: "",
+                                    Section_ID: ""
+                                  });
+                                }
+                              }}
                             />
                           </div>
                         )

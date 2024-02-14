@@ -352,9 +352,16 @@ export function TemplateQuestionnaire() {
                         let sectionName = e.currentTarget.value
                         await updateSection(section.Section_ID, sectionName);
                         setEditActiveIndex("")
+                        setActiveSection(section.Section_ID)
                       }}
                       onEdit={() => setEditActiveIndex(section.Section_ID)}
                       onDelete={async () => deleteSection(section.Section_ID)}
+                      onKeyUp={(e) => {
+                        e.preventDefault()
+                        if (e.key == "Escape") {
+                          setEditActiveIndex("");
+                        }
+                      }}
                     />
                   </div>
                 )
@@ -439,12 +446,13 @@ export function TemplateQuestionnaire() {
   )
 }
 
-export function Section(props: { index: number, section_name: string, rest: any, isEditActive: boolean, isActive: boolean, onPressEnter: (e: any) => void, onEdit: () => void, onDelete: () => void, onClick: () => void }) {
-  const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick } = props;
+export function Section(props: { index: number, section_name: string, rest: any, isEditActive: boolean, isActive: boolean, onPressEnter: (e: any) => void, onEdit: () => void, onDelete: () => void, onClick: () => void, onKeyUp: (e: any) => void }) {
+  const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick, onKeyUp } = props;
   const [hover, setHover] = useState(false)
   return (
     <div key={index} >
-      <Card style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 5, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "white" }}
+      <Card
+        style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 5, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "white" }}
         onClick={onClick}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
@@ -453,7 +461,13 @@ export function Section(props: { index: number, section_name: string, rest: any,
           <Typography style={{ fontSize: 12 }}  >Section {index}</Typography>
           {
             isEditActive ?
-              <Input onBlur={onPressEnter} onPressEnter={onPressEnter} placeholder={section_name} style={{ fontSize: 15 }} /> :
+              <Input
+                onBlur={onPressEnter}
+                onPressEnter={onPressEnter}
+                placeholder={section_name}
+                style={{ fontSize: 15 }}
+                onKeyUp={onKeyUp}
+              /> :
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 30 }} >
                 <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
                 {hover &&
