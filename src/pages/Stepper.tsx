@@ -44,29 +44,30 @@ const steps: Steps[] = [
 const completedIcon = "stepper_completed_icon.svg";
 
 const StepperComponent: React.FC = () => (
-  <div>
-    {
-      steps.map(({ isCompleted, imageName, title, description }, index) => (
-        <div style={{ display: "flex" }} >
-          <div style={{ display: "flex", alignItems: "center", flexDirection: "column" }} >
-            <img style={{ zIndex: 1000 }} src={`${process.env.PUBLIC_URL}/svgs/${isCompleted ? completedIcon : imageName}`} ></img>
-            {
-              (index < steps.length - 1) &&
-              <div style={{ height: 70, width: 9, backgroundColor: isCompleted ? stepperEdgeCompletedColor : stepperEdgeColor, marginTop: -3 }} ></div>
-            }
+  <div style={{ display: "flex", justifyContent: "center", alignItems:"center" }} >
+    <div>
+      {
+        steps.map(({ isCompleted, imageName, title, description }, index) => (
+          <div style={{ display: "flex" }} >
+            <div style={{ display: "flex", alignItems: "center", flexDirection: "column" }} >
+              <img style={{ zIndex: 1000 }} src={`${process.env.PUBLIC_URL}/svgs/${isCompleted ? completedIcon : imageName}`} ></img>
+              {
+                (index < steps.length - 1) &&
+                <div style={{ height: 70, width: 9, backgroundColor: isCompleted ? stepperEdgeCompletedColor : stepperEdgeColor, marginTop: -3 }} ></div>
+              }
+            </div>
+            <div style={{ marginLeft: 10 }} >
+              <Typography style={{ fontSize: 15, color: "#080E19", fontWeight: "600" }} >
+                {title}
+              </Typography>
+              <Typography style={{ fontSize: 12, color: "#61656C", fontWeight: "400" }} >
+                {description}
+              </Typography>
+            </div>
           </div>
-          <div style={{ marginLeft: 10 }} >
-            <Typography style={{ fontSize: 15, color: "#080E19", fontWeight: "600" }} >
-              {title}
-            </Typography>
-            <Typography style={{ fontSize: 12, color: "#61656C", fontWeight: "400" }} >
-              {description}
-            </Typography>
-          </div>
-        </div>
-      ))
-    }
-
+        ))
+      }
+    </div>
   </div>
 );
 
