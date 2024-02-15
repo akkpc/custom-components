@@ -12,6 +12,7 @@ import { AccordionTable } from "../pages/Table";
 import { AccordionTableWeightage } from "../pages/Table_Weightage";
 import { SourcingTemplate } from "../pages/SourcingTemplate";
 import { CollapseComponent } from "../pages/Collapse";
+import { SupplierResponsePage } from "../pages/SupplierResponsePage";
 
 function Rest() {
     return(
@@ -77,8 +78,8 @@ const router = createBrowserRouter([
         element: <SourcingTemplate />
     },
     {
-        path: "c",
-        element: <CollapseComponent/>
+        path: "/c",
+        element: <SupplierResponsePage/>
     }
 ]);
 

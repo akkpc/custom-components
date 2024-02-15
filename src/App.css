@@ -153,3 +153,11 @@ th.ant-table-cell {
 .table-header {
   color: rgba(113, 125, 145, 1) !important;
 }
+
+/* .supplier-response-item >.ant-collapse-item > .ant-collapse-header {
+  padding: 0px !important;
+} */
+
+.supplier-response-item >.ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box {
+  padding: 0px !important;
+}
