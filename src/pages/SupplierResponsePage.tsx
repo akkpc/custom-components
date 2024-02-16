@@ -1,9 +1,9 @@
 import type { CollapseProps } from 'antd';
-import { Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, theme } from 'antd';
+import { Button, Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, theme } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import React, { useEffect, useState } from 'react';
 import { parseJSON } from '../helpers';
-import { lightGrey } from '../helpers/colors';
+import { borderColor, buttonDarkBlue, lightGrey } from '../helpers/colors';
 import { EventSection, Question } from './SourcingTemplate';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
@@ -117,19 +117,48 @@ const SupplierResponsePage: React.FC = () => {
     }
 
     return (
-        <div style={{ marginTop: 10, padding: 30 }}>
-            <Collapse
-                className="supplier-response"
-                bordered={false}
-                defaultActiveKey={['1']}
-                expandIcon={({ isActive }) =>
-                    // <CaretRightOutlined rotate={isActive ? 90 : 0} />
-                    <img src={`${process.env.PUBLIC_URL}/svgs/accordion_icons.svg`} ></img>
-                }
-                style={{ background: token.colorBgContainer }}
-                items={sections}
-                rootClassName='supplier-response-item'
-            />
+        <div style={{
+            marginTop: 10,
+            padding: 30,
+            overflow: "hidden",
+            scrollbarColor:"red",
+            scrollbarWidth:"none"
+        }}>
+            <div>
+                <Collapse
+                    className="supplier-response"
+                    bordered={false}
+                    defaultActiveKey={['1']}
+                    expandIcon={({ isActive }) =>
+                        // <CaretRightOutlined rotate={isActive ? 90 : 0} />
+                        <img src={`${process.env.PUBLIC_URL}/svgs/accordion_icons.svg`} ></img>
+                    }
+                    style={{ background: token.colorBgContainer }}
+                    items={sections}
+                    rootClassName='supplier-response-item'
+                />
+                <div style={{height: 60}} ></div>
+            </div>
+            <div
+                style={{
+                    position: "fixed",
+                    width: "100%",
+                    height: 60,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    backgroundColor: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    borderTop: `1px solid ${borderColor}`
+                }}
+            >
+                <div style={{margin: 10}} >
+                    <Button style={{ marginRight: 10 }} >Close</Button>
+                    <Button style={{ backgroundColor: buttonDarkBlue, color: "white" }} >Submit Response</Button>
+                </div>
+            </div>
         </div>
     );
 };
