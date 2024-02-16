@@ -154,10 +154,17 @@ th.ant-table-cell {
   color: rgba(113, 125, 145, 1) !important;
 }
 
-/* .supplier-response-item >.ant-collapse-item > .ant-collapse-header {
-  padding: 0px !important;
-} */
+.supplier-response-item >.ant-collapse-item > .ant-collapse-header {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
 .supplier-response-item >.ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box {
-  padding: 0px !important;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  background-color: white;
+  padding-top: 0 !important;
+  border-radius: 8px;
 }

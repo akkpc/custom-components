@@ -6,13 +6,12 @@ import { BasicChart } from "../pages/BasicChart";
 import UICalender from "../pages/Calender";
 import { LineChart } from "../pages/LineChart";
 import { QuestionTab } from "../pages/QuestionTab";
-import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
+import { SourcingTemplate } from "../pages/SourcingTemplate";
 import { Stepper } from "../pages/Stepper";
+import { SupplierResponsePage } from "../pages/SupplierResponsePage";
 import { AccordionTable } from "../pages/Table";
 import { AccordionTableWeightage } from "../pages/Table_Weightage";
-import { SourcingTemplate } from "../pages/SourcingTemplate";
-import { CollapseComponent } from "../pages/Collapse";
-import { SupplierResponsePage } from "../pages/SupplierResponsePage";
+import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
 
 function Rest() {
     return(
@@ -38,7 +37,7 @@ const router = createBrowserRouter([
         element: <AccordionTable />
     },
     {
-        path: "/calendar",
+        path: "/custom-components/calendar",
         element: <UICalender />
     },
     {

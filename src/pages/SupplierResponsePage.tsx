@@ -1,9 +1,9 @@
-import { CaretRightOutlined } from '@ant-design/icons';
+import type { CollapseProps } from 'antd';
+import { Col, Collapse, Row, Typography, theme } from 'antd';
+import TextArea from 'antd/es/input/TextArea';
 import type { CSSProperties } from 'react';
 import React from 'react';
-import type { CollapseProps } from 'antd';
-import { Collapse, Typography, theme } from 'antd';
-import TextArea from 'antd/es/input/TextArea';
+import { lightGrey } from '../helpers/colors';
 
 const text = `
 Design Parameters & Constraints
@@ -36,7 +36,7 @@ const SupplierResponsePage: React.FC = () => {
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
-        borderRadius: 4,
+        borderRadius: 8,
         marginTop: 10,
         border: "1px solid #D8DCE5",
         padding: 0
@@ -62,31 +62,55 @@ const SupplierResponsePage: React.FC = () => {
 
 function Questionnaire() {
     return (
-        <div style={{ borderTop: "1px solid #D8DCE5", backgroundColor: "white", padding: 15 }} >
+        <div style={{ 
+            borderTop: "1px solid #D8DCE5", 
+            backgroundColor: "white", 
+            padding: 20,
+            // margin: 3
+            }} >
             <div style={{ marginTop: 10 }} >
-                {text}
-                <div>
-                    <div style={{display:"flex", alignItems:"center"}} > 
-                        <Typography>
-                            QUESTION
-                        </Typography>
-                        <Typography>
-                            What are the quality control procedures and standards in place for the manufacturing of the product?
-                        </Typography>
-                    </div>
-                    <div>
-                        <Typography>
-                            ANSWER
-                        </Typography>
-                        <TextArea placeholder='Enter your Answer here' >
-
-                        </TextArea>
-                    </div>
+                <Typography style={{ fontSize: 15, color: lightGrey, fontWeight: "400" }} >
+                    {text}
+                </Typography>
+                <div style={{paddingTop: 10}} >
+                    <Row style={{marginTop:15}} >
+                        <Col span={3}  >
+                            <Typography style={{fontWeight:"600", fontSize: 14}} >
+                                QUESTION
+                            </Typography>
+                        </Col>
+                        <Col span={21} >
+                            <Typography>
+                                What are the quality control procedures and standards in place for the manufacturing of the product?
+                            </Typography>
+                        </Col>
+                    </Row>
+                    <Row style={{marginTop:15}} >
+                        <Col span={3}  >
+                            <Typography style={{fontWeight:"600", fontSize: 14}} >
+                                ANSWER
+                            </Typography>
+                        </Col>
+                        <Col span={21} >
+                            <Typography>
+                                <TextArea placeholder='Enter your Answer here' ></TextArea>
+                            </Typography>
+                        </Col>
+                    </Row>
                 </div>
             </div>
         </div>
     )
 }
+interface Props {
+    type: string;
+    options?: string;
+}
+// export function GetField({type, options} :Props) {
+//     switch(type) {
+//         case ""
+//     }
+// }
 
 export {
     SupplierResponsePage

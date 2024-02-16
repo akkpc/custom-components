@@ -17,3 +17,5 @@ export const headerColor = "rgba(113, 125, 145, 1)"
 export const stepperEdgeColor = "#002157"
 
 export const stepperEdgeCompletedColor = "#8DCC8B"
+
+export const lightGrey = "#8B95A9"

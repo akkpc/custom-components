@@ -2,7 +2,7 @@
   "name": "custom_components",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://akkpc.github.io/custom-components",
+  "homepage": "https://akkpc.github.io/",
   "dependencies": {
     "@ant-design/charts": "^1.4.2",
     "@ant-design/icons": "^5.2.6",
