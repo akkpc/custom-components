@@ -50,7 +50,7 @@ function Header({ text, progressValue }: HeaderProps) {
     )
 }
 
-const SupplierResponsePage: React.FC = () => {
+const SupplierResponseQuestions: React.FC = () => {
     const { token } = theme.useToken();
     const [sourcingEventId, setSourcingEventId] = useState("")
     const [sections, setSections] = useState<CollapseProps["items"]>([])
@@ -342,5 +342,5 @@ export function ResponseField({ type, options, value, setValue }: Props & NewPro
 }
 
 export {
-    SupplierResponsePage
+    SupplierResponseQuestions as SupplierResponsePage
 };
