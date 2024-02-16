@@ -1,5 +1,5 @@
 import type { CollapseProps } from 'antd';
-import { Col, Collapse, DatePicker, Input, Row, Select, Typography, theme } from 'antd';
+import { Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, theme } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import type { CSSProperties } from 'react';
 import React, { useState } from 'react';
@@ -20,24 +20,49 @@ interface NewProps {
     setValue: (value: any) => void;
 }
 
+interface HeaderProps {
+    text: string,
+    progressValue: number
+}
+
+function Header({ text, progressValue }: HeaderProps) {
+    return (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }} >
+            <Typography>
+                {text}
+            </Typography>
+            <div style={{ width: 147 }} >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }} >
+                    <Typography style={{fontSize: 12, fontWeight: 400, color: lightGrey}} >Completion</Typography>
+                    <Typography style={{fontSize: 12, fontWeight: 500}} >{progressValue}%</Typography>
+                </div>
+                <Progress
+                    percent={progressValue}
+                    showInfo={false}
+                />
+            </div>
+        </div>
+    )
+}
+
 
 const getItems: (panelStyle: CSSProperties) => CollapseProps['items'] = (panelStyle) => [
     {
         key: '1',
-        label: 'This is panel header 1',
+        label: <Header text={"This is panel header 1"} progressValue={30} />,
         children:
             <Questionnaire />,
         style: panelStyle,
     },
     {
         key: '2',
-        label: 'This is panel header 2',
+        label: <Header text={"This is panel header 2"} progressValue={0} />,
         children: <Questionnaire />,
         style: panelStyle,
     },
     {
         key: '3',
-        label: 'This is panel header 3',
+        label: <Header text={"This is panel header 3"} progressValue={100} />,
         children: <Questionnaire />,
         style: panelStyle,
     },
@@ -112,7 +137,7 @@ function Questionnaire() {
                             <div style={{ margin: 20 }} >
                                 <Inputs {...data} />
                             </div>
-                            {sampleData.length-1 > index &&
+                            {sampleData.length - 1 > index &&
                                 <div style={{ borderBottom: "1px solid #D8DCE5", marginTop: 50 }} ></div>}
                         </div>
                     ))
