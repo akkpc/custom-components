@@ -1,9 +1,11 @@
 import type { CollapseProps } from 'antd';
 import { Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, theme } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
-import type { CSSProperties } from 'react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { parseJSON } from '../helpers';
 import { lightGrey } from '../helpers/colors';
+import { EventSection, Question } from './SourcingTemplate';
+const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 const text = `
 Design Parameters & Constraints
@@ -12,7 +14,10 @@ Design Parameters & Constraints
 
 interface Props {
     type: string;
-    options?: string;
+    options?: {
+        Name: string;
+        _id: string;
+    }[];
 }
 
 interface NewProps {
@@ -45,54 +50,10 @@ function Header({ text, progressValue }: HeaderProps) {
     )
 }
 
-
-const getItems: (panelStyle: CSSProperties) => CollapseProps['items'] = (panelStyle) => [
-    {
-        key: '1',
-        label: <Header text={"This is panel header 1"} progressValue={30} />,
-        children:
-            <Questionnaire />,
-        style: panelStyle,
-    },
-    {
-        key: '2',
-        label: <Header text={"This is panel header 2"} progressValue={0} />,
-        children: <Questionnaire />,
-        style: panelStyle,
-    },
-    {
-        key: '3',
-        label: <Header text={"This is panel header 3"} progressValue={100} />,
-        children: <Questionnaire />,
-        style: panelStyle,
-    },
-];
-
-const sampleData = [
-    {
-        type: "single_select",
-        options: JSON.stringify([{
-            key: "1",
-            value: "Hello"
-        },
-        {
-            key: "2",
-            value: "How"
-        }])
-    },
-    {
-        type: "short_text"
-    },
-    {
-        type: "date_time"
-    },
-    {
-        type: "text_area"
-    }
-]
-
 const SupplierResponsePage: React.FC = () => {
     const { token } = theme.useToken();
+    const [sourcingEventId, setSourcingEventId] = useState("")
+    const [sections, setSections] = useState<CollapseProps["items"]>([])
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
@@ -101,6 +62,59 @@ const SupplierResponsePage: React.FC = () => {
         border: "1px solid #D8DCE5",
         padding: 0
     };
+
+    useEffect(() => {
+        (async () => {
+            await KFSDK.initialize();
+            // let allParams = await KFSDK.app.page.getAllParameters();
+            let allParams = {
+                sourcingEventId: "Pk8i_vl7PCGg"
+            };
+
+
+            if (allParams.sourcingEventId) {
+                setSourcingEventId(allParams.sourcingEventId)
+                const sections: EventSection[] = await getSectionsBySourcingId(allParams.sourcingEventId);
+                const collapse = sections.map((section) => ({
+                    key: section.Section_ID,
+                    label: <Header text={section.Section_Name} progressValue={30} />,
+                    children:
+                        <Questionnaire sourcingEventId={allParams.sourcingEventId} sectionId={section.Section_ID} />,
+                    style: panelStyle,
+                }))
+                setSections(collapse);
+                console.log("sections", collapse)
+            }
+        })()
+    }, [])
+
+    async function getSectionsBySourcingId(sourcingEventId: string) {
+        const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    Filter: {
+                        "AND": [
+                            {
+                                "AND": [
+                                    {
+                                        "LHSField": "Sourcing_Event_ID",
+                                        "Operator": "EQUAL_TO",
+                                        "RHSType": "Value",
+                                        "RHSValue": sourcingEventId,
+                                        "RHSField": null,
+                                        "LHSAttribute": null,
+                                        "RHSAttribute": null
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                })
+            }).catch((err: any) => console.log("cannot fetch", err))
+        const sections: EventSection[] = sectionResponse.Data;
+        return sections;
+    }
 
     return (
         <div style={{ marginTop: 10, padding: 30 }}>
@@ -113,14 +127,66 @@ const SupplierResponsePage: React.FC = () => {
                     <img src={`${process.env.PUBLIC_URL}/svgs/accordion_icons.svg`} ></img>
                 }
                 style={{ background: token.colorBgContainer }}
-                items={getItems(panelStyle)}
+                items={sections}
                 rootClassName='supplier-response-item'
             />
         </div>
     );
 };
 
-function Questionnaire() {
+function Questionnaire({ sectionId, sourcingEventId }: { sectionId: string, sourcingEventId: string }) {
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [contentLoaded, setContentLoaded] = useState(false);
+    useEffect(() => {
+        (async () => {
+            const questions = await getQuestionsBySection();
+            console.log("Questions:  ", questions);
+            setQuestions(questions);
+            setContentLoaded(true);
+        })()
+    }, [])
+
+    async function getQuestionsBySection() {
+        const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?&page_number=1&page_size=10000`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    Filter: {
+                        "AND": [{
+                            "AND": [
+                                {
+                                    "LHSField": "Section_ID",
+                                    "Operator": "EQUAL_TO",
+                                    "RHSType": "Value",
+                                    "RHSValue": sectionId,
+                                    "RHSField": null,
+                                    "LHSAttribute": null,
+                                    "RHSAttribute": null
+                                },
+                                {
+                                    "LHSField": "Sourcing_Event_ID",
+                                    "Operator": "EQUAL_TO",
+                                    "RHSType": "Value",
+                                    "RHSValue": sourcingEventId,
+                                    "RHSField": null,
+                                    "LHSAttribute": null,
+                                    "RHSAttribute": null
+                                }
+                            ]
+                        }]
+                    }
+                })
+            }).catch((err: any) => console.log("cannot fetch", err))
+        let questions: Question[] = questionResponse.Data;
+        questions = questions.map((question) => {
+            if (question.Dropdown_options) {
+                question.Dropdown_options = parseJSON(question.Dropdown_options as any);
+            }
+            return question;
+        })
+        return questions;
+    }
+
     return (
         <div style={{
             borderTop: "1px solid #D8DCE5",
@@ -133,22 +199,25 @@ function Questionnaire() {
                     {text}
                 </Typography>
                 {
-                    sampleData.map((data, index) => (
-                        <div>
+                    contentLoaded ? questions.map((question, index) => (
+                        <div key={question._id} >
                             <div style={{ margin: 20 }} >
-                                <Inputs {...data} />
+                                <Inputs {...question} />
                             </div>
-                            {sampleData.length - 1 > index &&
+                            {questions.length - 1 > index &&
                                 <div style={{ borderBottom: "1px solid #D8DCE5", marginTop: 50 }} ></div>}
                         </div>
-                    ))
+                    )) :
+                        <div style={{ margin: 20 }} >
+                            Loading...
+                        </div>
                 }
             </div>
         </div>
     )
 }
 
-function Inputs({ type, options }: Props) {
+function Inputs({ Response_Type, Question, Dropdown_options }: Question) {
     const [value, setValue] = useState<any>()
     return (
         <div style={{ paddingTop: 10 }} >
@@ -160,7 +229,7 @@ function Inputs({ type, options }: Props) {
                 </Col>
                 <Col span={21} >
                     <Typography style={{ fontSize: 14, fontWeight: 500 }} >
-                        What are the quality control procedures and standards in place for the manufacturing of the product?
+                        {Question}
                     </Typography>
                 </Col>
             </Row>
@@ -174,15 +243,20 @@ function Inputs({ type, options }: Props) {
                     {/* <Typography>
                         <TextArea placeholder='Enter your Answer here' ></TextArea>
                     </Typography> */}
-                    <GetField type={type} options={options} value={value} setValue={setValue} />
+                    <ResponseField
+                        type={Response_Type}
+                        options={Dropdown_options ?? Dropdown_options}
+                        value={value}
+                        setValue={setValue}
+                    />
                 </Col>
             </Row>
         </div>
     )
 }
 
-export function GetField({ type, options, value, setValue }: Props & NewProps) {
-    const parsedOptions: any[] = JSON.parse(options ? options : "[]");
+export function ResponseField({ type, options, value, setValue }: Props & NewProps) {
+
     function onChange(event: any, dateString?: any) {
         if (type == "single_select") {
             setValue(event)
@@ -214,7 +288,7 @@ export function GetField({ type, options, value, setValue }: Props & NewProps) {
         case "single_select":
             return (
                 <Select
-                    options={parsedOptions}
+                    options={options}
                     onChange={onChange}
                     placeholder='Choose your answer here'
                     style={{ height: 40, width: 300 }}

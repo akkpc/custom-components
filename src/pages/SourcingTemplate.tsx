@@ -8,7 +8,7 @@ import { useAlert } from '../hooks/useAlert';
 import { Section } from './TemplateQuestionnaire';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
-type EventSection = {
+export type EventSection = {
   Sourcing_Event_Section_ID: string;
   Section_Sequence: number;
   Section_ID: string;
