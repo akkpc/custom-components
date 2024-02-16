@@ -33,8 +33,8 @@ function Header({ text, progressValue }: HeaderProps) {
             </Typography>
             <div style={{ width: 147 }} >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }} >
-                    <Typography style={{fontSize: 12, fontWeight: 400, color: lightGrey}} >Completion</Typography>
-                    <Typography style={{fontSize: 12, fontWeight: 500}} >{progressValue}%</Typography>
+                    <Typography style={{ fontSize: 12, fontWeight: 400, color: lightGrey }} >Completion</Typography>
+                    <Typography style={{ fontSize: 12, fontWeight: 500 }} >{progressValue}%</Typography>
                 </div>
                 <Progress
                     percent={progressValue}
@@ -103,7 +103,7 @@ const SupplierResponsePage: React.FC = () => {
     };
 
     return (
-        <div style={{ marginTop: 10, padding: 30 }} >
+        <div style={{ marginTop: 10, padding: 30 }}>
             <Collapse
                 className="supplier-response"
                 bordered={false}
@@ -126,7 +126,8 @@ function Questionnaire() {
             borderTop: "1px solid #D8DCE5",
             backgroundColor: "white"
             // margin: 3
-        }} >
+        }}
+        >
             <div style={{ marginTop: 5 }} >
                 <Typography style={{ fontSize: 15, color: lightGrey, fontWeight: "400", margin: 20 }} >
                     {text}
