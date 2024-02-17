@@ -15,7 +15,7 @@ export type EventSection = {
   Section_Name: string;
   Sourcing_Event_ID: string;
   Template_ID: string;
-  Event_ID: string;
+  Event_Number: string;
   _id: string;
 };
 
@@ -36,7 +36,7 @@ type EventQuestion = {
   Sourcing_Event_Question_ID: string;
   Template_ID: string;
   Section_ID: string;
-  Event_ID: string;
+  Event_Number: string;
   Sourcing_Event_ID: string;
   Question_ID: string;
   Question: string;
@@ -47,7 +47,7 @@ export type Template = {
   _id: string;
   Sourcing_Event_Template__ID: string,
   Sourcing_Event_ID: string,
-  Event_ID: string,
+  Event_Number: string,
   Event_Name: string,
   Template_ID: string,
   Template_Name: string;
@@ -259,7 +259,7 @@ export function SourcingTemplate() {
           Section_Name: sectionName,
           Section_Sequence: sections.length + 1,
           Sourcing_Event_ID: sourcingEventId,
-          Event_ID: "",
+          Event_Number: "",
           Event_Name: "",
           Template_ID: "",
           Section_ID: "",
