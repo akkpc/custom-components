@@ -16,6 +16,8 @@ export type EventSection = {
   Sourcing_Event_ID: string;
   Template_ID: string;
   Event_Number: string;
+  Event_Stage: string;
+  Instance_ID: string;
   _id: string;
 };
 
@@ -41,6 +43,8 @@ type EventQuestion = {
   Question_ID: string;
   Question: string;
   _id: string;
+  Event_Stage: string;
+  Instance_ID: string;
 };
 
 export type Template = {
@@ -51,6 +55,8 @@ export type Template = {
   Event_Name: string,
   Template_ID: string,
   Template_Name: string;
+  Event_Stage: string;
+  Instance_ID: string;
 }
 
 type Dataform = {
