@@ -10,7 +10,8 @@ const KFSDK = require('@kissflow/lowcode-client-sdk')
 const text = `
 Design Parameters & Constraints
 `;
-
+const questionnaireDataform = "Sourcing_Supplier_Response_Questio_A01"
+const sectionDataform = "Sourcing_Supplier_Response_Section_A00"
 
 interface Props {
     type: string;
@@ -23,11 +24,16 @@ interface Props {
 interface NewProps {
     value: any;
     setValue: (value: any) => void;
+    onBlur: () => void;
 }
 
 interface HeaderProps {
     text: string,
     progressValue: number
+}
+
+interface SupplierResponseQuestionProps {
+    Text_Response: string;
 }
 
 function Header({ text, progressValue }: HeaderProps) {
@@ -68,7 +74,7 @@ const SupplierResponseQuestions: React.FC = () => {
             await KFSDK.initialize();
             // let allParams = await KFSDK.app.page.getAllParameters();
             let allParams = {
-                sourcingEventId: "Pk8i_vl7PCGg"
+                sourcingEventId: "Pk8khJEoEsJs"
             };
 
 
@@ -83,13 +89,12 @@ const SupplierResponseQuestions: React.FC = () => {
                     style: panelStyle,
                 }))
                 setSections(collapse);
-                console.log("sections", collapse)
             }
         })()
     }, [])
 
     async function getSectionsBySourcingId(sourcingEventId: string) {
-        const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
+        const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sectionDataform}/allitems/list?&page_number=1&page_size=10000`,
             {
                 method: "POST",
                 body: JSON.stringify({
@@ -116,13 +121,14 @@ const SupplierResponseQuestions: React.FC = () => {
         return sections;
     }
 
+
     return (
         <div style={{
             marginTop: 10,
             padding: 30,
             overflow: "hidden",
-            scrollbarColor:"red",
-            scrollbarWidth:"none"
+            scrollbarColor: "red",
+            scrollbarWidth: "none"
         }}>
             <div>
                 <Collapse
@@ -137,7 +143,7 @@ const SupplierResponseQuestions: React.FC = () => {
                     items={sections}
                     rootClassName='supplier-response-item'
                 />
-                <div style={{height: 60}} ></div>
+                <div style={{ height: 60 }} ></div>
             </div>
             <div
                 style={{
@@ -154,7 +160,7 @@ const SupplierResponseQuestions: React.FC = () => {
                     borderTop: `1px solid ${borderColor}`
                 }}
             >
-                <div style={{margin: 10}} >
+                <div style={{ margin: 10 }} >
                     <Button style={{ marginRight: 10 }} >Close</Button>
                     <Button style={{ backgroundColor: buttonDarkBlue, color: "white" }} >Submit Response</Button>
                 </div>
@@ -164,19 +170,18 @@ const SupplierResponseQuestions: React.FC = () => {
 };
 
 function Questionnaire({ sectionId, sourcingEventId }: { sectionId: string, sourcingEventId: string }) {
-    const [questions, setQuestions] = useState<Question[]>([]);
+    const [questions, setQuestions] = useState<(Question & SupplierResponseQuestionProps)[]>([]);
     const [contentLoaded, setContentLoaded] = useState(false);
     useEffect(() => {
         (async () => {
             const questions = await getQuestionsBySection();
-            console.log("Questions:  ", questions);
             setQuestions(questions);
             setContentLoaded(true);
         })()
     }, [])
 
     async function getQuestionsBySection() {
-        const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?&page_number=1&page_size=10000`,
+        const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${questionnaireDataform}/allitems/list?&page_number=1&page_size=10000`,
             {
                 method: "POST",
                 body: JSON.stringify({
@@ -206,7 +211,7 @@ function Questionnaire({ sectionId, sourcingEventId }: { sectionId: string, sour
                     }
                 })
             }).catch((err: any) => console.log("cannot fetch", err))
-        let questions: Question[] = questionResponse.Data;
+        let questions: (SupplierResponseQuestionProps & Question)[] = questionResponse.Data;
         questions = questions.map((question) => {
             if (question.Dropdown_options) {
                 question.Dropdown_options = parseJSON(question.Dropdown_options as any);
@@ -246,8 +251,29 @@ function Questionnaire({ sectionId, sourcingEventId }: { sectionId: string, sour
     )
 }
 
-function Inputs({ Response_Type, Question, Dropdown_options }: Question) {
+function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response }: Question & SupplierResponseQuestionProps) {
     const [value, setValue] = useState<any>()
+
+    useEffect(() => {
+        if(Text_Response) {
+            setValue(Text_Response);
+        }
+    }, [Text_Response])
+
+    async function updateQuestion(response: Record<string, any>) {
+        await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${questionnaireDataform}/${_id}`,
+            {
+                method: "POST",
+                body: JSON.stringify(response)
+            }).catch((err: any) => console.log("cannot fetch", err))
+    }
+
+    async function onBlur() {
+        await updateQuestion({
+            Text_Response: value
+        })
+    }
+
     return (
         <div style={{ paddingTop: 10 }} >
             <Row style={{ marginTop: 15 }} >
@@ -277,6 +303,7 @@ function Inputs({ Response_Type, Question, Dropdown_options }: Question) {
                         options={Dropdown_options ?? Dropdown_options}
                         value={value}
                         setValue={setValue}
+                        onBlur={onBlur}
                     />
                 </Col>
             </Row>
@@ -284,7 +311,7 @@ function Inputs({ Response_Type, Question, Dropdown_options }: Question) {
     )
 }
 
-export function ResponseField({ type, options, value, setValue }: Props & NewProps) {
+export function ResponseField({ type, options, value, setValue, onBlur }: Props & NewProps) {
 
     function onChange(event: any, dateString?: any) {
         if (type == "single_select") {
@@ -304,6 +331,8 @@ export function ResponseField({ type, options, value, setValue }: Props & NewPro
                     placeholder='Enter your answer here'
                     style={{ height: 40 }}
                     onChange={onChange}
+                    onBlur={onBlur}
+                    value={value}
                 />
             )
         case "text_area":
@@ -312,6 +341,8 @@ export function ResponseField({ type, options, value, setValue }: Props & NewPro
                     placeholder='Enter your answer here'
                     style={{ minHeight: 106 }}
                     onChange={onChange}
+                    onBlur={onBlur}
+                    value={value}
                 />
             )
         case "single_select":
@@ -321,6 +352,8 @@ export function ResponseField({ type, options, value, setValue }: Props & NewPro
                     onChange={onChange}
                     placeholder='Choose your answer here'
                     style={{ height: 40, width: 300 }}
+                    onBlur={onBlur}
+                    value={value}
                 />
             )
         case "date_time":
@@ -330,6 +363,8 @@ export function ResponseField({ type, options, value, setValue }: Props & NewPro
                     onChange={onChange}
                     showTime
                     style={{ height: 40, width: 300 }}
+                    onBlur={onBlur}
+                    value={value}
                 />
             )
         default:
