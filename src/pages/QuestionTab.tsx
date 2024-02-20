@@ -204,7 +204,7 @@ export function QuestionTab() {
                                 Post Question
                             </Button> : <></>
                     }
-                    style={{ color: "red", height: 60 }}
+                    style={{ height: 60 }}
                     value={searchText}
                 />}
             <Tabs
