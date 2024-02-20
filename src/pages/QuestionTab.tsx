@@ -124,6 +124,7 @@ export function QuestionTab() {
     const [searchText, setSearchText] = useState("")
     const [filter, setFilter] = useState([{}])
     const [currentUserEmail, setCurrentUserEmail] = useState("");
+    const [sourcingEventId, setSourcingEventId] = useState("");
 
     useEffect(() => {
         (async () => {
@@ -137,6 +138,7 @@ export function QuestionTab() {
             let allParams = await KFSDK.app.page.getAllParameters();
             setCurrentTab(tabs[allParams.user_type])
             setCurrentUserEmail(allParams.buyer_email)
+            setSourcingEventId(allParams.sourcing_event_id)
         })()
     }, [])
 
@@ -148,7 +150,17 @@ export function QuestionTab() {
                     "AND": [
                         {
                             "OR": [
-                                ...filter
+                                ...filter,
+                                {
+                                    "LHSField": "Sourcing_Event_ID",
+                                    "Operator": "EQUAL_TO",
+                                    "RHSType": "Value",
+                                    "RHSValue": sourcingEventId,
+                                    "RHSField": null,
+                                    "RHSParam": "",
+                                    "LHSAttribute": null,
+                                    "RHSAttribute": null
+                                }
                             ]
                         }
                     ]
@@ -182,6 +194,7 @@ export function QuestionTab() {
                             <Button onClick={
                                 async () => {
                                     await postQuestions({
+                                        Sourcing_Event_ID: sourcingEventId,
                                         Question: searchText,
                                         _is_created: true
                                     })
