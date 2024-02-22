@@ -149,7 +149,7 @@ export function QuestionTab() {
                 Filter: {
                     "AND": [
                         {
-                            "OR": [
+                            "AND": [
                                 ...filter,
                                 {
                                     "LHSField": "Sourcing_Event_ID",

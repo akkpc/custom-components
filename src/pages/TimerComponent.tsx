@@ -38,7 +38,6 @@ export function TimerComponent() {
     (async () => {
       await KFSDK.initialize();
       let allParams = await KFSDK.app.page.getAllParameters();
-      
       const date = allParams.supplierWindowEndDate;
 
       if (date) {

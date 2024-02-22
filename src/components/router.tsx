@@ -13,6 +13,7 @@ import { AccordionTable } from "../pages/Table";
 import { AccordionTableWeightage } from "../pages/Table_Weightage";
 import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
 import { TimerComponent } from "../pages/TimerComponent";
+import { CheckboxComponent } from "../pages/Checkbox";
 
 function Rest() {
     return(
@@ -85,6 +86,10 @@ const router = createBrowserRouter([
         path: "/timer",
         element: <TimerComponent/>
     },
+    {
+        path: "/checkbox",
+        element: <CheckboxComponent />
+    }
 ]);
 
 export {
