@@ -72,28 +72,29 @@ const SupplierResponseQuestions: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            // let allParams = await KFSDK.app.page.getAllParameters();
-            let allParams = {
-                sourcingEventId: "Pk8khJEoEsJs"
-            };
+            let {currentStage,sourcingEventId} = await KFSDK.app.page.getAllParameters();
+            // let {eventStage,sourcingEventId} = {
+            //     sourcingEventId: "Pk8khJEoEsJs",
+            //     eventStage: "RFP"
+            // };
+            console.log("Test"  , currentStage, sourcingEventId)
 
-
-            if (allParams.sourcingEventId) {
-                setSourcingEventId(allParams.sourcingEventId)
-                const sections: EventSection[] = await getSectionsBySourcingId(allParams.sourcingEventId);
+            if (sourcingEventId) {
+                setSourcingEventId(sourcingEventId)
+                const sections: EventSection[] = await getSectionsBySourcingId(sourcingEventId, currentStage);
                 const collapse = sections.map((section) => ({
                     key: section.Section_ID,
                     label: <Header text={section.Section_Name} progressValue={30} />,
                     children:
-                        <Questionnaire sourcingEventId={allParams.sourcingEventId} sectionId={section.Section_ID} />,
+                        <Questionnaire event_stage={currentStage} sourcingEventId={sourcingEventId} sectionId={section.Section_ID} />,
                     style: panelStyle,
                 }))
-                setSections(collapse);
+                setSections(collapse); 
             }
         })()
     }, [])
 
-    async function getSectionsBySourcingId(sourcingEventId: string) {
+    async function getSectionsBySourcingId(sourcingEventId: string, event_stage: string) {
         const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sectionDataform}/allitems/list?&page_number=1&page_size=10000`,
             {
                 method: "POST",
@@ -107,6 +108,15 @@ const SupplierResponseQuestions: React.FC = () => {
                                         "Operator": "EQUAL_TO",
                                         "RHSType": "Value",
                                         "RHSValue": sourcingEventId,
+                                        "RHSField": null,
+                                        "LHSAttribute": null,
+                                        "RHSAttribute": null
+                                    },
+                                    {
+                                        "LHSField": "Event_Stage",
+                                        "Operator": "EQUAL_TO",
+                                        "RHSType": "Value",
+                                        "RHSValue":event_stage ,
                                         "RHSField": null,
                                         "LHSAttribute": null,
                                         "RHSAttribute": null
@@ -169,7 +179,7 @@ const SupplierResponseQuestions: React.FC = () => {
     );
 };
 
-function Questionnaire({ sectionId, sourcingEventId }: { sectionId: string, sourcingEventId: string }) {
+function Questionnaire({ sectionId, sourcingEventId, event_stage }: { sectionId: string, sourcingEventId: string, event_stage: string }) {
     const [questions, setQuestions] = useState<(Question & SupplierResponseQuestionProps)[]>([]);
     const [contentLoaded, setContentLoaded] = useState(false);
     useEffect(() => {
@@ -202,6 +212,15 @@ function Questionnaire({ sectionId, sourcingEventId }: { sectionId: string, sour
                                     "Operator": "EQUAL_TO",
                                     "RHSType": "Value",
                                     "RHSValue": sourcingEventId,
+                                    "RHSField": null,
+                                    "LHSAttribute": null,
+                                    "RHSAttribute": null
+                                },
+                                {
+                                    "LHSField": "Event_Stage",
+                                    "Operator": "EQUAL_TO",
+                                    "RHSType": "Value",
+                                    "RHSValue":event_stage ,
                                     "RHSField": null,
                                     "LHSAttribute": null,
                                     "RHSAttribute": null

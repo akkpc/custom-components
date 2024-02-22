@@ -48,7 +48,7 @@ const StepperComponent: React.FC = () => (
     <div>
       {
         steps.map(({ isCompleted, imageName, title, description }, index) => (
-          <div style={{ display: "flex" }} >
+          <div style={{ display: "flex" }} key={index} >
             <div style={{ display: "flex", alignItems: "center", flexDirection: "column" }} >
               <img style={{ zIndex: 1000 }} src={`${process.env.PUBLIC_URL}/svgs/${isCompleted ? completedIcon : imageName}`} ></img>
               {

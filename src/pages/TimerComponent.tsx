@@ -1,5 +1,5 @@
 import { Typography } from 'antd'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 const label: Record<string, string> = {
@@ -16,15 +16,34 @@ export function TimerComponent() {
     seconds: 0
   })
 
+  function isValidDate(dateString: string) {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime()) && date.toString() !== "Invalid Date";
+  }
+
+  function convertStringToDate(dateString: string | Date) : Date {
+      if(typeof dateString == "string") {
+        if(isValidDate(dateString)) return new Date(dateString);
+
+        let dateTimePart = dateString.split(' ')[0];
+        let dateObject = new Date(dateTimePart);
+    
+        return dateObject;
+      } 
+      return dateString
+}
+
   useEffect(() => {
 
     (async () => {
       await KFSDK.initialize();
-      let allParams = await KFSDK.app.page.popup.getAllParameters();
-      const date = allParams.date;
+      let allParams = await KFSDK.app.page.getAllParameters();
+      
+      const date = allParams.supplierWindowEndDate;
 
       if (date) {
-        const parsedDate = typeof date == "string" ? new Date(Date.parse(date)) : date
+        const parsedDate = convertStringToDate(date);
+        console.log("Date here : " ,parsedDate)
         const timer = setInterval(() => {
           const now = new Date()
           const diff = parsedDate.getTime() - now.getTime();
