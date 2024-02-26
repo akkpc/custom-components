@@ -7,7 +7,7 @@ import UICalender from "../pages/Calender";
 import { LineChart } from "../pages/LineChart";
 import { QuestionTab } from "../pages/QuestionTab";
 import { SourcingTemplate } from "../pages/SourcingTemplate";
-import { Stepper } from "../pages/Stepper";
+import { Supplier_Stepper } from "../pages/Supplier_Stepper";
 import { SupplierResponsePage } from "../pages/SupplierResponseQuestions";
 import { AccordionTable } from "../pages/Table";
 import { AccordionTableWeightage } from "../pages/Table_Weightage";
@@ -68,7 +68,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/stepper",
-        element: <Stepper />
+        element: <Supplier_Stepper />
     },
     {
         path: "/weightage",

@@ -45,7 +45,7 @@ const staticSteps: Steps[] = [
 
 const completedIcon = "stepper_completed_icon.svg";
 
-const StepperComponent: React.FC = () => {
+const Supplier_Stepper: React.FC = () => {
 
   const [steps, setSteps] = useState<Steps[]>([])
   const [completedKey, setCompletedKey] = useState();
@@ -156,5 +156,6 @@ const StepperComponent: React.FC = () => {
 }
 
 export {
-  StepperComponent as Stepper
+    Supplier_Stepper
 };
+
