@@ -14,6 +14,8 @@ import { AccordionTableWeightage } from "../pages/Table_Weightage";
 import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
 import { TimerComponent } from "../pages/TimerComponent";
 import { CheckboxComponent } from "../pages/Checkbox";
+import { Buyer_Stepper } from "../pages/Buyer_Stepper";
+import CustomTab from "../pages/CustomTab";
 
 function Rest() {
     return(
@@ -71,6 +73,10 @@ const router = createBrowserRouter([
         element: <Supplier_Stepper />
     },
     {
+        path: "/buyer_stepper",
+        element: <Buyer_Stepper/>
+    },
+    {
         path: "/weightage",
         element: <AccordionTableWeightage />
     },
@@ -89,6 +95,10 @@ const router = createBrowserRouter([
     {
         path: "/checkbox",
         element: <CheckboxComponent />
+    },
+    {
+        path: "/supplier_response_tab",
+        element: <CustomTab/>
     }
 ]);
 
