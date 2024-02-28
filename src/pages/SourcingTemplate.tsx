@@ -84,6 +84,7 @@ export function SourcingTemplate() {
   const [activeTemplate, setActiveTemplate] = useState<string>();
   const [sourcingEventId, setSourcingEventId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
+  const [eventStage,setEventStage] = useState("");
   const { alertContext, showInvalidInputError, showSuccessInput } = useAlert();
   const prevQuestionState = useRef(questions);
   const { token } = theme.useToken();
@@ -101,6 +102,9 @@ export function SourcingTemplate() {
       let allParams = await KFSDK.app.page.popup.getAllParameters();
       if (allParams.Sourcing_Event_ID) {
         setSourcingEventId(allParams.Sourcing_Event_ID)
+      }
+      if(allParams.eventStage) {
+        setEventStage(allParams.eventStage)
       }
     })()
   }, [])
@@ -150,7 +154,7 @@ export function SourcingTemplate() {
           Filter: {
             "AND": [
               {
-                "OR": [
+                "AND": [
                   {
                     "LHSField": "Sourcing_Event_ID",
                     "Operator": "EQUAL_TO",
@@ -159,7 +163,16 @@ export function SourcingTemplate() {
                     "RHSField": null,
                     "LHSAttribute": null,
                     "RHSAttribute": null
-                  }
+                  },
+                  {
+                    "LHSField": "Event_Stage",
+                    "Operator": "EQUAL_TO",
+                    "RHSType": "Value",
+                    "RHSValue": eventStage,
+                    "RHSField": null,
+                    "LHSAttribute": null,
+                    "RHSAttribute": null
+                  },
                 ]
               }
             ]
@@ -196,6 +209,15 @@ export function SourcingTemplate() {
                     "Operator": "EQUAL_TO",
                     "RHSType": "Value",
                     "RHSValue": activeTemplate,
+                    "RHSField": null,
+                    "LHSAttribute": null,
+                    "RHSAttribute": null
+                  },
+                  {
+                    "LHSField": "Event_Stage",
+                    "Operator": "EQUAL_TO",
+                    "RHSType": "Value",
+                    "RHSValue": eventStage,
                     "RHSField": null,
                     "LHSAttribute": null,
                     "RHSAttribute": null
@@ -241,7 +263,16 @@ export function SourcingTemplate() {
                   "RHSField": null,
                   "LHSAttribute": null,
                   "RHSAttribute": null
-                }
+                },
+                {
+                  "LHSField": "Event_Stage",
+                  "Operator": "EQUAL_TO",
+                  "RHSType": "Value",
+                  "RHSValue": eventStage,
+                  "RHSField": null,
+                  "LHSAttribute": null,
+                  "RHSAttribute": null
+                },
               ]
             }]
           }
@@ -269,6 +300,7 @@ export function SourcingTemplate() {
           Event_Name: "",
           Template_ID: "",
           Section_ID: "",
+          Event_Stage: eventStage,
           _is_created: true
         }])
       }).catch((err: any) => console.log("cannot fetch", err))
@@ -538,6 +570,7 @@ export function SourcingTemplate() {
                         Sourcing_Event_Question_ID: n_id,
                         Template_ID: activeTemplate,
                         Sourcing_Event_ID: sourcingEventId,
+                        Event_Stage: eventStage,
                       }]
                     })
                   }}
