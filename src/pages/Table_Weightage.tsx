@@ -3,7 +3,7 @@ import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 import { calculateSplitValue } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
-import { sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
+import { SourcingMasterProcess, sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
@@ -43,7 +43,7 @@ type Data = {
     key: string;
     parameters: string;
     Weightage: number;
-    type: "section" | "question",
+    type: "section" | "question" | "line_items",
     children: any[]
 }
 
@@ -51,6 +51,31 @@ type TableDataType = {
     _id: string;
     Weightage: number;
 }
+
+type LineItem = {
+    _id: string;
+    _created_by: {
+        _id: string;
+        Name: string;
+        Kind: string;
+    };
+    _modified_by: {
+        _id: string;
+        Name: string;
+        Kind: string;
+    };
+    _created_at: string;
+    _modified_at: string;
+    Item: string;
+    Item_Description: string;
+    Unit_of_Measure: string;
+    Quantity: number;
+    Weightage: number;
+};
+
+const leafNodes = ["question", "line_items"]
+const rootNodes = ["header_line_item", "section", "questionnaire"]
+const lineItemTableKey = "Table::RFQ_Configuration"
 
 const rowSelection: TableRowSelection<DataType> = {
     getCheckboxProps: (record) => ({
@@ -73,7 +98,7 @@ const AccordionTableWeightage: React.FC = () => {
             await KFSDK.initialize();
 
             const sourcing_event_id = await KFSDK.app.page.popup.getAllParameters();
-            await getSectiondetailsBySourcingEvent(sourcing_event_id);
+            await buildRowDetails(sourcing_event_id);
             buildColumns();
             setContentLoaded(true);
             setSourcingEventId(sourcing_event_id)
@@ -125,9 +150,9 @@ const AccordionTableWeightage: React.FC = () => {
             key: 'parameters',
             width: "80%",
             render: (text: string, record: any, index: any) => (
-                <div style={{ display:"flex", color: tableFontColor }} >
-                    {record.type == "question" && 
-                    <Typography style={{ fontWeight: "bold", marginRight: 6, width: 30 }} >Q{index + 1}: </Typography>
+                <div style={{ display: "flex", color: tableFontColor }} >
+                    {record.type == "question" &&
+                        <Typography style={{ fontWeight: "bold", marginRight: 6, width: 30 }} >Q{index + 1}: </Typography>
                     }
                     <Typography style={{ width: "100%" }} >
                         {text}
@@ -200,26 +225,8 @@ const AccordionTableWeightage: React.FC = () => {
                 })
             })
         }))
-        let q = [
-            {
-                key: "questionnaire",
-                parameters: "Questionnaire",
-                Weightage: 0,
-                type: "questionnaire",
-                showCheckBox: false,
-                children: technicalData
-            },
-            {
-                key: "line_items",
-                parameters: "Line Items",
-                Weightage: 0,
-                type: "line_items",
-                showCheckBox: false,
-                children: []
-            }
-        ]
-        setData(q)
-        prevData.current = JSON.parse(JSON.stringify(q));
+
+        return technicalData
     }
 
     async function getQuestionDetails(sourcing_event_id: string) {
@@ -255,6 +262,50 @@ const AccordionTableWeightage: React.FC = () => {
         return questions
     }
 
+    async function getLineDetails(sourcing_event_id: string) {
+        const sourcingDetails: any =
+            (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/Sourcing_Master_A00/${sourcing_event_id}`))
+
+        const lineItems: LineItem[] = sourcingDetails[lineItemTableKey]
+        console.log("lineItems", lineItems)
+
+        let commercialData: Data[] = lineItems.map((lineItem) => ({
+            key: lineItem._id,
+            parameters: lineItem.Item,
+            Weightage: lineItem.Weightage || 0,
+            type: "line_items",
+            showCheckBox: false,
+            children: []
+        }))
+
+        return commercialData
+    }
+
+    async function buildRowDetails(sourcing_event_id: string) {
+        const technicalData = await getSectiondetailsBySourcingEvent(sourcing_event_id);
+        const commercialData = await getLineDetails(sourcing_event_id);
+        let q = [
+            {
+                key: "questionnaire",
+                parameters: "Questionnaire",
+                Weightage: 0,
+                type: "questionnaire",
+                showCheckBox: false,
+                children: technicalData
+            },
+            {
+                key: "header_line_item",
+                parameters: "Line Items",
+                Weightage: 0,
+                type: "header_line_item",
+                showCheckBox: false,
+                children: commercialData
+            }
+        ]
+        setData(q)
+        prevData.current = JSON.parse(JSON.stringify(q));
+    }
+
     async function updateWeightage(sectionWeightage: any[], dataformName: string) {
         const questions: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataformName}/batch`, {
             method: "POST",
@@ -264,9 +315,20 @@ const AccordionTableWeightage: React.FC = () => {
         return questions
     }
 
+    async function updateLineWeightage(lineWeightage: any[]) {
+        const lineDetails: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcingEventId}`, {
+            method: "PUT",
+            body: JSON.stringify({
+                [lineItemTableKey]: lineWeightage
+            })
+        }));
+        console.log("lineDetails",  lineDetails)
+        return lineDetails
+    }
+
     function customExpandIcon(props: any) {
         console.log("props", props)
-        if (props.record.children) {
+        if (rootNodes.includes(props.record.type)) {
             if (props.expanded) {
                 return (<a style={{ color: 'black', position: "relative", float: "left", marginRight: 15 }} onClick={e => {
                     props.onExpand(props.record, e);
@@ -300,6 +362,9 @@ const AccordionTableWeightage: React.FC = () => {
                             }
                             if (delta["question"] && delta["question"].length > 0) {
                                 await updateWeightage(delta["question"], sourcing_question_dataform);
+                            }
+                            if (delta["line_items"] && delta["line_items"].length > 0) {
+                                await updateLineWeightage(delta["line_items"]);
                             }
                         } else {
                             setWeightageError(true)
@@ -430,6 +495,24 @@ function RowRender({ record, setData }: any) {
                     return [...data]
                 })
                 break;
+            case "header_line_item":
+                setData((data: any) => {
+                    let lineItems = data[1].children;
+                    let lineItemLength = lineItems.length;
+                    let { lastValue, value } = calculateSplitValue(lineItemLength)
+
+                    lineItems = lineItems.map((lineItem: any, index: number) => {
+                        if (lastValue && (index == lineItemLength - 1)) {
+                            lineItem.Weightage = lastValue;
+                        } else {
+                            lineItem.Weightage = value;
+                        }
+                        return lineItem;
+                    })
+                    data[1].children = lineItems;
+                    return [...data]
+                })
+                break;
         }
     }
 
@@ -452,7 +535,7 @@ function RowRender({ record, setData }: any) {
                         onChange={(value: any) => onChangeValue(value)}
                         controls={false}
                         addonAfter={
-                            record.type != "question" && <Button
+                            !leafNodes.includes(record.type) && <Button
                                 onClick={() => {
                                     splitWeightage(record.type, record.key)
                                 }}
