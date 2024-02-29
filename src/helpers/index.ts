@@ -57,10 +57,13 @@ function parseJSON(jsonString: string) {
         return null
     }
 }
+
+function getKey(str: string) {
+    return str.replaceAll(" ", "_")
+}
 export {
     calculateSplitValue,
-    getColorCode,
-    getUniqueString,
+    getColorCode, getKey, getUniqueString,
     parseJSON
 };
 

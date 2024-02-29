@@ -6,12 +6,19 @@ const SourcingMasterProcess = "Sourcing_Master_A00"
 const Applicable_commercial_info = "Applicable_commercial_info"
 const Applicable_Commercial_Info_Weightages = "Applicable_Commercial_Info_Weightages"
 const lineItemTableKey = "Table::RFQ_Configuration"
-const Questionnaire_Weightage = "Questionnaire_Weightage"
-const Commercial_Weightage = "Commercial_Weightage"
-const Line_Item_Weightage = "Line_Item_Weightage"
+
+const Commercial_Details = "Commercial_Details"
+const Line_Items = "Line_Items"
+const Questionnaire = "Questionnaire"
+
+
+const leafNodes = ["question", "line_item_info", "line_item"]
+const rootNodes = ["questionnaire", "section", "commercial_details", "line_items"]
 
 
 export {
-    Applicable_Commercial_Info_Weightages, Applicable_commercial_info, Commercial_Weightage,
-    Line_Item_Weightage, Questionnaire_Weightage, SourcingMasterProcess, baseUrl, lineItemTableKey, sourcing_question_dataform, sourcing_section_dataform
+    Applicable_Commercial_Info_Weightages, Applicable_commercial_info,
+    Commercial_Details, Line_Items, Questionnaire, SourcingMasterProcess, baseUrl, leafNodes, lineItemTableKey, rootNodes, sourcing_question_dataform,
+    sourcing_section_dataform
 }
+

@@ -2,15 +2,13 @@ import { Button, InputNumber, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 import { KFButton } from '../components/KFButton';
-import { calculateSplitValue } from '../helpers';
+import { calculateSplitValue, getKey } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
-import { Applicable_Commercial_Info_Weightages, Applicable_commercial_info, Line_Item_Weightage, Questionnaire_Weightage, SourcingMasterProcess, lineItemTableKey, sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
+import { Applicable_commercial_info, Commercial_Details, Line_Items, Questionnaire, SourcingMasterProcess, leafNodes, lineItemTableKey, rootNodes, sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
 
-const leafNodes = ["question", "line_item_info", "line_item"]
-const rootNodes = ["header_line_item", "section", "questionnaire", "commercial_details", "line_items"]
 const allNodes = rootNodes.concat(leafNodes)
 
 interface DataType {
@@ -48,7 +46,7 @@ type Data = {
     key: string;
     parameters: string;
     Weightage: number;
-    type: typeof allNodes[number] ,
+    type: typeof allNodes[number],
     children?: Data[],
     showCheckBox?: boolean,
 }
@@ -164,7 +162,7 @@ const AccordionTableWeightage: React.FC = () => {
                         <Typography style={{ fontWeight: "bold", marginRight: 6, width: "5%" }} >Q{index + 1}: </Typography>
                     }
                     <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
-                        {record.type != "question" && `${index+1}. `} {text}
+                        {record.type != "question" && `${index + 1}. `} {text}
                     </Typography>
                 </div>
             ),
@@ -304,18 +302,18 @@ const AccordionTableWeightage: React.FC = () => {
         return questions
     }
 
-    async function getLineDetails(sourcing_event_id: string) {
+    async function buildRowDetails(sourcing_event_id: string) {
+        const technicalData = await getSectiondetailsBySourcingEvent(sourcing_event_id);
         const sourcingDetails: any =
             (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/Sourcing_Master_A00/${sourcing_event_id}`))
 
         const lineItems: LineItem[] = sourcingDetails[lineItemTableKey]
         const applicableCommercialInfo = sourcingDetails[Applicable_commercial_info]
-        const exisitingWeightage = JSON.parse(sourcingDetails[Applicable_Commercial_Info_Weightages] || "{}")
-        console.log("lineItems", lineItems)
+
         let commercialItems: Data = {
             key: "commercial_details",
             parameters: "Commercial Details",
-            Weightage: sourcingDetails[Questionnaire_Weightage] || 0,
+            Weightage: sourcingDetails[Commercial_Details] ?? 0,
             type: "commercial_details",
             children: []
         }
@@ -327,7 +325,7 @@ const AccordionTableWeightage: React.FC = () => {
                     commercialItems?.children.push({
                         key: info,
                         parameters: info,
-                        Weightage: exisitingWeightage[info] ?? 0,
+                        Weightage: sourcingDetails[getKey(info)] ?? 0,
                         type: "line_item_info",
                         children: []
                     })
@@ -339,7 +337,7 @@ const AccordionTableWeightage: React.FC = () => {
             let lineItemNode: Data = {
                 key: "line_items",
                 parameters: "Line Items",
-                Weightage: sourcingDetails[Line_Item_Weightage],
+                Weightage: sourcingDetails[Line_Items],
                 type: "line_items",
                 children: []
             }
@@ -355,25 +353,19 @@ const AccordionTableWeightage: React.FC = () => {
                 commercialItems.children.push(lineItemNode);
             }
         }
-        console.log("commercialItems", commercialItems)
-        return commercialItems
-    }
 
-    async function buildRowDetails(sourcing_event_id: string) {
-        const technicalData = await getSectiondetailsBySourcingEvent(sourcing_event_id);
-        const commercialData = await getLineDetails(sourcing_event_id);
         let q: Data[] = [
             {
                 key: "questionnaire",
                 parameters: "Questionnaire",
-                Weightage: 0,
+                Weightage: sourcingDetails[Questionnaire],
                 type: "questionnaire",
                 showCheckBox: false,
                 children: technicalData
             },
         ]
-        if (commercialData) {
-            q.push(commercialData)
+        if (commercialItems) {
+            q.push(commercialItems)
         }
         setData(q)
         prevData.current = JSON.parse(JSON.stringify(q));
@@ -388,14 +380,11 @@ const AccordionTableWeightage: React.FC = () => {
         return questions
     }
 
-    async function updateLineWeightage(lineWeightage: any[]) {
+    async function updateProcessWeightages(payload: Record<string, any>) {
         const lineDetails: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcingEventId}`, {
             method: "PUT",
-            body: JSON.stringify({
-                [lineItemTableKey]: lineWeightage
-            })
+            body: JSON.stringify(payload)
         }));
-        console.log("lineDetails", lineDetails)
         return lineDetails
     }
 
@@ -495,9 +484,29 @@ const AccordionTableWeightage: React.FC = () => {
                                 if (delta["question"] && delta["question"].length > 0) {
                                     await updateWeightage(delta["question"], sourcing_question_dataform);
                                 }
-                                if (delta["line_items"] && delta["line_items"].length > 0) {
-                                    await updateLineWeightage(delta["line_items"]);
+
+                                let processPayload: Record<string, any> = {}
+                                if (delta["line_item"] && delta["line_item"].length > 0) {
+                                    processPayload[lineItemTableKey] = delta["line_item"];
                                 }
+
+                                if (delta["questionnaire"] && delta["questionnaire"].length > 0) {
+                                    processPayload[Questionnaire] = delta["questionnaire"][0].Weightage;
+                                }
+                                if (delta["commercial_details"] && delta["commercial_details"].length > 0) {
+                                    processPayload[Commercial_Details] = delta["commercial_details"][0].Weightage;
+                                }
+                                if (delta["line_items"] && delta["line_items"].length > 0) {
+                                    processPayload[Line_Items] = delta["line_items"][0].Weightage;
+                                }
+                                if (delta["line_item_info"] && delta["line_item_info"].length > 0) {
+                                    delta["line_item_info"].forEach((info: any) => {
+                                        processPayload[getKey(info._id)] = info.Weightage;
+                                    })
+                                }
+                                await updateProcessWeightages(processPayload);
+                                prevData.current = data;
+                                showMessage("Weightage has been saved successfully!")
                             } else {
                                 setWeightageError(() => true)
                             }
@@ -530,6 +539,12 @@ function RowRender({ record, setData }: any) {
                     return [...data]
                 })
                 break;
+            case "commercial_details":
+                setData((data: any) => {
+                    data[1].Weightage = value;
+                    return [...data]
+                })
+                break;
             case "section":
                 setData((data: any) => {
                     let sections = data[0].children;
@@ -557,6 +572,38 @@ function RowRender({ record, setData }: any) {
                         return s
                     })
                     data[0].children = sections;
+                    return [...data]
+                })
+                break;
+            case "line_item_info":
+            case "line_items":
+                setData((data: any) => {
+                    let sections = data[1].children;
+                    let sectionIndex = sections.findIndex((s: any) => s.key == record.key)
+                    if (sectionIndex >= 0) {
+                        sections[sectionIndex].Weightage = value
+                    }
+                    data[1].children = sections;
+                    return [...data]
+                })
+                break;
+            case "line_item":
+                setData((data: any) => {
+                    let sections = data[1].children;
+                    let lineItemIndex = sections.findIndex((s: any) => s.key == "line_items")
+                    if (lineItemIndex >= 0) {
+                        let lines = sections[lineItemIndex].children
+                        lines = lines.map((s: any) => {
+                            if (s.key == record.key) {
+                                return {
+                                    ...s,
+                                    Weightage: value
+                                }
+                            }
+                            return s;
+                        })
+                        sections[lineItemIndex].children = lines;
+                    }
                     return [...data]
                 })
                 break;
@@ -600,7 +647,7 @@ function RowRender({ record, setData }: any) {
                     return [...data]
                 })
                 break;
-            case "header_line_item":
+            case "commercial_details":
                 setData((data: any) => {
                     let lineItems = data[1].children;
                     let lineItemLength = lineItems.length;
@@ -616,6 +663,29 @@ function RowRender({ record, setData }: any) {
                     })
                     data[1].children = lineItems;
                     return [...data]
+                })
+                break;
+            case "line_items":
+                setData((data: any) => {
+                    let lineItemIndex = data[1].children.findIndex((lineItem: any) => lineItem.key == key);
+                    if (lineItemIndex >= 0) {
+                        let lineItems = data[1].children[lineItemIndex];
+                        let lineLength = lineItems.children.length
+                        if (lineLength > 0) {
+                            let { lastValue, value } = calculateSplitValue(lineLength)
+                            lineItems.children = lineItems.children.map((lineItem: any, index: number) => {
+                                if ((index == lineLength - 1)) {
+                                    lineItem.Weightage = lastValue;
+                                } else {
+                                    lineItem.Weightage = value;
+                                }
+                                return lineItem;
+                            })
+                            data[1].children[lineItemIndex] = lineItems;
+                        }
+                        return [...data]
+                    }
+                    return []
                 })
                 break;
         }
