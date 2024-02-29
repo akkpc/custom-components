@@ -4,10 +4,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { calculateSplitValue } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
-import { SourcingMasterProcess, sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
+import { Applicable_Commercial_Info_Weightages, Applicable_commercial_info, Line_Item_Weightage, Questionnaire_Weightage, SourcingMasterProcess, lineItemTableKey, sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
+
+const leafNodes = ["question", "line_item_info", "line_item"]
+const rootNodes = ["header_line_item", "section", "questionnaire", "commercial_details", "line_items"]
+const allNodes = rootNodes.concat(leafNodes)
 
 interface DataType {
     key: string;
@@ -44,8 +48,9 @@ type Data = {
     key: string;
     parameters: string;
     Weightage: number;
-    type: "section" | "question" | "line_items",
-    children: any[]
+    type: typeof allNodes[number] ,
+    children?: Data[],
+    showCheckBox?: boolean,
 }
 
 type TableDataType = {
@@ -74,9 +79,6 @@ type LineItem = {
     Weightage: number;
 };
 
-const leafNodes = ["question", "line_items"]
-const rootNodes = ["header_line_item", "section", "questionnaire"]
-const lineItemTableKey = "Table::RFQ_Configuration"
 
 const rowSelection: TableRowSelection<DataType> = {
     getCheckboxProps: (record) => ({
@@ -159,10 +161,10 @@ const AccordionTableWeightage: React.FC = () => {
             render: (text: string, record: any, index: any) => (
                 <div style={{ display: "flex", color: tableFontColor }} >
                     {record.type == "question" &&
-                        <Typography style={{ fontWeight: "bold", marginRight: 6, width: 30 }} >Q{index + 1}: </Typography>
+                        <Typography style={{ fontWeight: "bold", marginRight: 6, width: "5%" }} >Q{index + 1}: </Typography>
                     }
-                    <Typography style={{ width: "100%" }} >
-                        {text}
+                    <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
+                        {record.type != "question" && `${index+1}. `} {text}
                     </Typography>
                 </div>
             ),
@@ -170,14 +172,14 @@ const AccordionTableWeightage: React.FC = () => {
         }];
         columns.push({
             title: () => (
-                <div style={{display:"flex" , alignItems:"center", columnGap:20}} >
+                <div style={{ display: "flex", alignItems: "center", columnGap: 20 }} >
                     <Typography>Weightage</Typography>
                     <Button
                         onClick={() => {
                             setData((data: any) => {
                                 let { value, lastValue } = calculateSplitValue(data.length);
-                                data = data.map((d: any,index: any) => {
-                                    if(index - 1 == data.length) {
+                                data = data.map((d: any, index: any) => {
+                                    if (index - 1 == data.length) {
                                         return ({
                                             ...d,
                                             Weightage: lastValue
@@ -254,14 +256,14 @@ const AccordionTableWeightage: React.FC = () => {
             parameters: section.Section_Name,
             Weightage: section.Weightage,
             type: "section",
-            showCheckBox: false,
             children: questions.filter((q) => q.Section_ID == section.Section_ID).map((question, index) => {
                 return ({
                     key: question._id,
                     parameters: question.Question,
                     Weightage: question.Weightage,
                     type: "question",
-                    showCheckBox: false
+                    showCheckBox: false,
+                    children: []
                 })
             })
         }))
@@ -307,25 +309,60 @@ const AccordionTableWeightage: React.FC = () => {
             (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/Sourcing_Master_A00/${sourcing_event_id}`))
 
         const lineItems: LineItem[] = sourcingDetails[lineItemTableKey]
+        const applicableCommercialInfo = sourcingDetails[Applicable_commercial_info]
+        const exisitingWeightage = JSON.parse(sourcingDetails[Applicable_Commercial_Info_Weightages] || "{}")
         console.log("lineItems", lineItems)
+        let commercialItems: Data = {
+            key: "commercial_details",
+            parameters: "Commercial Details",
+            Weightage: sourcingDetails[Questionnaire_Weightage] || 0,
+            type: "commercial_details",
+            children: []
+        }
+
+        if (applicableCommercialInfo && applicableCommercialInfo.length > 0) {
+            for (let i = 0; i < applicableCommercialInfo.length; i++) {
+                let info = applicableCommercialInfo[i];
+                if (commercialItems?.children) {
+                    commercialItems?.children.push({
+                        key: info,
+                        parameters: info,
+                        Weightage: exisitingWeightage[info] ?? 0,
+                        type: "line_item_info",
+                        children: []
+                    })
+                }
+            }
+        }
 
         if (lineItems) {
-            let commercialData: Data[] = lineItems.map((lineItem) => ({
+            let lineItemNode: Data = {
+                key: "line_items",
+                parameters: "Line Items",
+                Weightage: sourcingDetails[Line_Item_Weightage],
+                type: "line_items",
+                children: []
+            }
+            lineItemNode.children = lineItems.map((lineItem) => ({
                 key: lineItem._id,
                 parameters: lineItem.Item,
                 Weightage: lineItem.Weightage || 0,
-                type: "line_items",
+                type: "line_item",
                 showCheckBox: false,
                 children: []
             }))
-            return commercialData
+            if (commercialItems.children) {
+                commercialItems.children.push(lineItemNode);
+            }
         }
+        console.log("commercialItems", commercialItems)
+        return commercialItems
     }
 
     async function buildRowDetails(sourcing_event_id: string) {
         const technicalData = await getSectiondetailsBySourcingEvent(sourcing_event_id);
         const commercialData = await getLineDetails(sourcing_event_id);
-        let q = [
+        let q: Data[] = [
             {
                 key: "questionnaire",
                 parameters: "Questionnaire",
@@ -336,14 +373,7 @@ const AccordionTableWeightage: React.FC = () => {
             },
         ]
         if (commercialData) {
-            q.push({
-                key: "header_line_item",
-                parameters: "Line Items",
-                Weightage: 0,
-                type: "header_line_item",
-                showCheckBox: false,
-                children: commercialData
-            })
+            q.push(commercialData)
         }
         setData(q)
         prevData.current = JSON.parse(JSON.stringify(q));
