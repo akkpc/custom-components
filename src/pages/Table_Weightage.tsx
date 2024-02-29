@@ -107,10 +107,10 @@ const AccordionTableWeightage: React.FC = () => {
     }, [])
 
     useEffect(() => {
-        if(showWeightageError){
+        if (showWeightageError) {
             showMessage("Please confirm total percentage equals 100%")
         }
-     },[showWeightageError])
+    }, [showWeightageError])
 
     function validateWeightage(obj: any[], weightage: any, keyname: string) {
         if (obj && obj.length > 0) {
@@ -152,7 +152,7 @@ const AccordionTableWeightage: React.FC = () => {
 
     function buildColumns() {
         const columns: any = [{
-            title: "Type",
+            title: "Parameters",
             dataIndex: 'parameters',
             key: 'parameters',
             width: "80%",
@@ -169,7 +169,40 @@ const AccordionTableWeightage: React.FC = () => {
             className: "table-header"
         }];
         columns.push({
-            title: "Weightage",
+            title: () => (
+                <div style={{display:"flex" , alignItems:"center", columnGap:20}} >
+                    <Typography>Weightage</Typography>
+                    <Button
+                        onClick={() => {
+                            setData((data: any) => {
+                                let { value, lastValue } = calculateSplitValue(data.length);
+                                data = data.map((d: any,index: any) => {
+                                    if(index - 1 == data.length) {
+                                        return ({
+                                            ...d,
+                                            Weightage: lastValue
+                                        })
+                                    }
+                                    return ({
+                                        ...d,
+                                        Weightage: value
+                                    })
+                                })
+                                return [...data]
+                            })
+                        }}
+                        style={{ display: "flex", height: 14, width: 18, fontSize: 5, alignItems: "center", justifyContent: "center", color: "rgba(0, 60, 156, 1)", borderColor: "rgba(0, 60, 156, 1)", borderRadius: 3 }}
+                        type='primary'
+                        size='small'
+                        ghost
+                        icon={
+                            <Tooltip title="Split equally" >
+                                <img src={process.env.PUBLIC_URL + "/svgs/split_equally_icon.svg"} alt="image" />
+                            </Tooltip>
+                        }
+                    />
+                </div>
+            ),
             dataIndex: "weightage",
             key: "weightage",
             render: (text: string, record: any) => (
@@ -302,7 +335,7 @@ const AccordionTableWeightage: React.FC = () => {
                 children: technicalData
             },
         ]
-        if(commercialData) {
+        if (commercialData) {
             q.push({
                 key: "header_line_item",
                 parameters: "Line Items",
@@ -361,30 +394,6 @@ const AccordionTableWeightage: React.FC = () => {
 
     return (
         <div>
-            <div style={{ display: "flex", justifyContent: "flex-end", margin: 3, alignItems: "center" }} >
-                <KFButton
-                    buttonType="primary"
-                    onClick={async () => {
-                        let weightages = validateWeightage(data, {}, "root")
-                        let isValid = Object.values(weightages).every((w: any) => (w == 100))
-                        let delta = calculateDelta(data, prevData.current, []);
-                        if (isValid) {
-                            setWeightageError(false)
-                            if (delta["section"] && delta["section"].length > 0) {
-                                await updateWeightage(delta["section"], sourcing_section_dataform);
-                            }
-                            if (delta["question"] && delta["question"].length > 0) {
-                                await updateWeightage(delta["question"], sourcing_question_dataform);
-                            }
-                            if (delta["line_items"] && delta["line_items"].length > 0) {
-                                await updateLineWeightage(delta["line_items"]);
-                            }
-                        } else {
-                            setWeightageError(() => true)
-                        }
-                    }}
-                >Save</KFButton>
-            </div>
             {contentLoaded && data ?
                 <Table
                     columns={columns}
@@ -413,6 +422,59 @@ const AccordionTableWeightage: React.FC = () => {
                     rootClassName='root'
                     rowKey={(record) => record.key}
                 /> : "Loading..."}
+            <div style={{ height: 100 }} ></div>
+            <div
+                style={{
+                    position: "fixed",
+                    width: "100%",
+                    height: 50,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    backgroundColor: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                }}
+            >
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        padding: 5,
+                        alignItems: "center",
+                        gap: 10
+                    }} >
+                    <KFButton
+                        buttonType="secondary"
+                        onClick={async () => {
+                            setData(prevData.current);
+                        }}
+                    >Close</KFButton>
+                    <KFButton
+                        buttonType="primary"
+                        onClick={async () => {
+                            let weightages = validateWeightage(data, {}, "root")
+                            let isValid = Object.values(weightages).every((w: any) => (w == 100))
+                            let delta = calculateDelta(data, prevData.current, []);
+                            if (isValid) {
+                                setWeightageError(false)
+                                if (delta["section"] && delta["section"].length > 0) {
+                                    await updateWeightage(delta["section"], sourcing_section_dataform);
+                                }
+                                if (delta["question"] && delta["question"].length > 0) {
+                                    await updateWeightage(delta["question"], sourcing_question_dataform);
+                                }
+                                if (delta["line_items"] && delta["line_items"].length > 0) {
+                                    await updateLineWeightage(delta["line_items"]);
+                                }
+                            } else {
+                                setWeightageError(() => true)
+                            }
+                        }}
+                    >Save</KFButton>
+                </div>
+            </div>
         </div>
     );
 };
