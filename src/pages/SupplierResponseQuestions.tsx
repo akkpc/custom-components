@@ -136,9 +136,9 @@ const SupplierResponseQuestions: React.FC = () => {
         <div style={{
             marginTop: 10,
             padding: 30,
-            overflow: "hidden",
-            scrollbarColor: "red",
-            scrollbarWidth: "none"
+            // overflow: "hidden",
+            // scrollbarColor: "red",
+            // scrollbarWidth: "none"
         }}>
             <div>
                 <Collapse
@@ -155,7 +155,7 @@ const SupplierResponseQuestions: React.FC = () => {
                 />
                 <div style={{ height: 60 }} ></div>
             </div>
-            <div
+            {/* <div
                 style={{
                     position: "fixed",
                     width: "100%",
@@ -174,7 +174,7 @@ const SupplierResponseQuestions: React.FC = () => {
                     <Button style={{ marginRight: 10 }} >Close</Button>
                     <Button style={{ backgroundColor: buttonDarkBlue, color: "white" }} >Submit Response</Button>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 };

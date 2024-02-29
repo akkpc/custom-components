@@ -10,20 +10,28 @@ interface ButtonProps {
     isActive: boolean;
 }
 
+// const qnaComponentId = "Container_QNpAY2qEr"
+// const questionnaireComponentId = "Container_JzO2vWLyR"
+// const lineComponentId = "Container_kou7_plwp"
+
+const qnaComponentId = "Container_NLO3KNKBV"
+const questionnaireComponentId = "Container_SIywL7mzo"
+const lineComponentId = "Container_ymVafCM7_"
+
 const tabs = [
     {
         key: "q_and_a",
-        componentId: "Container_QNpAY2qEr",
+        componentId: qnaComponentId,
         name: "Q&A"
     },
     {
         key: "questionnaires",
-        componentId: "Container_JzO2vWLyR",
+        componentId: questionnaireComponentId,
         name: "Questionnaires"
     },
     {
         key: "lines",
-        componentId: "Container_kou7_plwp",
+        componentId: lineComponentId,
         name: "Lines"
     }
 ]
@@ -37,9 +45,9 @@ export default function CustomTab() {
     }, [])
 
     async function hideAll() {
-        const qnaComponent = await KFSDK.app.page.getComponent("Container_QNpAY2qEr");
-        const questionnaireComponent = await KFSDK.app.page.getComponent("Container_JzO2vWLyR");
-        const lineComponent = await KFSDK.app.page.getComponent("Container_kou7_plwp");
+        const qnaComponent = await KFSDK.app.page.getComponent(qnaComponentId);
+        const questionnaireComponent = await KFSDK.app.page.getComponent(questionnaireComponentId);
+        const lineComponent = await KFSDK.app.page.getComponent(lineComponentId);
         qnaComponent.hide()
         questionnaireComponent.hide()
         lineComponent.hide()

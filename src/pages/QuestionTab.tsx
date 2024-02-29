@@ -130,7 +130,7 @@ export function QuestionTab() {
         (async () => {
             await getQuestions();
         })()
-    }, [searchText, filter])
+    }, [searchText, filter, sourcingEventId])
 
     useEffect(() => {
         (async () => {
