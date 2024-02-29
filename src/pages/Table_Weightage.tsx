@@ -1,6 +1,7 @@
 import { Button, InputNumber, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
+import { KFButton } from '../components/KFButton';
 import { calculateSplitValue } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
 import { SourcingMasterProcess, sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
@@ -105,11 +106,17 @@ const AccordionTableWeightage: React.FC = () => {
         })()
     }, [])
 
+    useEffect(() => {
+        if(showWeightageError){
+            showMessage("Please confirm total percentage equals 100%")
+        }
+     },[showWeightageError])
+
     function validateWeightage(obj: any[], weightage: any, keyname: string) {
         if (obj && obj.length > 0) {
             for (let i = 0; i < obj.length; i++) {
                 if (weightage.hasOwnProperty(keyname)) {
-                    weightage[keyname] += obj[i].Weightage ?? 0;
+                    weightage[keyname] = Math.round((weightage[keyname] + obj[i].Weightage ?? 0 + Number.EPSILON) * 10) / 10;
                 } else {
                     weightage[keyname] = obj[i].Weightage ?? 0;
                 }
@@ -269,16 +276,17 @@ const AccordionTableWeightage: React.FC = () => {
         const lineItems: LineItem[] = sourcingDetails[lineItemTableKey]
         console.log("lineItems", lineItems)
 
-        let commercialData: Data[] = lineItems.map((lineItem) => ({
-            key: lineItem._id,
-            parameters: lineItem.Item,
-            Weightage: lineItem.Weightage || 0,
-            type: "line_items",
-            showCheckBox: false,
-            children: []
-        }))
-
-        return commercialData
+        if (lineItems) {
+            let commercialData: Data[] = lineItems.map((lineItem) => ({
+                key: lineItem._id,
+                parameters: lineItem.Item,
+                Weightage: lineItem.Weightage || 0,
+                type: "line_items",
+                showCheckBox: false,
+                children: []
+            }))
+            return commercialData
+        }
     }
 
     async function buildRowDetails(sourcing_event_id: string) {
@@ -293,15 +301,17 @@ const AccordionTableWeightage: React.FC = () => {
                 showCheckBox: false,
                 children: technicalData
             },
-            {
+        ]
+        if(commercialData) {
+            q.push({
                 key: "header_line_item",
                 parameters: "Line Items",
                 Weightage: 0,
                 type: "header_line_item",
                 showCheckBox: false,
                 children: commercialData
-            }
-        ]
+            })
+        }
         setData(q)
         prevData.current = JSON.parse(JSON.stringify(q));
     }
@@ -322,7 +332,7 @@ const AccordionTableWeightage: React.FC = () => {
                 [lineItemTableKey]: lineWeightage
             })
         }));
-        console.log("lineDetails",  lineDetails)
+        console.log("lineDetails", lineDetails)
         return lineDetails
     }
 
@@ -345,15 +355,18 @@ const AccordionTableWeightage: React.FC = () => {
         }
     }
 
+    function showMessage(message: string) {
+        KFSDK.client.showInfo(message)
+    }
+
     return (
         <div>
             <div style={{ display: "flex", justifyContent: "flex-end", margin: 3, alignItems: "center" }} >
-                {showWeightageError && <Text type="danger" style={{ fontSize: 16, marginRight: 5 }} >Weightage should not exceed 100%</Text>}
-                <Button
-                    type='primary'
+                <KFButton
+                    buttonType="primary"
                     onClick={async () => {
                         let weightages = validateWeightage(data, {}, "root")
-                        let isValid = Object.values(weightages).every((w: any) => (w <= 100))
+                        let isValid = Object.values(weightages).every((w: any) => (w == 100))
                         let delta = calculateDelta(data, prevData.current, []);
                         if (isValid) {
                             setWeightageError(false)
@@ -367,10 +380,10 @@ const AccordionTableWeightage: React.FC = () => {
                                 await updateLineWeightage(delta["line_items"]);
                             }
                         } else {
-                            setWeightageError(true)
+                            setWeightageError(() => true)
                         }
                     }}
-                >Save</Button>
+                >Save</KFButton>
             </div>
             {contentLoaded && data ?
                 <Table
@@ -467,7 +480,7 @@ function RowRender({ record, setData }: any) {
                     let { lastValue, value } = calculateSplitValue(sectionLength)
 
                     sections = sections.map((section: any, index: number) => {
-                        if (lastValue && (index == sections.length - 1)) {
+                        if (index == sections.length - 1) {
                             section.Weightage = lastValue;
                         } else {
                             section.Weightage = value;
@@ -484,7 +497,7 @@ function RowRender({ record, setData }: any) {
                     let questions = data[0].children[index].children
                     let { value, lastValue } = calculateSplitValue(questions.length);
                     questions = questions.map((question: any, index: number) => {
-                        if (lastValue && (index == questions.length - 1)) {
+                        if ((index == questions.length - 1)) {
                             question.Weightage = lastValue;
                         } else {
                             question.Weightage = value;
@@ -502,7 +515,7 @@ function RowRender({ record, setData }: any) {
                     let { lastValue, value } = calculateSplitValue(lineItemLength)
 
                     lineItems = lineItems.map((lineItem: any, index: number) => {
-                        if (lastValue && (index == lineItemLength - 1)) {
+                        if ((index == lineItemLength - 1)) {
                             lineItem.Weightage = lastValue;
                         } else {
                             lineItem.Weightage = value;

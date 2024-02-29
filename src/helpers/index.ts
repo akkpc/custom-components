@@ -30,16 +30,14 @@ function getColorCode(number: number) {
 }
 
 function calculateSplitValue(value: number) {
-    let sValue = Math.round((100 / value + Number.EPSILON) * 100) / 100;
-    let lastValue;
-    if (sValue * value < 100) {
-        lastValue = (100 - sValue * (value - 1))
-    }
+    let sValue = Math.round((100 / value + Number.EPSILON) * 10) / 10;
+    let lastValue = Math.round((100 - sValue * (value - 1) + Number.EPSILON) * 10) / 10;
     return {
         value: sValue,
         lastValue
     };
 }
+
 
 function getUniqueString() {
     const timestamp = Math.floor(Date.now() / 1000).toString(16);

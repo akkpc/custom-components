@@ -170,3 +170,34 @@ th.ant-table-cell {
   padding-top: 0 !important;
   border-radius: 8px;
 }
+
+.kf-button {
+  min-width: 100px;
+  height: 38px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.kf-button-primary {
+  background-color:#0565ff;
+  color: white;
+}
+
+.kf-button-secondary {
+  background-color: #f1f3f7;
+  color: black;
+}
+
+.kf-button-secondary:hover {
+  background-color: #d8dce5 !important;
+  color: black !important;
+}
+.kf-button-primary:hover {
+  background-color: #003c9c !important;
+  color: white !important;
+}
+
+
+.kf-button-error {
+  background-color: red;
+}
