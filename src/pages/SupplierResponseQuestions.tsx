@@ -1,9 +1,8 @@
-import type { CollapseProps } from 'antd';
-import { Button, Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, theme } from 'antd';
+import { Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, theme } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import React, { useEffect, useState } from 'react';
 import { parseJSON } from '../helpers';
-import { borderColor, buttonDarkBlue, lightGrey } from '../helpers/colors';
+import { lightGrey } from '../helpers/colors';
 import { EventSection, Question } from './SourcingTemplate';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
@@ -34,6 +33,13 @@ interface HeaderProps {
 
 interface SupplierResponseQuestionProps {
     Text_Response: string;
+    updateProgressValue: () => Promise<void>;
+    setSections: React.Dispatch<React.SetStateAction<SourcingSupplierSection[]>>;
+    sourcingSectionId: string;
+}
+
+interface SourcingSupplierSection extends EventSection {
+    Progress: number;
 }
 
 function Header({ text, progressValue }: HeaderProps) {
@@ -59,7 +65,8 @@ function Header({ text, progressValue }: HeaderProps) {
 const SupplierResponseQuestions: React.FC = () => {
     const { token } = theme.useToken();
     const [sourcingEventId, setSourcingEventId] = useState("")
-    const [sections, setSections] = useState<CollapseProps["items"]>([])
+    const [currentStage, setCurrentStage] = useState("")
+    const [sections, setSections] = useState<SourcingSupplierSection[]>([])
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
@@ -72,24 +79,12 @@ const SupplierResponseQuestions: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let {currentStage,sourcingEventId} = await KFSDK.app.page.getAllParameters();
-            // let {eventStage,sourcingEventId} = {
-            //     sourcingEventId: "Pk8khJEoEsJs",
-            //     eventStage: "RFP"
-            // };
-            console.log("Test"  , currentStage, sourcingEventId)
-
+            let { currentStage, sourcingEventId } = await KFSDK.app.page.getAllParameters();
             if (sourcingEventId) {
                 setSourcingEventId(sourcingEventId)
-                const sections: EventSection[] = await getSectionsBySourcingId(sourcingEventId, currentStage);
-                const collapse = sections.map((section) => ({
-                    key: section.Section_ID,
-                    label: <Header text={section.Section_Name} progressValue={30} />,
-                    children:
-                        <Questionnaire event_stage={currentStage} sourcingEventId={sourcingEventId} sectionId={section.Section_ID} />,
-                    style: panelStyle,
-                }))
-                setSections(collapse); 
+                const sections: SourcingSupplierSection[] = await getSectionsBySourcingId(sourcingEventId, currentStage);
+                setCurrentStage(currentStage)
+                setSections(sections);
             }
         })()
     }, [])
@@ -116,7 +111,7 @@ const SupplierResponseQuestions: React.FC = () => {
                                         "LHSField": "Event_Stage",
                                         "Operator": "EQUAL_TO",
                                         "RHSType": "Value",
-                                        "RHSValue":event_stage ,
+                                        "RHSValue": event_stage,
                                         "RHSField": null,
                                         "LHSAttribute": null,
                                         "RHSAttribute": null
@@ -127,7 +122,7 @@ const SupplierResponseQuestions: React.FC = () => {
                     }
                 })
             }).catch((err: any) => console.log("cannot fetch", err))
-        const sections: EventSection[] = sectionResponse.Data;
+        const sections: SourcingSupplierSection[] = sectionResponse.Data;
         return sections;
     }
 
@@ -150,7 +145,15 @@ const SupplierResponseQuestions: React.FC = () => {
                         <img src={`${process.env.PUBLIC_URL}/svgs/accordion_icons.svg`} ></img>
                     }
                     style={{ background: token.colorBgContainer }}
-                    items={sections}
+                    items={sections.map((section) => ({
+                        key: section.Sourcing_Event_Section_ID,
+                        label: <Header text={section.Section_Name} progressValue={section.Progress || 0} />,
+                        children:
+                            <Questionnaire progressValue={section.Progress || 0} event_stage={currentStage} sourcingEventId={sourcingEventId} sectionId={section.Section_ID} sourcingSectionId={section._id}
+                                setSections={setSections}
+                            />,
+                        style: panelStyle,
+                    }))}
                     rootClassName='supplier-response-item'
                 />
                 <div style={{ height: 60 }} ></div>
@@ -179,7 +182,7 @@ const SupplierResponseQuestions: React.FC = () => {
     );
 };
 
-function Questionnaire({ sectionId, sourcingEventId, event_stage }: { sectionId: string, sourcingEventId: string, event_stage: string }) {
+function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_stage, progressValue, setSections }: { sourcingSectionId: string, sectionId: string, sourcingEventId: string, event_stage: string, progressValue: number, setSections: React.Dispatch<React.SetStateAction<SourcingSupplierSection[]>> }) {
     const [questions, setQuestions] = useState<(Question & SupplierResponseQuestionProps)[]>([]);
     const [contentLoaded, setContentLoaded] = useState(false);
     useEffect(() => {
@@ -191,6 +194,7 @@ function Questionnaire({ sectionId, sourcingEventId, event_stage }: { sectionId:
     }, [])
 
     async function getQuestionsBySection() {
+
         const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${questionnaireDataform}/allitems/list?&page_number=1&page_size=10000`,
             {
                 method: "POST",
@@ -220,7 +224,7 @@ function Questionnaire({ sectionId, sourcingEventId, event_stage }: { sectionId:
                                     "LHSField": "Event_Stage",
                                     "Operator": "EQUAL_TO",
                                     "RHSType": "Value",
-                                    "RHSValue":event_stage ,
+                                    "RHSValue": event_stage,
                                     "RHSField": null,
                                     "LHSAttribute": null,
                                     "RHSAttribute": null
@@ -240,6 +244,29 @@ function Questionnaire({ sectionId, sourcingEventId, event_stage }: { sectionId:
         return questions;
     }
 
+    async function getProgressValue() {
+        const questions = await getQuestionsBySection();
+        return (questions.filter((q) => q.Text_Response).length / questions.length) * 100
+    }
+
+    async function updateProgressValue() {
+        const pValue = await getProgressValue();
+        if (pValue != progressValue) {
+            await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sectionDataform}/${sourcingSectionId}`,
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        Progress: pValue
+                    })
+                }).catch((err: any) => console.log("cannot fetch", err))
+            setSections((section) => {
+                let index = section.findIndex((s) => s._id == sourcingSectionId);
+                section[index].Progress = pValue;
+                return [...section]
+            })
+        }
+    }
+
     return (
         <div style={{
             borderTop: "1px solid #D8DCE5",
@@ -255,7 +282,7 @@ function Questionnaire({ sectionId, sourcingEventId, event_stage }: { sectionId:
                     contentLoaded ? questions.map((question, index) => (
                         <div key={question._id} >
                             <div style={{ margin: 20 }} >
-                                <Inputs {...question} />
+                                <Inputs {...question} updateProgressValue={updateProgressValue} sourcingSectionId={sourcingSectionId} />
                             </div>
                             {questions.length - 1 > index &&
                                 <div style={{ borderBottom: "1px solid #D8DCE5", marginTop: 50 }} ></div>}
@@ -270,11 +297,11 @@ function Questionnaire({ sectionId, sourcingEventId, event_stage }: { sectionId:
     )
 }
 
-function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response }: Question & SupplierResponseQuestionProps) {
+function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response, updateProgressValue, sourcingSectionId }: Question & SupplierResponseQuestionProps) {
     const [value, setValue] = useState<any>()
 
     useEffect(() => {
-        if(Text_Response) {
+        if (Text_Response) {
             setValue(Text_Response);
         }
     }, [Text_Response])
@@ -291,6 +318,7 @@ function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response 
         await updateQuestion({
             Text_Response: value
         })
+        await updateProgressValue();
     }
 
     return (
