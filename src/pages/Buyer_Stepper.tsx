@@ -93,24 +93,17 @@ const Buyer_Stepper: React.FC = () => {
       await KFSDK.initialize();
       let allParams = await KFSDK.app.page.getAllParameters();
 
-      const stages: Record<string, string> = JSON.parse(allParams.stepperObj || "{}");
-      console.log("Stages : " ,allParams.stepperObj )
+      const stages: Record<string, string> = JSON.parse(allParams.stepper || "{}");
+      console.log("Stages : ", allParams.stepperObj)
       const currentStage = allParams.currentStage;
       const dynamicStages: any[] = getStepperObject(stepperMeta, stages)
-      // console.log("Stages : " ,stages,dynamicStages )
+      console.log("Stages : ", dynamicStages)
       setSteps(dynamicStages);
     })()
   }, [])
 
   function getStepperObject(stepperMeta: Record<string, string>[], stages: Record<string, string>) {
-    return stepperMeta.filter((step) => {
-      if (step.key in stages) {
-        return {
-          ...step,
-          description: stages[step.key]
-        }
-      }
-    })
+    return stepperMeta.filter((step) => step.key in stages).map((step: any) => ({ ...step, description: stages[step.key] }))
   }
 
   return (

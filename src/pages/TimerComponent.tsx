@@ -15,62 +15,64 @@ export function TimerComponent() {
     minutes: 0,
     seconds: 0
   })
+  // const [eventDueFinished,setEventDueFinished] = useState(false);
 
   function isValidDate(dateString: string) {
     const date = new Date(dateString);
     return !isNaN(date.getTime()) && date.toString() !== "Invalid Date";
   }
 
-  function convertStringToDate(dateString: string | Date) : Date {
-      if(typeof dateString == "string") {
-        if(isValidDate(dateString)) return new Date(dateString);
+  function convertStringToDate(dateString: string | Date): Date {
+    if (typeof dateString == "string") {
+      if (isValidDate(dateString)) return new Date(dateString);
 
-        let dateTimePart = dateString.split(' ')[0];
-        let dateObject = new Date(dateTimePart);
-    
-        return dateObject;
-      } 
-      return dateString
-}
+      let dateTimePart = dateString.split(' ')[0];
+      let dateObject = new Date(dateTimePart);
+
+      return dateObject;
+    }
+    return dateString
+  }
 
   useEffect(() => {
 
     (async () => {
       await KFSDK.initialize();
       let allParams = await KFSDK.app.page.getAllParameters();
-      const date = allParams.supplierWindowEndDate;
+      const date = allParams.timer_date;
 
       if (date) {
         const parsedDate = convertStringToDate(date);
-        console.log("Date here : " ,parsedDate)
-        const timer = setInterval(() => {
-          const now = new Date()
-          const diff = parsedDate.getTime() - now.getTime();
-          if (diff <= 0) {
-            setTimeData({
-              days: 0,
-              hours: 0,
-              minutes: 0,
-              seconds: 0
-            })
-            clearInterval(timer);
-          } else {
+        if (!isNaN(parsedDate.getTime())) {
+          const timer = setInterval(() => {
+            const now = new Date()
+            const diff = parsedDate.getTime() - now.getTime();
+            if (diff <= 0) {
+              setTimeData({
+                days: 0,
+                hours: 0,
+                minutes: 0,
+                seconds: 0
+              })
+              clearInterval(timer);
+            } else {
 
-            let days = Math.floor(diff / (1000 * 60 * 60 * 24))
-            let hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-            let minutes = Math.floor(((diff % (1000 * 60 * 60))) / (1000 * 60))
-            let seconds = Math.floor(((diff % (1000 * 60))) / (1000))
-            let data = {
-              days,
-              hours,
-              minutes,
-              seconds
-            };
-            setTimeData(data)
+              let days = Math.floor(diff / (1000 * 60 * 60 * 24))
+              let hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+              let minutes = Math.floor(((diff % (1000 * 60 * 60))) / (1000 * 60))
+              let seconds = Math.floor(((diff % (1000 * 60))) / (1000))
+              let data = {
+                days,
+                hours,
+                minutes,
+                seconds
+              };
+              setTimeData(data)
+            }
+          }, 1000)
+          return () => {
+            clearInterval(timer);
           }
-        }, 1000)
-        return () => {
-          clearInterval(timer);
         }
       }
     })()
