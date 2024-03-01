@@ -1,8 +1,9 @@
 import { Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, theme } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import React, { useEffect, useState } from 'react';
+import { KFButton } from '../components/KFButton';
 import { parseJSON } from '../helpers';
-import { lightGrey } from '../helpers/colors';
+import { borderColor, lightGrey } from '../helpers/colors';
 import { EventSection, Question } from './SourcingTemplate';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
@@ -67,6 +68,7 @@ const SupplierResponseQuestions: React.FC = () => {
     const [sourcingEventId, setSourcingEventId] = useState("")
     const [currentStage, setCurrentStage] = useState("")
     const [sections, setSections] = useState<SourcingSupplierSection[]>([])
+    const [eventTypes, setEventTypes] = useState<string[]>([])
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
@@ -79,12 +81,14 @@ const SupplierResponseQuestions: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let { currentStage, sourcingEventId } = await KFSDK.app.page.getAllParameters();
+            let { currentStage, sourcingEventId, Event_Type } = await KFSDK.app.page.getAllParameters();
+            const eventTypes: string[] = JSON.parse(Event_Type || "[]");
             if (sourcingEventId) {
                 setSourcingEventId(sourcingEventId)
                 const sections: SourcingSupplierSection[] = await getSectionsBySourcingId(sourcingEventId, currentStage);
                 setCurrentStage(currentStage)
                 setSections(sections);
+                setEventTypes(eventTypes);
             }
         })()
     }, [])
@@ -130,18 +134,13 @@ const SupplierResponseQuestions: React.FC = () => {
     return (
         <div style={{
             marginTop: 10,
-            padding: 30,
-            // overflow: "hidden",
-            // scrollbarColor: "red",
-            // scrollbarWidth: "none"
+            padding: 30
         }}>
             <div>
                 <Collapse
                     className="supplier-response"
                     bordered={false}
-                    defaultActiveKey={['1']}
                     expandIcon={({ isActive }) =>
-                        // <CaretRightOutlined rotate={isActive ? 90 : 0} />
                         <img src={`${process.env.PUBLIC_URL}/svgs/accordion_icons.svg`} ></img>
                     }
                     style={{ background: token.colorBgContainer }}
@@ -158,7 +157,7 @@ const SupplierResponseQuestions: React.FC = () => {
                 />
                 <div style={{ height: 60 }} ></div>
             </div>
-            {/* <div
+            {currentStage != "RFQ" && <div
                 style={{
                     position: "fixed",
                     width: "100%",
@@ -173,11 +172,28 @@ const SupplierResponseQuestions: React.FC = () => {
                     borderTop: `1px solid ${borderColor}`
                 }}
             >
-                <div style={{ margin: 10 }} >
-                    <Button style={{ marginRight: 10 }} >Close</Button>
-                    <Button style={{ backgroundColor: buttonDarkBlue, color: "white" }} >Submit Response</Button>
+                <div style={{ display: "flex", paddingRight: 10, gap: 10 }} >
+                    <KFButton
+                        buttonType='secondary'
+                    >Close</KFButton>
+                    {(currentStage != "RFI" || !eventTypes.includes("RFQ")) ?
+                        <KFButton
+                            onClick={async () => {
+                                await KFSDK.app.setVariable("sourcing_custom_tab_key", "lines")
+                                const comp1 = await KFSDK.app.page.getComponent("CustomComponents_-Py6oMIbsl")
+                                comp1.refresh()
+                            }}
+                            buttonType='primary' >
+                            Save & next
+                        </KFButton>
+                        :
+                        <KFButton
+                            buttonType='primary' >
+                            Submit
+                        </KFButton>
+                    }
                 </div>
-            </div> */}
+            </div>}
         </div>
     );
 };
@@ -322,7 +338,7 @@ function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response,
     }
 
     return (
-        <div style={{ paddingTop: 10 }} >
+        <div key={_id} style={{ paddingTop: 10 }} >
             <Row style={{ marginTop: 15 }} >
                 <Col span={3}  >
                     <Typography style={{ fontWeight: 600, fontSize: 14 }} >

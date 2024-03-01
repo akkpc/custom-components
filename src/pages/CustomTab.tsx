@@ -17,28 +17,34 @@ interface Tab {
     hideComponents: string[]
 }
 
+declare global {
+    interface Window {
+        tabDocument: any;
+    }
+}
+
 export default function CustomTab() {
     const [tabs, setTabs] = useState<Tab[]>([]);
     const [currentTab, setCurrentTab] = useState<string>("");
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            const { availableTabs, initialTab } = await KFSDK.app.page.getAllParameters();
+            const { availableTabs } = await KFSDK.app.page.getAllParameters();
+            const supplier_response_current_tab_id = await KFSDK.app.getVariable("sourcing_custom_tab_key")
+
             setTabs(JSON.parse(availableTabs || "[]"));
-            setCurrentTab(initialTab)
+            setCurrentTab(supplier_response_current_tab_id)
         })()
     }, [])
 
     useEffect(() => {
         (async () => {
             if (currentTab) {
-                await enableHiddenTabs();
-                let tabIndex = tabs.findIndex((tab) => tab.key == currentTab);
-                let ctab = tabs[tabIndex]
-                for await (const tab of ctab.hideComponents) {
-                    const cTab = await KFSDK.app.page.getComponent(tab);
-                    cTab.hide();
-                }
+                console.log("currentTab ,", currentTab)
+                await hideAll();
+                const index = tabs.findIndex((t) => t.key == currentTab)
+                const cTab = await KFSDK.app.page.getComponent(tabs[index].componentId);
+                cTab.show();
             }
         })()
     }, [currentTab])
@@ -47,15 +53,6 @@ export default function CustomTab() {
         for await (const tab of tabs) {
             const cTab = await KFSDK.app.page.getComponent(tab.componentId);
             cTab.hide();
-        }
-    }
-
-    async function enableHiddenTabs() {
-        for await (const tab of tabs) {
-            for await (const c of tab.hideComponents) {
-                const cTab = await KFSDK.app.page.getComponent(c);
-                cTab.show();
-            }
         }
     }
 
@@ -78,6 +75,7 @@ export default function CustomTab() {
                                 const activeComponent = await KFSDK.app.page.getComponent(componentId);
                                 activeComponent.show();
                                 setCurrentTab(key);
+                                await KFSDK.app.setVariable("sourcing_custom_tab_key", key)
                             }}
                             isActive={currentTab == key}
                             key={key}
@@ -92,6 +90,7 @@ export default function CustomTab() {
 function TabButton({ name, onClick, tabKey: key, isActive, setCurrentTab }: ButtonProps) {
     return (
         <Button
+            id={key}
             type={'default'}
             style={{
                 borderRadius: 15,
