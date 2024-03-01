@@ -9,7 +9,7 @@ const description = 'This is a description.';
 type Steps = {
   key: string;
   title: string;
-  description: string;
+  description?: string;
   imageName?: string;
   isCompleted?: boolean;
 }
@@ -18,7 +18,7 @@ type StageParams = {
   endDate: string;
 }
 
-const stepperMeta = [
+const stepperMeta: Steps[] = [
   {
     key: "event_creation_draft",
     title: "Event Creation (Draft)",
@@ -80,6 +80,7 @@ const stepperMeta = [
     imageName: "stepper_award_icon.svg",
   },
 ];
+const validStages = stepperMeta.map((step) => step.key)
 
 const completedIcon = "stepper_completed_icon.svg";
 
@@ -94,33 +95,47 @@ const Buyer_Stepper: React.FC = () => {
       let allParams = await KFSDK.app.page.getAllParameters();
 
       const stages: Record<string, string> = JSON.parse(allParams.stepper || "{}");
-      console.log("Stages : ", allParams.stepperObj)
-      const currentStage = allParams.currentStage;
-      const dynamicStages: any[] = getStepperObject(stepperMeta, stages)
-      console.log("Stages : ", dynamicStages)
+      const currentStage = (allParams.current_status);
+      const dynamicStages: any[] = getStepperObject(stepperMeta, stages, currentStage)
+      console.log("Stages : ", dynamicStages, currentStage)
       setSteps(dynamicStages);
+      setCompletedKey(currentStage);
     })()
   }, [])
 
-  function getStepperObject(stepperMeta: Record<string, string>[], stages: Record<string, string>) {
-    return stepperMeta.filter((step) => step.key in stages).map((step: any) => ({ ...step, description: stages[step.key] }))
+  function getStepperObject(stepperMeta: Steps[], stages: Record<string, string>, currentStage: string) {
+    stepperMeta = stepperMeta.filter((step) => step.key in stages).map((step: any) => ({ ...step, description: stages[step.key] }))
+
+    if (validStages.includes(currentStage)) {
+      stepperMeta = stepperMeta.map((step) => {
+        let isCompleted = true;
+        if (currentStage == step.key) {
+          isCompleted = false;
+          currentStage = "";
+        }
+        return (
+          {
+            ...step,
+            isCompleted
+          }
+        )
+      })
+    }
+    return stepperMeta;
   }
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }} >
       <div>
         {
-          steps.map(({ key, imageName, title, description }, index) => {
-            if (completedKey == key) {
-              setCompletedKey(undefined);
-            }
+          steps.map(({ key, imageName, title, description, isCompleted }, index) => {
             return (
               <div style={{ display: "flex" }} key={index} >
                 <div style={{ display: "flex", alignItems: "center", flexDirection: "column" }} >
-                  <img style={{ zIndex: 1000 }} src={`${process.env.PUBLIC_URL}/svgs/${completedKey ? completedIcon : imageName}`} ></img>
+                  <img style={{ zIndex: 1000 }} src={`${process.env.PUBLIC_URL}/svgs/${isCompleted ? completedIcon : imageName}`} ></img>
                   {
                     (index < steps.length - 1) &&
-                    <div style={{ height: 70, width: 9, backgroundColor: completedKey ? stepperEdgeCompletedColor : stepperEdgeColor, marginTop: -3 }} ></div>
+                    <div style={{ height: 70, width: 9, backgroundColor: isCompleted ? stepperEdgeCompletedColor : stepperEdgeColor, marginTop: -3 }} ></div>
                   }
                 </div>
                 <div style={{ marginLeft: 10 }} >
