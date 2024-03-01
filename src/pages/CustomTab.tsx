@@ -10,47 +10,53 @@ interface ButtonProps {
     isActive: boolean;
 }
 
-// const qnaComponentId = "Container_QNpAY2qEr"
-// const questionnaireComponentId = "Container_JzO2vWLyR"
-// const lineComponentId = "Container_kou7_plwp"
-
-const qnaComponentId = "Container_NLO3KNKBV"
-const questionnaireComponentId = "Container_SIywL7mzo"
-const lineComponentId = "Container_ymVafCM7_"
-
-const tabs = [
-    {
-        key: "q_and_a",
-        componentId: qnaComponentId,
-        name: "Q&A"
-    },
-    {
-        key: "questionnaires",
-        componentId: questionnaireComponentId,
-        name: "Questionnaires"
-    },
-    {
-        key: "lines",
-        componentId: lineComponentId,
-        name: "Lines"
-    }
-]
+interface Tab {
+    key: string;
+    componentId: string;
+    name: string;
+    hideComponents: string[]
+}
 
 export default function CustomTab() {
-    const [currentTab, setCurrentTab] = useState<string>("q_and_a");
+    const [tabs, setTabs] = useState<Tab[]>([]);
+    const [currentTab, setCurrentTab] = useState<string>("");
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
+            const { availableTabs, initialTab } = await KFSDK.app.page.getAllParameters();
+            setTabs(JSON.parse(availableTabs || "[]"));
+            setCurrentTab(initialTab)
         })()
     }, [])
 
+    useEffect(() => {
+        (async () => {
+            if (currentTab) {
+                await enableHiddenTabs();
+                let tabIndex = tabs.findIndex((tab) => tab.key == currentTab);
+                let ctab = tabs[tabIndex]
+                for await (const tab of ctab.hideComponents) {
+                    const cTab = await KFSDK.app.page.getComponent(tab);
+                    cTab.hide();
+                }
+            }
+        })()
+    }, [currentTab])
+
     async function hideAll() {
-        const qnaComponent = await KFSDK.app.page.getComponent(qnaComponentId);
-        const questionnaireComponent = await KFSDK.app.page.getComponent(questionnaireComponentId);
-        const lineComponent = await KFSDK.app.page.getComponent(lineComponentId);
-        qnaComponent.hide()
-        questionnaireComponent.hide()
-        lineComponent.hide()
+        for await (const tab of tabs) {
+            const cTab = await KFSDK.app.page.getComponent(tab.componentId);
+            cTab.hide();
+        }
+    }
+
+    async function enableHiddenTabs() {
+        for await (const tab of tabs) {
+            for await (const c of tab.hideComponents) {
+                const cTab = await KFSDK.app.page.getComponent(c);
+                cTab.show();
+            }
+        }
     }
 
     return (
@@ -96,7 +102,7 @@ function TabButton({ name, onClick, tabKey: key, isActive, setCurrentTab }: Butt
                 justifyContent: "center",
                 fontSize: 13,
                 backgroundColor: (isActive) ? "#F1F5FA" : "transparent",
-                boxShadow:"none",
+                boxShadow: "none",
                 textShadow: "none"
             }}
             onClick={() => {
