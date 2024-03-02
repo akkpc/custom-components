@@ -13,7 +13,7 @@ import { AccordionTable } from "../pages/Table";
 import { AccordionTableWeightage } from "../pages/Table_Weightage";
 import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
 import { TimerComponent } from "../pages/TimerComponent";
-import { CheckboxComponent } from "../pages/Checkbox";
+import { CheckboxComponent } from "../pages/TermsAndCondition";
 import { Buyer_Stepper } from "../pages/Buyer_Stepper";
 import CustomTab from "../pages/CustomTab";
 
