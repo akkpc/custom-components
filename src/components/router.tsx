@@ -63,7 +63,7 @@ const router = createHashRouter([
         element: <TemplateQuestionnaire />
     },
     {
-        path: "/stepper",
+        path: "/supplier_stepper",
         element: <Supplier_Stepper />
     },
     {
@@ -79,7 +79,7 @@ const router = createHashRouter([
         element: <SourcingTemplate />
     },
     {
-        path: "/c",
+        path: "/supplier_response_page",
         element: <SupplierResponsePage />
     },
     {

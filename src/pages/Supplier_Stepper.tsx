@@ -88,7 +88,7 @@ const Supplier_Stepper: React.FC = () => {
   }
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }} >
+    steps.length > 0 ? <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }} >
       <div>
         {
           steps.map(({ key, imageName, title, description }, index) => {
@@ -118,7 +118,7 @@ const Supplier_Stepper: React.FC = () => {
           )
         }
       </div>
-    </div>
+    </div> : <div>Loading...</div>
   )
 }
 
