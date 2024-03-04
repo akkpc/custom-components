@@ -3,16 +3,80 @@ import { useEffect, useState } from 'react'
 import { KFButton } from '../components/KFButton'
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
+enum StatusType {
+    Not_Responded = "Not Responded",
+    Accepted = "Accepted",
+    Declined = "Declined",
+}
+
+const title = "Are you sure want to reject this Event ?";
+const content = "You are about to reject this event, You can't participate this event anymore";
 export function CheckboxComponent() {
 
     const [checked, setChecked] = useState(false)
+    const [supplierTaskId, setSupplierTaskID] = useState("")
+    const [currentConsentStatus, setCurrentConsentStatus] = useState<StatusType>(StatusType.Not_Responded)
 
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            console.log("KFSDK : ", await KFSDK?.app.getVariable("checkbox_enabled"))
+            // await hideAll()
+            const { supplierTaskId: stid } = await KFSDK.app.page.getAllParameters()
+            console.log("supplierTaskId")
+            setSupplierTaskID(stid);
         })()
     }, [])
+
+    useEffect(() => {
+        (async () => {
+            if (supplierTaskId) {
+                const my_task: any = await getDetail(supplierTaskId);
+                if (my_task.Consent_Status == StatusType.Accepted) {
+                    await toggle(my_task.Consent_Status);
+                } else {
+                    setCurrentConsentStatus(my_task.Consent_Status);
+                }
+            }
+        })()
+    }, [supplierTaskId])
+
+    async function updateConsent(isAccepted: boolean) {
+        const consent: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Supplier_Tasks_A00/${supplierTaskId}`, {
+            method: "POST",
+            body: JSON.stringify({
+                Consent_Status: isAccepted ? "Accepted" : "Declined"
+            })
+        })).Data
+        return consent
+    }
+
+    async function getDetail(supplierTaskId: string) {
+        const my_task: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Supplier_Tasks_A00/${supplierTaskId}`))
+
+        return my_task
+    }
+
+    async function toggle(currentConsentStatus: StatusType) {
+        const continueComponent = await KFSDK.app.page.getComponent("Container_bcpG-cP9H")
+        const inputComponent = await KFSDK.app.page.getComponent("CustomComponents_0CHJdOkX1c")
+        if(currentConsentStatus == StatusType.Accepted) {
+            continueComponent.show()
+        } else{ 
+            inputComponent.show()
+        }
+    }
+
+    async function hideAll() {
+        const continueComponent = await KFSDK.app.page.getComponent("Container_bcpG-cP9H")
+        const inputComponent = await KFSDK.app.page.getComponent("CustomComponents_0CHJdOkX1c")
+        inputComponent.hide()
+        continueComponent.hide()
+    }
+
+    async function refersh() {
+        const tandc = await KFSDK.app.page.getComponent("CustomComponents_0CHJdOkX1c")
+        tandc.refresh()
+    }
     return (
         <div style={{
             display: "flex",
@@ -28,7 +92,7 @@ export function CheckboxComponent() {
                 justifyContent: "space-around",
                 height: "100%"
             }} >
-                <div
+                {(currentConsentStatus == StatusType.Not_Responded) ? <div
                     style={{
                         display: "flex",
                     }}
@@ -38,19 +102,57 @@ export function CheckboxComponent() {
                         Read and Accept
                         <a>&nbsp;Terms & Conditions</a>
                     </Typography>
-                </div>
+                </div> :
+                    (currentConsentStatus == StatusType.Accepted) ? <Typography style={{ marginLeft: 8, fontSize: 15 }} >
+                        Read Accepted
+                        <a>&nbsp;Terms & Conditions</a>
+                    </Typography> : <></>
+                }
                 <div>
-                    <KFButton
+                    {currentConsentStatus == StatusType.Accepted ? <KFButton
                         buttonType='primary'
-                        style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
-                        className=""
-                    >Reject Invite</KFButton>
-                    <KFButton
-                        buttonType="primary"
-                        disabled={!checked}
-                        style={{ backgroundColor: "green", color: "white", fontWeight: "600" }}
-                        className=""
-                    >Accept Invite</KFButton>
+                        // style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
+                        // className=""
+                        onClick={async () => {
+
+                        }}
+                    >Continue</KFButton>
+                        :
+                        currentConsentStatus == StatusType.Declined ?
+                            <div>
+                                <Typography>Declined</Typography>
+                            </div> :
+                            <div>
+                                <KFButton
+                                    buttonType='primary'
+                                    style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
+                                    className=""
+                                    onClick={async () => {
+                                        KFSDK.client.showConfirm({
+                                            title,
+                                            content
+                                        }).then(async (action: any) => {
+                                            if (action === "OK") {
+                                                await updateConsent(false)
+                                                await refersh();
+                                            }
+                                            else {
+                                            }
+                                        })
+                                    }}
+                                >Reject Invite</KFButton>
+                                <KFButton
+                                    buttonType="primary"
+                                    disabled={!checked}
+                                    style={{ backgroundColor: "green", color: "white", fontWeight: "600" }}
+                                    className=""
+                                    onClick={async () => {
+                                        await updateConsent(true)
+                                        await refersh();
+                                    }}
+                                >Accept Invite</KFButton>
+                            </div>
+                    }
                 </div>
             </div>
         </div>

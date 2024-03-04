@@ -9,7 +9,7 @@ const description = 'This is a description.';
 type Steps = {
   key: string;
   title: string;
-  description: string;
+  description?: string;
   imageName?: string;
   isCompleted?: boolean;
 }
@@ -18,32 +18,42 @@ type StageParams = {
   endDate: string;
 }
 
-const staticSteps: Steps[] = [
+const completedIcon = "stepper_completed_icon.svg";
+
+const stepsMetaData: Steps[] = [
   {
-    key: "1",
+    key: "SupplierConsent",
     title: "Supplier Consent",
-    description: new Date().toLocaleString(),
-    imageName: "stepper_clarification_icon.svg",
-    isCompleted: true
-  },
-
-  {
-    key: "6",
-    title: "Supplier Clarifications",
-    description: new Date().toLocaleString(),
     imageName: "stepper_clarification_icon.svg",
   },
-
   {
-    key: "7",
+    key: "RFI",
+    title: "RFI Response",
+    imageName: "stepper_pending_icon.svg",
+  },
+  {
+    key: "RFP",
+    title: "RFP Response",
+    imageName: "stepper_pending_icon.svg",
+  },
+  {
+    key: "RFP_Supplier_Clarification",
+    title: "Supplier Clarification",
+    imageName: "stepper_clarification_icon.svg",
+  },
+  {
+    key: "RFQ",
+    title: "Supplier Clarification",
+    imageName: "stepper_pending_icon.svg",
+  },
+  {
+    key: "AwardCommunicaiton",
     title: "Award Communication",
-    description: new Date().toLocaleString(),
     imageName: "stepper_award_icon.svg",
   }
 ]
 
-
-const completedIcon = "stepper_completed_icon.svg";
+const availableStages = stepsMetaData.map(({ key }) => key);
 
 const Supplier_Stepper: React.FC = () => {
 
@@ -57,66 +67,23 @@ const Supplier_Stepper: React.FC = () => {
 
       const stages: Record<string, string> = JSON.parse(allParams.stepperObj || "{}");
       const currentStage = allParams.currentStage;
-      const dynamicStages: any[] = getStepperObject(stages)
+      const dynamicStages: any[] = getStepperObject(stages, currentStage)
+      console.log("dynamicStages" , dynamicStages, currentStage, stages)
       setSteps(dynamicStages);
     })()
   }, [])
 
-  function getStepperObject(stages: Record<string, string>) {
-    let columns = []
-    if (stages.hasOwnProperty("SupplierConsent")) {
-      columns.push({
-        key: "SupplierConsent",
-        title: "Supplier Consent",
-        description: stages["SupplierConsent"],
-        imageName: "stepper_clarification_icon.svg",
-      })
+  function getStepperObject(stages: Record<string, string>, currentStage: string) {
+    let columns = stepsMetaData.filter(({ key }) => stages.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stages[stage.key] }))
+    if (availableStages.includes(currentStage)) {
+      for (let i = 0; i < columns.length; columns) {
+        if (columns[i].key == currentStage) {
+          break;
+        }
+        columns[i].isCompleted = true;
+      }
     }
 
-    if (stages.hasOwnProperty("RFI")) {
-      columns.push({
-        key: "RFI",
-        title: "RFI Response",
-        description: stages["RFI"],
-        imageName: "stepper_pending_icon.svg",
-      })
-    }
-
-    if (stages.hasOwnProperty("RFP")) {
-      columns.push({
-        key: "RFP",
-        title: "RFP Response",
-        description: stages["RFP"],
-        imageName: "stepper_pending_icon.svg",
-      })
-    }
-
-    if (stages.hasOwnProperty("RFP_Supplier_Clarification")) {
-      columns.push({
-        key: "RFP_Supplier_Clarification",
-        title: "Supplier Clarification",
-        description: stages["RFP_Supplier_Clarification"],
-        imageName: "stepper_clarification_icon.svg",
-      })
-    }
-
-    if (stages.hasOwnProperty("RFQ")) {
-      columns.push({
-        key: "RFQ",
-        title: "Supplier Clarification",
-        description: stages["RFQ"],
-        imageName: "stepper_pending_icon.svg",
-      })
-    }
-
-    if (stages.hasOwnProperty("AwardCommunicaiton")) {
-      columns.push({
-        key: "AwardCommunicaiton",
-        title: "Award Communication",
-        description: stages["AwardCommunicaiton"],
-        imageName: "stepper_award_icon.svg",
-      })
-    }
     return columns
   }
 
@@ -156,6 +123,6 @@ const Supplier_Stepper: React.FC = () => {
 }
 
 export {
-    Supplier_Stepper
+  Supplier_Stepper
 };
 
