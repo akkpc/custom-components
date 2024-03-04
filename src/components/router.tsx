@@ -32,7 +32,7 @@ function Rest() {
 const router = createHashRouter([
     {
         path: "/",
-        element: <AccordionTable />
+        element: <div>Home Page</div>
     },
     {
         path: "/calendar",
@@ -94,7 +94,7 @@ const router = createHashRouter([
         path: "/supplier_response_tab",
         element: <CustomTab />
     }
-] , {
+], {
     basename: "/custom-components"
 });
 
