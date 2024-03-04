@@ -1,21 +1,21 @@
 import {
-    createBrowserRouter
+    createHashRouter
 } from "react-router-dom";
 import { BarChart } from "../pages/BarChart";
 import { BasicChart } from "../pages/BasicChart";
+import { Buyer_Stepper } from "../pages/Buyer_Stepper";
 import UICalender from "../pages/Calender";
+import CustomTab from "../pages/CustomTab";
 import { LineChart } from "../pages/LineChart";
 import { QuestionTab } from "../pages/QuestionTab";
 import { SourcingTemplate } from "../pages/SourcingTemplate";
-import { Supplier_Stepper } from "../pages/Supplier_Stepper";
 import { SupplierResponsePage } from "../pages/SupplierResponseQuestions";
+import { Supplier_Stepper } from "../pages/Supplier_Stepper";
 import { AccordionTable } from "../pages/Table";
 import { AccordionTableWeightage } from "../pages/Table_Weightage";
 import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
-import { TimerComponent } from "../pages/TimerComponent";
 import { CheckboxComponent } from "../pages/TermsAndCondition";
-import { Buyer_Stepper } from "../pages/Buyer_Stepper";
-import CustomTab from "../pages/CustomTab";
+import { TimerComponent } from "../pages/TimerComponent";
 
 function Rest() {
     return (
@@ -29,7 +29,7 @@ function Rest() {
     )
 }
 
-const router = createBrowserRouter([
+const router = createHashRouter([
     {
         path: "/",
         element: <AccordionTable />
@@ -94,7 +94,7 @@ const router = createBrowserRouter([
         path: "/supplier_response_tab",
         element: <CustomTab />
     }
-], {
+] , {
     basename: "/custom-components"
 });
 
