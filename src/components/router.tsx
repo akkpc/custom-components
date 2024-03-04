@@ -18,7 +18,7 @@ import { Buyer_Stepper } from "../pages/Buyer_Stepper";
 import CustomTab from "../pages/CustomTab";
 
 function Rest() {
-    return(
+    return (
         <div>
             Hello
             <button onClick={() => {
@@ -31,17 +31,11 @@ function Rest() {
 
 const router = createBrowserRouter([
     {
-        path: "/custom-components",
-        element: <AccordionTable />
-    },
-
-    {
         path: "/",
-        // element: <div>hello</div>,
         element: <AccordionTable />
     },
     {
-        path: "/custom-components/calendar",
+        path: "/calendar",
         element: <UICalender />
     },
     {
@@ -74,7 +68,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/buyer_stepper",
-        element: <Buyer_Stepper/>
+        element: <Buyer_Stepper />
     },
     {
         path: "/weightage",
@@ -86,11 +80,11 @@ const router = createBrowserRouter([
     },
     {
         path: "/c",
-        element: <SupplierResponsePage/>
+        element: <SupplierResponsePage />
     },
     {
         path: "/timer",
-        element: <TimerComponent/>
+        element: <TimerComponent />
     },
     {
         path: "/checkbox",
@@ -98,9 +92,11 @@ const router = createBrowserRouter([
     },
     {
         path: "/supplier_response_tab",
-        element: <CustomTab/>
+        element: <CustomTab />
     }
-]);
+], {
+    basename: "/custom-components"
+});
 
 export {
     router
