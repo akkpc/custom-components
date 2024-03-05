@@ -137,7 +137,7 @@ export function QuestionTab() {
             await KFSDK.initialize();
             let allParams = await KFSDK.app.page.getAllParameters();
             setCurrentTab(tabs[allParams.user_type])
-            setCurrentUserEmail(allParams.buyer_email)
+            setCurrentUserEmail(allParams.supplier_email)
             setSourcingEventId(allParams.sourcing_event_id)
         })()
     }, [])
