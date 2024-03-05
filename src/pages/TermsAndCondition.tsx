@@ -23,7 +23,6 @@ export function CheckboxComponent() {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            // await hideAll()
             const { supplierTaskId: stid } = await KFSDK.app.page.getAllParameters()
             console.log("supplierTaskId", stid)
             setSupplierTaskID(stid);
@@ -34,7 +33,6 @@ export function CheckboxComponent() {
         (async () => {
             if (supplierTaskId) {
                 const my_task: any = await getDetail(supplierTaskId);
-                console.log("first " , my_task)
                 await toggle(my_task.Consent_Status);
                 setCurrentConsentStatus(my_task.Consent_Status);
             }
@@ -70,12 +68,12 @@ export function CheckboxComponent() {
         }
     }
 
-    // async function hideAll() {
-    //     const continueComponent = await KFSDK.app.page.getComponent(continueComponentId)
-    //     const inputComponent = await KFSDK.app.page.getComponent(inputComponentId)
-    //     inputComponent.hide()
-    //     continueComponent.hide()
-    // }
+    async function hideAll() {
+        const continueComponent = await KFSDK.app.page.getComponent(continueComponentId)
+        const inputComponent = await KFSDK.app.page.getComponent(inputComponentId)
+        inputComponent.hide()
+        continueComponent.hide()
+    }
 
     async function refersh() {
         const tandc = await KFSDK.app.page.getComponent(inputComponentId)

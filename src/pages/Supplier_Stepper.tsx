@@ -58,25 +58,25 @@ const availableStages = stepsMetaData.map(({ key }) => key);
 const Supplier_Stepper: React.FC = () => {
 
   const [steps, setSteps] = useState<Steps[]>([])
-  const [completedKey, setCompletedKey] = useState();
 
   useEffect(() => {
     (async () => {
       await KFSDK.initialize();
       let allParams = await KFSDK.app.page.getAllParameters();
 
+
       const stages: Record<string, string> = JSON.parse(allParams.stepperObj || "{}");
       const currentStage = allParams.currentStage;
-      const dynamicStages: any[] = getStepperObject(stages, currentStage)
+      const dynamicStages: any[] = await getStepperObject(stages, currentStage)
       console.log("dynamicStages" , dynamicStages, currentStage, stages)
       setSteps(dynamicStages);
     })()
   }, [])
 
-  function getStepperObject(stages: Record<string, string>, currentStage: string) {
+  async function getStepperObject(stages: Record<string, string>, currentStage: string) {
     let columns = stepsMetaData.filter(({ key }) => stages.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stages[stage.key] }))
     if (availableStages.includes(currentStage)) {
-      for (let i = 0; i < columns.length; columns) {
+      for (let i = 0; i < columns.length; i++) {
         if (columns[i].key == currentStage) {
           break;
         }
@@ -91,17 +91,14 @@ const Supplier_Stepper: React.FC = () => {
     steps.length > 0 ? <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }} >
       <div>
         {
-          steps.map(({ key, imageName, title, description }, index) => {
-            if (completedKey == key) {
-              setCompletedKey(undefined);
-            }
+          steps.map(({ imageName, title, description, isCompleted }, index) => {
             return (
               <div style={{ display: "flex" }} key={index} >
                 <div style={{ display: "flex", alignItems: "center", flexDirection: "column" }} >
-                  <img style={{ zIndex: 1000 }} src={`${process.env.PUBLIC_URL}/svgs/${completedKey ? completedIcon : imageName}`} ></img>
+                  <img style={{ zIndex: 1000 }} src={`${process.env.PUBLIC_URL}/svgs/${isCompleted ? completedIcon : imageName}`} ></img>
                   {
                     (index < steps.length - 1) &&
-                    <div style={{ height: 70, width: 9, backgroundColor: completedKey ? stepperEdgeCompletedColor : stepperEdgeColor, marginTop: -3 }} ></div>
+                    <div style={{ height: 70, width: 9, backgroundColor: isCompleted ? stepperEdgeCompletedColor : stepperEdgeColor, marginTop: -3 }} ></div>
                   }
                 </div>
                 <div style={{ marginLeft: 10 }} >
