@@ -79,7 +79,11 @@ export function TimerComponent() {
   }, [])
 
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
+    <div style={{
+       display: "flex", 
+       alignItems: "center", 
+       justifyContent: "start" 
+       }} >
       <div style={{ display: "flex", gap: 10 }} >
         {
           Object.keys(timeData).map((key: string, index) => (

@@ -7,6 +7,7 @@ import { Buyer_Stepper } from "../pages/Buyer_Stepper";
 import UICalender from "../pages/Calender";
 import CustomTab from "../pages/CustomTab";
 import { LineChart } from "../pages/LineChart";
+import { ProgressChart } from "../pages/ProgressChart";
 import { QuestionTab } from "../pages/QuestionTab";
 import { SourcingTemplate } from "../pages/SourcingTemplate";
 import { SupplierResponsePage } from "../pages/SupplierResponseQuestions";
@@ -93,6 +94,10 @@ const router = createHashRouter([
     {
         path: "/supplier_response_tab",
         element: <CustomTab />
+    },
+    {
+        path: "/progress-chart",
+        element: <ProgressChart/>
     }
 ], {
     basename: "/custom-components"
