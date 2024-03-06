@@ -61,9 +61,31 @@ function parseJSON(jsonString: string) {
 function getKey(str: string) {
     return str.replaceAll(" ", "_")
 }
+
+
+function convertStringToDate(dateString: string) {
+    if (dateString) {
+        var dateTimePart = dateString.split(' ')[0];
+        var dateObject = new Date(dateTimePart);
+        return !isNaN(dateObject.getTime()) ? dateObject.toLocaleDateString() : "Not yet defined";
+    }
+    return "Not yet defined"
+}
+
+function getDateObj(dateString: string) {
+    if (dateString) {
+        var dateTimePart = dateString.split(' ')[0];
+        var dateObject = new Date(dateTimePart);
+        return dateObject
+    }
+    return;
+}
+
 export {
     calculateSplitValue,
     getColorCode, getKey, getUniqueString,
-    parseJSON
+    parseJSON,
+    convertStringToDate,
+    getDateObj
 };
 
