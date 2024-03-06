@@ -13,6 +13,8 @@ const title = "Are you sure want to reject this Event ?";
 const content = "You are about to reject this event, You can't participate this event anymore";
 const continueComponentId = "Container_bcpG-cP9H"
 const inputComponentId = "Container_ltTuhc3t6"
+const customComponent = "CustomComponents_0CHJdOkX1c"
+const stepperComponent = "CustomComponents_xEiBBj1Ypy"
 
 export function CheckboxComponent() {
 
@@ -24,7 +26,6 @@ export function CheckboxComponent() {
         (async () => {
             await KFSDK.initialize();
             const { supplierTaskId: stid } = await KFSDK.app.page.getAllParameters()
-            console.log("supplierTaskId", stid)
             setSupplierTaskID(stid);
         })()
     }, [])
@@ -76,8 +77,10 @@ export function CheckboxComponent() {
     }
 
     async function refersh() {
-        const tandc = await KFSDK.app.page.getComponent(inputComponentId)
+        const tandc = await KFSDK.app.page.getComponent(customComponent)
+        const stepper = await KFSDK.app.page.getComponent(stepperComponent)
         tandc.refresh()
+        stepper.refresh()
     }
     return (
         <div style={{

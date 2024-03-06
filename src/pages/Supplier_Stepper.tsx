@@ -1,10 +1,10 @@
 import { Typography } from "antd";
 import React, { useEffect, useState } from 'react';
 import { stepperEdgeColor, stepperEdgeCompletedColor } from "../helpers/colors";
+import { convertStringToDate, getDateObj } from "../helpers";
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const description = 'This is a description.';
-
 
 type Steps = {
   key: string;
@@ -62,19 +62,62 @@ const Supplier_Stepper: React.FC = () => {
   useEffect(() => {
     (async () => {
       await KFSDK.initialize();
-      let allParams = await KFSDK.app.page.getAllParameters();
-
-
-      const stages: Record<string, string> = JSON.parse(allParams.stepperObj || "{}");
-      const currentStage = allParams.currentStage;
-      const dynamicStages: any[] = await getStepperObject(stages, currentStage)
-      console.log("dynamicStages" , dynamicStages, currentStage, stages)
+      let { task_id } = await KFSDK.app.page.getAllParameters();
+      const dynamicStages: any[] = await getStepperObject(task_id)
       setSteps(dynamicStages);
     })()
   }, [])
 
-  async function getStepperObject(stages: Record<string, string>, currentStage: string) {
-    let columns = stepsMetaData.filter(({ key }) => stages.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stages[stage.key] }))
+  async function getStepperObject(id: string) {
+    const taskDetails = await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Supplier_Tasks_A00/${id}`);
+    const eventId = taskDetails.Event_ID
+
+    const SourcingDetails: any = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/Sourcing_Master_A00/${eventId}`);
+    const {
+      Current_Stage,
+      RSVP_End_Date_3,
+      Awarding_Communication,
+      Event_Type,
+      RFI_End_Date,
+      RFP_End_Date,
+      RFQ_End_Date
+    }: any = SourcingDetails;
+
+    let stepperObj: any = {
+      SupplierConsent: convertStringToDate(RSVP_End_Date_3),
+      AwardCommunicaiton: convertStringToDate(Awarding_Communication)
+    }
+    console.log("Event_Type :  ", Event_Type)
+    if (Event_Type.includes("RFI")) {
+      stepperObj.RFI = convertStringToDate(RFI_End_Date)
+    }
+
+    if (Event_Type.includes("RFP")) {
+      stepperObj.RFP = convertStringToDate(RFP_End_Date)
+      stepperObj.RFP_Supplier_Clarification = convertStringToDate(RFP_End_Date)
+    }
+
+    if (Event_Type.includes("RFQ")) {
+      stepperObj.RFQ = convertStringToDate(RFQ_End_Date)
+    }
+
+    let currentStage = "SupplierConsent";
+    if (taskDetails.Consent_Status == "Accepted") {
+      currentStage = Current_Stage;
+    }
+
+    const time: any = getDateObj(SourcingDetails[`${Current_Stage}_End_Date`])?.getTime();
+    if (time) {
+      if (time < new Date().getTime()) {
+        if (Current_Stage == "RFP") {
+          currentStage = "RFP_Supplier_Clarification";
+        } else {
+          currentStage = "AwardCommunicaiton";
+        }
+      }
+    }
+
+    let columns = stepsMetaData.filter(({ key }) => stepperObj.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stepperObj[stage.key] }))
     if (availableStages.includes(currentStage)) {
       for (let i = 0; i < columns.length; i++) {
         if (columns[i].key == currentStage) {
