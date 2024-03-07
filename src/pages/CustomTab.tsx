@@ -31,7 +31,6 @@ export default function CustomTab() {
             await KFSDK.initialize();
             const { availableTabs } = await KFSDK.app.page.getAllParameters();
             const parsedTabs = JSON.parse(availableTabs || "[]");
-            await KFSDK.app.setVariable("sourcing_custom_tab_key" , "Summary")
             const supplier_response_current_tab_id = await KFSDK.app.getVariable("sourcing_custom_tab_key")
 
             setTabs(parsedTabs);

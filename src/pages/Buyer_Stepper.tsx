@@ -87,7 +87,6 @@ const completedIcon = "stepper_completed_icon.svg";
 const Buyer_Stepper: React.FC = () => {
 
   const [steps, setSteps] = useState<Steps[]>([])
-  const [completedKey, setCompletedKey] = useState();
 
   useEffect(() => {
     (async () => {
@@ -99,7 +98,6 @@ const Buyer_Stepper: React.FC = () => {
       const dynamicStages: any[] = getStepperObject(stepperMeta, stages, currentStage)
       console.log("Stages : ", dynamicStages, currentStage)
       setSteps(dynamicStages);
-      setCompletedKey(currentStage);
     })()
   }, [])
 

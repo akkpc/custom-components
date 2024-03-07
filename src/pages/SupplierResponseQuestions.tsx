@@ -27,6 +27,16 @@ interface NewProps {
     onBlur: () => void;
 }
 
+interface QuestionProps {
+    sourcingSectionId: string,
+    sectionId: string,
+    sourcingEventId: string,
+    event_stage: string,
+    progressValue: number,
+    setSections: React.Dispatch<React.SetStateAction<SourcingSupplierSection[]>>,
+    supplierId: string
+}
+
 interface HeaderProps {
     text: string,
     progressValue: number
@@ -69,6 +79,7 @@ const SupplierResponseQuestions: React.FC = () => {
     const [currentStage, setCurrentStage] = useState("")
     const [sections, setSections] = useState<SourcingSupplierSection[]>([])
     const [eventTypes, setEventTypes] = useState<string[]>([])
+    const [supplierId, setSupplierId] = useState("");
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
@@ -83,17 +94,19 @@ const SupplierResponseQuestions: React.FC = () => {
             await KFSDK.initialize();
             let { currentStage, sourcingEventId, Event_Type } = await KFSDK.app.page.getAllParameters();
             const eventTypes: string[] = JSON.parse(Event_Type || "[]");
+            const supplier_id = await KFSDK.app.getVariable("currentSupplierId");
             if (sourcingEventId) {
+                const sections: SourcingSupplierSection[] = await getSectionsBySourcingId(sourcingEventId, currentStage, supplier_id);
                 setSourcingEventId(sourcingEventId)
-                const sections: SourcingSupplierSection[] = await getSectionsBySourcingId(sourcingEventId, currentStage);
                 setCurrentStage(currentStage)
                 setSections(sections);
                 setEventTypes(eventTypes);
+                setSupplierId(supplier_id)
             }
         })()
     }, [])
 
-    async function getSectionsBySourcingId(sourcingEventId: string, event_stage: string) {
+    async function getSectionsBySourcingId(sourcingEventId: string, event_stage: string, supplier_id: string) {
         const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sectionDataform}/allitems/list?&page_number=1&page_size=10000`,
             {
                 method: "POST",
@@ -116,6 +129,15 @@ const SupplierResponseQuestions: React.FC = () => {
                                         "Operator": "EQUAL_TO",
                                         "RHSType": "Value",
                                         "RHSValue": event_stage,
+                                        "RHSField": null,
+                                        "LHSAttribute": null,
+                                        "RHSAttribute": null
+                                    },
+                                    {
+                                        "LHSField": "Supplier_ID",
+                                        "Operator": "EQUAL_TO",
+                                        "RHSType": "Value",
+                                        "RHSValue": supplier_id,
                                         "RHSField": null,
                                         "LHSAttribute": null,
                                         "RHSAttribute": null
@@ -148,8 +170,14 @@ const SupplierResponseQuestions: React.FC = () => {
                         key: section.Sourcing_Event_Section_ID,
                         label: <Header text={section.Section_Name} progressValue={section.Progress || 0} />,
                         children:
-                            <Questionnaire progressValue={section.Progress || 0} event_stage={currentStage} sourcingEventId={sourcingEventId} sectionId={section.Section_ID} sourcingSectionId={section._id}
+                            <Questionnaire
+                                progressValue={section.Progress || 0}
+                                event_stage={currentStage}
+                                sourcingEventId={sourcingEventId}
+                                sectionId={section.Section_ID}
+                                sourcingSectionId={section._id}
                                 setSections={setSections}
+                                supplierId={supplierId}
                             />,
                         style: panelStyle,
                     }))}
@@ -198,7 +226,7 @@ const SupplierResponseQuestions: React.FC = () => {
     );
 };
 
-function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_stage, progressValue, setSections }: { sourcingSectionId: string, sectionId: string, sourcingEventId: string, event_stage: string, progressValue: number, setSections: React.Dispatch<React.SetStateAction<SourcingSupplierSection[]>> }) {
+function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_stage, progressValue, setSections, supplierId }: QuestionProps) {
     const [questions, setQuestions] = useState<(Question & SupplierResponseQuestionProps)[]>([]);
     const [contentLoaded, setContentLoaded] = useState(false);
     useEffect(() => {
@@ -241,6 +269,15 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
                                     "Operator": "EQUAL_TO",
                                     "RHSType": "Value",
                                     "RHSValue": event_stage,
+                                    "RHSField": null,
+                                    "LHSAttribute": null,
+                                    "RHSAttribute": null
+                                },
+                                {
+                                    "LHSField": "Supplier_ID",
+                                    "Operator": "EQUAL_TO",
+                                    "RHSType": "Value",
+                                    "RHSValue": supplierId,
                                     "RHSField": null,
                                     "LHSAttribute": null,
                                     "RHSAttribute": null
