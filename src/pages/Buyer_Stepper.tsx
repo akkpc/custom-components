@@ -80,7 +80,7 @@ const stepperMeta: Steps[] = [
     imageName: "stepper_award_icon.svg",
   },
 ];
-const validStages = stepperMeta.map((step) => step.key)
+const availableStages = stepperMeta.map((step) => step.key)
 
 const completedIcon = "stepper_completed_icon.svg";
 
@@ -104,24 +104,17 @@ const Buyer_Stepper: React.FC = () => {
   }, [])
 
   function getStepperObject(stepperMeta: Steps[], stages: Record<string, string>, currentStage: string) {
-    stepperMeta = stepperMeta.filter((step) => step.key in stages).map((step: any) => ({ ...step, description: stages[step.key] }))
-
-    if (validStages.includes(currentStage)) {
-      stepperMeta = stepperMeta.map((step) => {
-        let isCompleted = true;
-        if (currentStage == step.key) {
-          isCompleted = false;
-          currentStage = "";
+    let columns = stepperMeta.filter(({ key }) => stages.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stages[stage.key] }))
+    if (availableStages.includes(currentStage)) {
+      for (let i = 0; i < columns.length; i++) {
+        if (columns[i].key == currentStage) {
+          break;
         }
-        return (
-          {
-            ...step,
-            isCompleted
-          }
-        )
-      })
+        columns[i].isCompleted = true;
+      }
     }
-    return stepperMeta;
+
+    return columns;
   }
 
   return (

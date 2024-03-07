@@ -48,9 +48,9 @@ export function ProgressChart() {
                 left: 0
             }} >
                 {
-                    value.map((v) => {
+                    value.map((v,index) => {
                         return (
-                            <div style={{
+                            <div key={index} style={{
                                 backgroundColor: v.color,
                                 borderRadius: 20,
                                 height: 28,
@@ -76,9 +76,9 @@ export function ProgressChart() {
                 marginTop: 20
             }} >
                 {
-                    value.map(({ label, color }) => {
+                    value.map(({ label, color }, index) => {
                         return (
-                            <Label label={label} color={color} />
+                            <Label key={index} label={label} color={color} />
                         )
                     })
                 }

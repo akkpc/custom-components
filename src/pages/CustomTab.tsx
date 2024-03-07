@@ -30,9 +30,11 @@ export default function CustomTab() {
         (async () => {
             await KFSDK.initialize();
             const { availableTabs } = await KFSDK.app.page.getAllParameters();
+            const parsedTabs = JSON.parse(availableTabs || "[]");
+            await KFSDK.app.setVariable("sourcing_custom_tab_key" , "Summary")
             const supplier_response_current_tab_id = await KFSDK.app.getVariable("sourcing_custom_tab_key")
 
-            setTabs(JSON.parse(availableTabs || "[]"));
+            setTabs(parsedTabs);
             setCurrentTab(supplier_response_current_tab_id)
         })()
     }, [])
@@ -40,11 +42,12 @@ export default function CustomTab() {
     useEffect(() => {
         (async () => {
             if (currentTab) {
-                console.log("currentTab ,", currentTab)
                 await hideAll();
                 const index = tabs.findIndex((t) => t.key == currentTab)
-                const cTab = await KFSDK.app.page.getComponent(tabs[index].componentId);
-                cTab.show();
+                if (index >= 0) {
+                    const cTab = await KFSDK.app.page.getComponent(tabs[index].componentId);
+                    cTab.show();
+                }
             }
         })()
     }, [currentTab])
