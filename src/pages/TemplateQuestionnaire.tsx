@@ -25,6 +25,7 @@ export type Question = {
     _id: string;
   }[],
   Template_ID: string;
+  Section_ID: string;
 };
 
 const appBarHeight = 50;
