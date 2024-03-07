@@ -149,19 +149,19 @@ export function QuestionTab() {
                 Filter: {
                     "AND": [
                         {
-                            "AND": [
+                            "OR": [
                                 ...filter,
-                                {
-                                    "LHSField": "Sourcing_Event_ID",
-                                    "Operator": "EQUAL_TO",
-                                    "RHSType": "Value",
-                                    "RHSValue": sourcingEventId,
-                                    "RHSField": null,
-                                    "RHSParam": "",
-                                    "LHSAttribute": null,
-                                    "RHSAttribute": null
-                                }
                             ]
+                        },
+                        {
+                            "LHSField": "Sourcing_Event_ID",
+                            "Operator": "EQUAL_TO",
+                            "RHSType": "Value",
+                            "RHSValue": sourcingEventId,
+                            "RHSField": null,
+                            "RHSParam": "",
+                            "LHSAttribute": null,
+                            "RHSAttribute": null
                         }
                     ]
                 }
