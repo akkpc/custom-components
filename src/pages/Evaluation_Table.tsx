@@ -339,6 +339,8 @@ function RowRender({ record: { key, type, ...rest }, mergeCell, evaluatorSequenc
                             await saveScore()
                         }
                     }}
+                    min={0}
+                    max={100}
                 />
             }
         </div>)
