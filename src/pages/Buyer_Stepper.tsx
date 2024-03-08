@@ -22,57 +22,57 @@ const stepperMeta: Steps[] = [
   {
     key: "event_creation_draft",
     title: "Event Creation (Draft)",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_clarification_icon.svg",
   },
   {
     key: "awaiting_rfi_response",
     title: "Awaiting RFI Response",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "rfi_evaluation_qualification",
     title: "RFI Evaluation & Qualification",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "rfp_configuration",
     title: "RFP Configuration",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "awaiting_rfp_response",
     title: "Awaiting RFP Response",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "rfp_technical_evaluation",
     title: "RFP / Technical Evaluation",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "rfq_configuration",
     title: "RFQ Configuration",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "awaiting_rfq_response",
     title: "Awaiting RFQ Response",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "rfq_commercial_evaluation",
     title: "RFQ / Commercial Evaluation",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "assess_award",
     title: "Assess & Award",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "post_award_actions",
     title: "Post Award Actions",
-    imageName: "stepper_award_icon.svg",
+    imageName: "stepper_pending_icon.svg",
   },
   {
     key: "completed",

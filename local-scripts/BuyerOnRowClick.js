@@ -16,7 +16,7 @@ const {
   RFP_End_Date,
   RFQ_End_Date,
   _created_by,
-  _activity_instance_id,
+  _last_completed_step: _activity_instance_id,
   Event_Name,
   Event_Short_Description,
   Category
@@ -107,7 +107,7 @@ const availableTabs = [
 const payload = {
   id: _id,
   aid: _activity_instance_id,
-  timer_date: getDate(),
+  timer_date: getDate(SourcingDetails[`${Current_Stage}_End_Date`]),
   event_owner_name: _created_by.Name,
   event_owner_email: _created_by.Email,
   current_stage: Current_Stage,

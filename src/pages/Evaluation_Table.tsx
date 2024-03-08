@@ -101,13 +101,13 @@ const Evaluation_Table: React.FC = () => {
             await KFSDK.initialize();
             // let allParams = await KFSDK.app.page.getAllParameters();
             // const sourcing_event_id = allParams.sourcing_event_id;
-            const sourcing_event_id = "Pk8qEciXX8WV";
+            const sourcing_event_id = "Pk8qwoggRz6U";
             const eventStage = "RFP"
             const evaluator_sequence = 1;
 
             const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcing_event_id)
             const suppliers = sourcingDetails["Table::Add_Existing_Suppliers"].map((supplier) => ({
-                _id: supplier._id,
+                _id: supplier.Supplier_Name_1._id,
                 Supplier_Name: supplier.First_Name_1
             }))
             setCurrentStage(eventStage);
