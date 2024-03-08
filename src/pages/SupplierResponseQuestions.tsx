@@ -299,7 +299,9 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
 
     async function getProgressValue() {
         const questions = await getQuestionsBySection();
-        return (questions.filter((q) => q.Text_Response).length / questions.length) * 100
+        const answered = questions.filter((q) => q.Text_Response).length;
+        const total = questions.length;
+        return Number((answered/total  * 100).toFixed(2))
     }
 
     async function updateProgressValue() {
@@ -354,6 +356,7 @@ function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response,
     const [value, setValue] = useState<any>()
 
     useEffect(() => {
+        console.log("Dropdown_options" , Dropdown_options)
         if (Text_Response) {
             setValue(Text_Response);
         }
@@ -435,7 +438,7 @@ export function ResponseField({ type, options, value, setValue, onBlur }: Props 
                     value={value}
                 />
             )
-        case "text_area":
+        case "long_text":
             return (
                 <TextArea
                     placeholder='Enter your answer here'
@@ -448,7 +451,7 @@ export function ResponseField({ type, options, value, setValue, onBlur }: Props 
         case "single_select":
             return (
                 <Select
-                    options={options}
+                    options={options?.map(({Name}) => ({label: Name, value: Name}))}
                     onChange={onChange}
                     placeholder='Choose your answer here'
                     style={{ height: 40, width: 300 }}

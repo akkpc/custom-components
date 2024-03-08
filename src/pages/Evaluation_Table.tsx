@@ -129,20 +129,24 @@ const Evaluation_Table: React.FC = () => {
                 for (let i = 0; i < sections.length; i++) {
                     const section = sections[i];
                     let newSection: TableRowData = {
+                        id: section.Supplier_ID,
                         key: section._id,
                         parameters: section.Section_Name,
-                        [section._id]: section[getScoreKey(evaluatorSequence)],
+                        [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)],
                         type: "section",
-                        children: questions.filter((q) => q.Section_ID == section.Section_ID).map((q) => ({
+                        mergeCell: true,
+                        children: questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID)).map((q) => ({
+                            id: section.Supplier_ID,
                             key: q._id,
                             parameters: q.Question,
-                            [q._id]: q.Score || 0,
-                            [getResponseKey(q._id)]: q.Text_Response,
+                            [q.Supplier_ID]: q[getScoreKey(evaluatorSequence)] || 0,
+                            [getResponseKey(q.Supplier_ID)]: q.Text_Response,
                             type: "question",
-                        })) as any
+                        }))
                     }
                     tableData.push(newSection)
                 }
+                console.log("tableData", tableData)
                 setData(tableData);
                 setContentLoaded(true);
             })()
@@ -168,6 +172,7 @@ const Evaluation_Table: React.FC = () => {
         }];
         suppliers.forEach(({ _id, Supplier_Name }) => {
             columns.push({
+                key: _id,
                 title: getTitleWithCheckbox(_id, Supplier_Name),
                 children: [
                     {
@@ -184,7 +189,11 @@ const Evaluation_Table: React.FC = () => {
                         dataIndex: _id,
                         key: _id,
                         render: (text: string, record: any) => ({
-                            children: <RowRender record={record} mergeCell={record.mergeCell} evaluatorSequence={evaluatorSequence} />
+                            children: <RowRender
+                                record={record}
+                                mergeCell={record.mergeCell}
+                                evaluatorSequence={evaluatorSequence}
+                            />
                         }),
                         width: 130,
                     }],
@@ -301,14 +310,15 @@ const Evaluation_Table: React.FC = () => {
     );
 };
 
-function RowRender({ record: { key, type, ...rest }, mergeCell, evaluatorSequence }: any) {
+function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSequence }: any) {
     const [scoreValue, setScoreValue] = useState(0);
 
     useEffect(() => {
-        if (rest[key]) {
-            setScoreValue(rest[key])
+        console.log("first", rest, key, id)
+        if (rest[id]) {
+            setScoreValue(rest[id])
         }
-    }, [rest[key]])
+    }, [rest[id]])
 
     async function saveScore() {
         let dataform = type == "section" ? supplierResponseSection : supplierResponseQuestion;
