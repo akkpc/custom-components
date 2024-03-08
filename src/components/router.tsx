@@ -6,6 +6,7 @@ import { BasicChart } from "../pages/BasicChart";
 import { Buyer_Stepper } from "../pages/Buyer_Stepper";
 import UICalender from "../pages/Calender";
 import CustomTab from "../pages/CustomTab";
+import { Evaluation_Table } from "../pages/Evaluation_Table";
 import { LineChart } from "../pages/LineChart";
 import { ProgressChart } from "../pages/ProgressChart";
 import { QuestionTab } from "../pages/QuestionTab";
@@ -98,7 +99,11 @@ const router = createHashRouter([
     {
         path: "/progress-chart",
         element: <ProgressChart/>
-    }
+    },
+    {
+        path: "/evaluation_table",
+        element: <Evaluation_Table/>
+    },
 ], {
     basename: "/custom-components"
 });
