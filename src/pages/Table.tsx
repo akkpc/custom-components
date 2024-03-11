@@ -149,14 +149,15 @@ const AccordionTable: React.FC = () => {
                             children: <p style={{ marginLeft: 8 }} >{text}</p>
                         }),
                     },
-                    {
-                        title: "Score",
-                        dataIndex: _id,
-                        key: _id,
-                        render: (text: string, record: any) => ({
-                            children: <RowRender text={text || 0} mergeCell={record.mergeCell} />
-                        }),
-                    }],
+                    // {
+                    //     title: "Score",
+                    //     dataIndex: _id,
+                    //     key: _id,
+                    //     render: (text: string, record: any) => ({
+                    //         children: <RowRender text={text || 0} mergeCell={record.mergeCell} />
+                    //     }),
+                    // }
+                ],
             })
         })
         setColumns(columns)
