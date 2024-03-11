@@ -1,6 +1,7 @@
-import { InputNumber, Table } from 'antd';
+import { Checkbox, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
+import { getColorCode } from '../helpers';
 import { SourcingMasterProcess } from '../helpers/constants';
 import { SourcingMaster } from '../types';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
@@ -85,8 +86,12 @@ function getScoreKey(sequence: number): ("Score_1" | "Score_2" | "Score_3") {
     return "Score_3"
 }
 
+function getResponseKey(id: string) {
+    return `${id}_response`
+}
 
-const Evaluation_Table: React.FC = () => {
+
+const AssessAndAwardTable: React.FC = () => {
     const [selectedColumn, setSelectedColumn] = useState<string>();
     const [contentLoaded, setContentLoaded] = useState(false);
     const [suppliers, setSuppliers] = useState<any[]>([]);
@@ -101,7 +106,7 @@ const Evaluation_Table: React.FC = () => {
             await KFSDK.initialize();
             // let allParams = await KFSDK.app.page.getAllParameters();
             // const sourcing_event_id = allParams.sourcing_event_id;
-            const sourcing_event_id = "Pk8r0d1ff5ag";
+            const sourcing_event_id = "Pk8qwoggRz6U";
             const eventStage = "RFP"
             const evaluator_sequence = 1;
 
@@ -132,14 +137,14 @@ const Evaluation_Table: React.FC = () => {
                         id: section.Supplier_ID,
                         key: section._id,
                         parameters: section.Section_Name,
-                        [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)],
+                        [section.Supplier_ID]: section["Score"],
                         type: "section",
                         mergeCell: true,
                         children: questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID)).map((q) => ({
                             id: section.Supplier_ID,
                             key: q._id,
                             parameters: q.Question,
-                            [q.Supplier_ID]: q[getScoreKey(evaluatorSequence)] || 0,
+                            [q.Supplier_ID]: q["Score"] || 0,
                             [getResponseKey(q.Supplier_ID)]: q.Text_Response,
                             type: "question",
                         }))
@@ -155,8 +160,8 @@ const Evaluation_Table: React.FC = () => {
 
     function getTitleWithCheckbox(key: string, title: string) {
         return <div style={{ display: "flex" }} >
-            {/* <Checkbox disabled={selectedColumn ? selectedColumn !== key : false}
-                onChange={(event) => event.target.checked ? setSelectedColumn(key) : setSelectedColumn("")} style={{ marginRight: 5 }} ></Checkbox> */}
+            <Checkbox disabled={selectedColumn ? selectedColumn !== key : false}
+                onChange={(event) => event.target.checked ? setSelectedColumn(key) : setSelectedColumn("")} style={{ marginRight: 5 }} ></Checkbox>
             <p>{title}</p>
         </div>
     }
@@ -180,9 +185,9 @@ const Evaluation_Table: React.FC = () => {
                         dataIndex: getResponseKey(_id),
                         key: getResponseKey(_id),
                         render: (text: string, record: any) => ({
-                            children: <p style={{ marginLeft: 8 }} >{text}</p>
+                            children: <p style={{ marginLeft: 8 }} >{record[getResponseKey(record.id)]}</p>
                         }),
-                        width: 300,
+                        width: 200,
                     },
                     {
                         title: "Score",
@@ -291,10 +296,6 @@ const Evaluation_Table: React.FC = () => {
         return questions;
     }
 
-    function getResponseKey(id: string) {
-        return `${id}_response`
-    }
-
     return (
         <div>
             {contentLoaded ? <Table
@@ -311,48 +312,25 @@ const Evaluation_Table: React.FC = () => {
 };
 
 function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSequence }: any) {
-    const [scoreValue, setScoreValue] = useState(0);
-
-    useEffect(() => {
-        console.log("first", rest, key, id)
-        if (rest[id]) {
-            setScoreValue(rest[id])
-        }
-    }, [rest[id]])
-
-    async function saveScore() {
-        let dataform = type == "section" ? supplierResponseSection : supplierResponseQuestion;
-        let payload: any = {}
-        payload[`Score_${evaluatorSequence}`] = scoreValue;
-
-        const lineDetails: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform}/${key}`, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        }));
-        return lineDetails
-    }
 
     return (
         <div style={{
             display: "flex", alignItems: "center", justifyContent: "center", height: "100%"
         }} >
             {
-                <InputNumber
-                    value={scoreValue}
-                    onChange={(value) => {
-                        if (value) {
-                            setScoreValue(value);
-                        }
-                    }}
-                    onBlur={async () => {
-                        if (scoreValue != rest[key]) {
-                            await saveScore()
-                        }
-                    }}
-                    min={0}
-                    max={100}
-                />
+                <div style={{
+                    border: `0.5px solid grey`,
+                    padding: 3,
+                    width: "100%",
+                    backgroundColor: getColorCode(rest[id]),
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "90%"
+                }} >
+                    {rest[id]}
+                </div>
             }
         </div>)
 }
-export { Evaluation_Table };
+export { AssessAndAwardTable };

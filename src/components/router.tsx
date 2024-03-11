@@ -18,6 +18,7 @@ import { AccordionTableWeightage } from "../pages/Table_Weightage";
 import { TemplateQuestionnaire } from "../pages/TemplateQuestionnaire";
 import { CheckboxComponent } from "../pages/TermsAndCondition";
 import { TimerComponent } from "../pages/TimerComponent";
+import { AssessAndAwardTable } from "../pages/AssessAndAwardTable";
 
 function Rest() {
     return (
@@ -103,6 +104,10 @@ const router = createHashRouter([
     {
         path: "/evaluation_table",
         element: <Evaluation_Table/>
+    },
+    {
+        path: "/assess_and_award",
+        element: <AssessAndAwardTable/>
     },
 ], {
     basename: "/custom-components"
