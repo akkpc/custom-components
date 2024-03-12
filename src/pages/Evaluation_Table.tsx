@@ -142,22 +142,8 @@ const Evaluation_Table: React.FC = () => {
                 let respondedSupplierIds = responses.map((s) => s.Supplier_ID)
                 let respondedSuppliers = suppliers.filter((supplier) => respondedSupplierIds.includes(supplier._id))
 
-                const techniCalItems = await buildTechnicalItems(sourcingDetails.Current_Stage);
-                const commercialItems = await buildCommercialItems(lineItemInstanceIds, sourcingDetails);
-
-                let questionnaires: TableRowData = {
-                    key: `Questionnaire_Score_${evaluatorSequence}`,
-                    parameters: "Questionnaire",
-                    type: "questionniare",
-                    children: techniCalItems
-                }
-
-                let commercials: TableRowData = {
-                    key: `Commercial_Score_${evaluatorSequence}`,
-                    parameters: "Commercials",
-                    type: "commercial_details",
-                    children: commercialItems
-                }
+                const questionnaires = await buildTechnicalItems(sourcingDetails.Current_Stage);
+                const commercials = await buildCommercialItems(lineItemInstanceIds, sourcingDetails);
 
                 let overAllScore: TableRowData = {
                     key: `Score_${evaluatorSequence}`,
@@ -166,11 +152,9 @@ const Evaluation_Table: React.FC = () => {
                     children: [questionnaires, commercials]
                 }
 
-                for (let i = 0; i < responses.length; i++) {
-                    const task: any = responses[i];
-                    overAllScore[task.Supplier_ID] = task[`Score_${evaluatorSequence}`] || 0;
-                    questionnaires[task.Supplier_ID] = task[`Questionnaire_Score_${evaluatorSequence}`] || 0;
-                    commercials[task.Supplier_ID] = task[`Commercial_Score_${evaluatorSequence}`] || 0;
+                for (let i = 0; i < respondedSupplierIds.length; i++) {
+                    const supplierId: any = respondedSupplierIds[i];
+                    overAllScore[supplierId] = questionnaires[supplierId] + commercials[supplierId];
                 }
 
                 console.log("overAllScore: ", overAllScore)
@@ -194,17 +178,27 @@ const Evaluation_Table: React.FC = () => {
         let sections = await getSupplierSections(sourcingEventId, currentStage);
         let questions = await getSupplierQuestions(sourcingEventId, currentStage);
 
-        let sectionCols: TableRowData[] = [];
+        let technicalItems: TableRowData[] = [];
         let sectionKey: Record<string, number> = {}
+        // let supplierQuestionnaireSum: Record<string, number> = {};
+
+        let questionnaires: TableRowData = {
+            key: `Questionnaire_Score_${evaluatorSequence}`,
+            parameters: "Questionnaire",
+            type: "questionniare",
+        };
 
         for (let i = 0; i < sections.length; i++) {
             const section = sections[i];
             const sectionQuestion = questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID))
             let questionKey: Record<string, number> = {}
             let questionCols: TableRowData[] = []
+            let supplierSectionSum: Record<string, number> = {};
 
             for (let j = 0; j < sectionQuestion.length; j++) {
                 let { Question, _id, Supplier_ID, Text_Response, ...rest } = sectionQuestion[j]
+                console.log("rest", rest, supplierSectionSum, rest[getScoreKey(evaluatorSequence)])
+                supplierSectionSum[Supplier_ID] = supplierSectionSum[Supplier_ID] ? supplierSectionSum[Supplier_ID] + rest[getScoreKey(evaluatorSequence)] : rest[getScoreKey(evaluatorSequence)] || 0;
                 if (Question in questionKey) {
                     questionCols[questionKey[Question]] = {
                         ...questionCols[questionKey[Question]],
@@ -228,39 +222,47 @@ const Evaluation_Table: React.FC = () => {
                 }
             }
 
+            questionnaires[section.Supplier_ID] = questionnaires[section.Supplier_ID] ? questionnaires[section.Supplier_ID] + supplierSectionSum[section.Supplier_ID] : supplierSectionSum[section.Supplier_ID];
             if (section.Section_Name in sectionKey) {
-                sectionCols[sectionKey[section.Section_Name]] = {
-                    ...sectionCols[sectionKey[section.Section_Name]],
-                    [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)],
+                technicalItems[sectionKey[section.Section_Name]] = {
+                    ...technicalItems[sectionKey[section.Section_Name]],
+                    [section.Supplier_ID]: supplierSectionSum[section.Supplier_ID],
                     [`${section.Supplier_ID}_instance_id`]: section._id,
                 }
             } else {
-                sectionCols.push(
+                technicalItems.push(
                     {
                         key: section._id,
                         parameters: section.Section_Name,
                         type: "section",
-                        [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)] || 0,
+                        [section.Supplier_ID]: supplierSectionSum[section.Supplier_ID],
                         [`${section.Supplier_ID}_instance_id`]: section._id,
                         children: questionCols
                     }
                 )
-                sectionKey[section.Section_Name] = sectionCols.length - 1;
+                sectionKey[section.Section_Name] = technicalItems.length - 1;
             }
         }
+        questionnaires.children = technicalItems;
 
-        return sectionCols;
+        return questionnaires
     }
 
     async function buildCommercialItems(instanceIds: string[], SourcingDetails: any) {
         const applicableCommercialInfo = SourcingDetails[Applicable_commercial_info]
-        let commercials: TableRowData[] = []
+        let commercials: TableRowData = {
+            key: `Commercial_Score_${evaluatorSequence}`,
+            parameters: "Commercials",
+            type: "commercial_details",
+            children: []
+        }
         let lineItems: TableRowData = {
             key: "Table::Line_Items",
             parameters: "Line Items",
             type: "line_items",
             children: [],
         }
+        let commercialSum = 0
         for await (const id of instanceIds) {
             const {
                 Supplier_ID,
@@ -271,23 +273,28 @@ const Evaluation_Table: React.FC = () => {
                     key: `${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`,
                     type: "line_item_info",
                     parameters: info,
-                    [Supplier_ID]: rest[`${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`]
+                    [Supplier_ID]: rest[`${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`],
+                    editScore: true
                 }
-                commercials.push(newCommercialsInfos)
+                commercials.children?.push(newCommercialsInfos)
+                commercialSum += rest[`${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`];
             })
-
+            let lineItemsSum = 0
             rest[`Table::Line_Items`].forEach((item: any) => {
                 lineItems?.children?.push({
                     key: item._id,
                     type: "line_item",
                     parameters: item.Item.Item,
                     [Supplier_ID]: item[`Score_${evaluatorSequence}`],
-                    [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`
+                    [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
+                    editScore: true
                 })
+                lineItemsSum += item[`Score_${evaluatorSequence}`];
             });
-            lineItems[Supplier_ID] = rest[`Line_Items_Score_${evaluatorSequence}`]
+            lineItems[Supplier_ID] = lineItemsSum;
+            commercialSum += lineItemsSum;
         }
-        commercials.push(lineItems);
+        commercials.children?.push(lineItems);
         return commercials;
     }
 
@@ -320,9 +327,10 @@ const Evaluation_Table: React.FC = () => {
                         render: (text: string, record: any) => ({
                             children: <RowRender
                                 record={record}
-                                mergeCell={record.mergeCell}
                                 evaluatorSequence={evaluatorSequence}
                                 isViewOnly={isViewOnly || !record.editScore}
+                                text={text}
+                                supplierId={_id}
                             />
                         }),
                         width: 100,
@@ -483,14 +491,15 @@ const Evaluation_Table: React.FC = () => {
     );
 };
 
-function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSequence, isViewOnly = true }: any) {
+function RowRender({ record: { id, key, type, ...rest }, evaluatorSequence, isViewOnly = true, text, supplierId }: any) {
     const [scoreValue, setScoreValue] = useState(0);
 
     useEffect(() => {
-        if (rest[id]) {
-            setScoreValue(rest[id])
+        console.log("text", rest, evaluatorSequence, text, isViewOnly)
+        if (supplierId) {
+            setScoreValue(rest[supplierId])
         }
-    }, [rest[id]])
+    }, [supplierId])
 
     async function saveScore() {
         let dataform = type == "section" ? supplierResponseSection : supplierResponseQuestion;
@@ -506,10 +515,10 @@ function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSeq
 
     return (
         <div style={{
-            height: "100%", width: "100%", display:"flex", alignItems:"center"
+            height: "100%", width: "100%", display: "flex", alignItems: "center"
         }} >
             {isViewOnly ?
-                <div style={{textAlign: "left", paddingLeft: 15}} >
+                <div style={{ textAlign: "left", paddingLeft: 15 }} >
                     {scoreValue}
                 </div> :
                 <InputNumber
