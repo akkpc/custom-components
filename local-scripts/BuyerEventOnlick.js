@@ -108,7 +108,7 @@ if (_status == "Draft") {
     }
   ]
 
-  let _activity_instance_id = _current_context[0]._context_activity_instance_id
+  let _activity_instance_id = _current_step.includes("Evaluation") ? _last_completed_step :  _current_context[0]._context_activity_instance_id
   const payload = {
     id: _id,
     aid: _activity_instance_id,
