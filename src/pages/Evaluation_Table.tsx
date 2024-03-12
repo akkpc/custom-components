@@ -1,8 +1,7 @@
 import { InputNumber, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
-import { getColorCode } from '../helpers';
-import { dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
+import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
@@ -113,7 +112,6 @@ const Evaluation_Table: React.FC = () => {
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
-    const [currentStage, setCurrentStage] = useState("");
     const [evaluatorSequence, setEvaluatorSequence] = useState(0);
     const [isViewOnly, setIsViewOnly] = useState(true);
 
@@ -123,11 +121,8 @@ const Evaluation_Table: React.FC = () => {
             // let allParams = await KFSDK.app.page.getAllParameters();
             // const sourcing_event_id = allParams.sourcing_event_id;
             const sourcing_event_id = "Pk8sR3hY9Rmn";
-            const eventStage = "RFP"
             const evaluator_sequence = 1;
             const viewOnly = false
-
-            setCurrentStage(eventStage);
             setSourcingEventId(sourcing_event_id)
             setEvaluatorSequence(evaluator_sequence)
             setIsViewOnly(viewOnly);
@@ -147,30 +142,28 @@ const Evaluation_Table: React.FC = () => {
                 let respondedSupplierIds = responses.map((s) => s.Supplier_ID)
                 let respondedSuppliers = suppliers.filter((supplier) => respondedSupplierIds.includes(supplier._id))
 
-                buildColumns(respondedSuppliers);
-
-                const techniCalItems = await buildTechnicalItems();
-                const commercialItems = await buildCommercialItems(lineItemInstanceIds);
+                const techniCalItems = await buildTechnicalItems(sourcingDetails.Current_Stage);
+                const commercialItems = await buildCommercialItems(lineItemInstanceIds, sourcingDetails);
 
                 let questionnaires: TableRowData = {
-                    key: "questionniare",
+                    key: `Questionnaire_Score_${evaluatorSequence}`,
                     parameters: "Questionnaire",
                     type: "questionniare",
                     children: techniCalItems
                 }
 
                 let commercials: TableRowData = {
-                    key: "commercial_details",
+                    key: `Commercial_Score_${evaluatorSequence}`,
                     parameters: "Commercials",
                     type: "commercial_details",
                     children: commercialItems
                 }
 
                 let overAllScore: TableRowData = {
-                    key: "root",
+                    key: `Score_${evaluatorSequence}`,
                     parameters: "OverAll Score",
                     type: "root",
-                    children: [questionnaires,commercials]
+                    children: [questionnaires, commercials]
                 }
 
                 for (let i = 0; i < responses.length; i++) {
@@ -180,6 +173,9 @@ const Evaluation_Table: React.FC = () => {
                     commercials[task.Supplier_ID] = task[`Commercial_Score_${evaluatorSequence}`] || 0;
                 }
 
+                console.log("overAllScore: ", overAllScore)
+
+                buildColumns(respondedSuppliers);
                 setData([overAllScore]);
                 setContentLoaded(true);
             })()
@@ -194,45 +190,104 @@ const Evaluation_Table: React.FC = () => {
         </div>
     }
 
-    async function buildTechnicalItems() {
-        const sections = await getSupplierSections(sourcingEventId, currentStage);
-        const questions = await getSupplierQuestions(sourcingEventId, currentStage);
+    async function buildTechnicalItems(currentStage: string) {
+        let sections = await getSupplierSections(sourcingEventId, currentStage);
+        let questions = await getSupplierQuestions(sourcingEventId, currentStage);
 
-        const sectionDetails: TableRowData[] = [];
+        let sectionCols: TableRowData[] = [];
+        let sectionKey: Record<string, number> = {}
 
         for (let i = 0; i < sections.length; i++) {
             const section = sections[i];
-            let newSection: TableRowData = {
-                id: section.Supplier_ID,
-                key: section._id,
-                parameters: section.Section_Name,
-                [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)],
-                type: "section",
-                mergeCell: true,
-                children: questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID)).map((q) => ({
-                    id: section.Supplier_ID,
-                    key: q._id,
-                    parameters: q.Question,
-                    [q.Supplier_ID]: q[getScoreKey(evaluatorSequence)] || 0,
-                    [getResponseKey(q.Supplier_ID)]: q.Text_Response,
-                    type: "question",
-                }))
+            const sectionQuestion = questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID))
+            let questionKey: Record<string, number> = {}
+            let questionCols: TableRowData[] = []
+
+            for (let j = 0; j < sectionQuestion.length; j++) {
+                let { Question, _id, Supplier_ID, Text_Response, ...rest } = sectionQuestion[j]
+                if (Question in questionKey) {
+                    questionCols[questionKey[Question]] = {
+                        ...questionCols[questionKey[Question]],
+                        [Supplier_ID]: rest[getScoreKey(evaluatorSequence)] || 0,
+                        [getResponseKey(Supplier_ID)]: Text_Response,
+                        [`${Supplier_ID}_instance_id`]: _id,
+                    }
+                } else {
+                    questionCols.push(
+                        {
+                            key: _id,
+                            parameters: Question,
+                            [Supplier_ID]: rest[getScoreKey(evaluatorSequence)] || 0,
+                            [getResponseKey(Supplier_ID)]: Text_Response,
+                            [`${Supplier_ID}_instance_id`]: _id,
+                            type: "question",
+                            editScore: true
+                        }
+                    )
+                    questionKey[Question] = questionCols.length - 1;
+                }
             }
-            sectionDetails.push(newSection)
+
+            if (section.Section_Name in sectionKey) {
+                sectionCols[sectionKey[section.Section_Name]] = {
+                    ...sectionCols[sectionKey[section.Section_Name]],
+                    [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)],
+                    [`${section.Supplier_ID}_instance_id`]: section._id,
+                }
+            } else {
+                sectionCols.push(
+                    {
+                        key: section._id,
+                        parameters: section.Section_Name,
+                        type: "section",
+                        [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)] || 0,
+                        [`${section.Supplier_ID}_instance_id`]: section._id,
+                        children: questionCols
+                    }
+                )
+                sectionKey[section.Section_Name] = sectionCols.length - 1;
+            }
         }
 
-        return sectionDetails;
+        return sectionCols;
     }
 
-    async function buildCommercialItems(instanceIds: string[]) {
-        let commercials : TableRowData[] = []
-        let commercialsInfos = {
-            key: "line_item_info",
-            parameters: "Commercials",
-            type: "line_item_info",
+    async function buildCommercialItems(instanceIds: string[], SourcingDetails: any) {
+        const applicableCommercialInfo = SourcingDetails[Applicable_commercial_info]
+        let commercials: TableRowData[] = []
+        let lineItems: TableRowData = {
+            key: "Table::Line_Items",
+            parameters: "Line Items",
+            type: "line_items",
+            children: [],
         }
-        const commercialResponses = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/allitems/list`));
+        for await (const id of instanceIds) {
+            const {
+                Supplier_ID,
+                ...rest
+            } = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${id}`));
+            applicableCommercialInfo.forEach((info: string) => {
+                let newCommercialsInfos = {
+                    key: `${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`,
+                    type: "line_item_info",
+                    parameters: info,
+                    [Supplier_ID]: rest[`${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`]
+                }
+                commercials.push(newCommercialsInfos)
+            })
 
+            rest[`Table::Line_Items`].forEach((item: any) => {
+                lineItems?.children?.push({
+                    key: item._id,
+                    type: "line_item",
+                    parameters: item.Item.Item,
+                    [Supplier_ID]: item[`Score_${evaluatorSequence}`],
+                    [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`
+                })
+            });
+            lineItems[Supplier_ID] = rest[`Line_Items_Score_${evaluatorSequence}`]
+        }
+        commercials.push(lineItems);
         return commercials;
     }
 
@@ -267,7 +322,7 @@ const Evaluation_Table: React.FC = () => {
                                 record={record}
                                 mergeCell={record.mergeCell}
                                 evaluatorSequence={evaluatorSequence}
-                                isViewOnly={isViewOnly}
+                                isViewOnly={isViewOnly || !record.editScore}
                             />
                         }),
                         width: 100,
@@ -432,7 +487,6 @@ function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSeq
     const [scoreValue, setScoreValue] = useState(0);
 
     useEffect(() => {
-        console.log("first", rest, key, id)
         if (rest[id]) {
             setScoreValue(rest[id])
         }
@@ -452,20 +506,11 @@ function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSeq
 
     return (
         <div style={{
-            display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%"
+            height: "100%", width: "100%", display:"flex", alignItems:"center"
         }} >
             {isViewOnly ?
-                <div style={{
-                    border: `0.5px solid grey`,
-                    padding: 3,
-                    width: "100%",
-                    backgroundColor: getColorCode(rest[id]),
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "90%"
-                }} >
-                    {rest[id]}
+                <div style={{textAlign: "left", paddingLeft: 15}} >
+                    {scoreValue}
                 </div> :
                 <InputNumber
                     value={scoreValue}
