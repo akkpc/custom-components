@@ -142,3 +142,28 @@ export interface SourcingMaster {
     }[];
     _meta_version: string;
 };
+
+
+export interface SourcingSupplierResponses {
+    Sourcing_Event_ID: string;
+    Response_Type: string;
+    Supplier_ID: string;
+    Commercial_Included: boolean;
+    Response_Status: string;
+    Line_Item_instance_id: string;
+    Line_item_activity_instance_id: string;
+    Score_1: number;
+    Score_2: number;
+    Score_3: number;
+    Questionnaire_Score: number;
+    Commercial_Score: number;
+    Score: number;
+    Evaluation_Status: string;
+    Questionnaire_Score_1: number;
+    Questionnaire_Score_2: number;
+    Questionnaire_Score_3: number;
+    Commercial_Score_1: number;
+    Commercial_Score_2: number;
+    Commercial_Score_3: number;
+    _id: string;
+}

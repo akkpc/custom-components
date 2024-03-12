@@ -4,10 +4,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { calculateSplitValue, getKey } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
-import { Applicable_commercial_info, Commercial_Details, Line_Items, Questionnaire, SourcingMasterProcess, leafNodes, lineItemTableKey, rootNodes, sourcing_question_dataform, sourcing_section_dataform } from '../helpers/constants';
+import { Applicable_commercial_info, Commercial_Details, Line_Items, Questionnaire, dataforms, leafNodes, lineItemTableKey, processes, rootNodes } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
+
+const {
+    supplierResponseSection,
+    supplierResponseQuestion
+} = dataforms;
+
+const {
+    SourcingMaster: SourcingMasterProcess
+} = processes;
 
 const allNodes = rootNodes.concat(leafNodes)
 
@@ -479,10 +488,10 @@ const AccordionTableWeightage: React.FC = () => {
                             if (isValid) {
                                 setWeightageError(false)
                                 if (delta["section"] && delta["section"].length > 0) {
-                                    await updateWeightage(delta["section"], sourcing_section_dataform);
+                                    await updateWeightage(delta["section"], supplierResponseSection);
                                 }
                                 if (delta["question"] && delta["question"].length > 0) {
-                                    await updateWeightage(delta["question"], sourcing_question_dataform);
+                                    await updateWeightage(delta["question"], supplierResponseQuestion);
                                 }
 
                                 let processPayload: Record<string, any> = {}

@@ -1,14 +1,34 @@
 import { InputNumber, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
-import { SourcingMasterProcess } from '../helpers/constants';
-import { SourcingMaster } from '../types';
+import { getColorCode } from '../helpers';
+import { dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
+import { SourcingMaster, SourcingSupplierResponses } from '../types';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
-const supplierResponseTemplate = "Sourcing_Supplier_Response_Templat_A00"
-const supplierResponseSection = "Sourcing_Supplier_Response_Section_A00"
-const supplierResponseQuestion = "Sourcing_Supplier_Response_Questio_A01"
-const supplierResponseCommercials = "Sourcing_Supplier_Line_Items_A00"
+const {
+    supplierResponses,
+    supplierResponseSection,
+    supplierResponseQuestion
+} = dataforms;
+
+const {
+    SourcingMaster: SourcingMasterProcess,
+    SupplierLineItem
+} = processes;
+
+let rootNodes = oldRootNode.concat("root");
+const allNodes = rootNodes.concat(leafNodes)
+
+enum ResponseStatus {
+    Active = "Active",
+    Draft = "Draft"
+}
+
+enum Evaluation_Status {
+    Completed = "Completed",
+    Not_Completed = "Not Completed"
+}
 
 interface DataType {
     key: React.ReactNode;
@@ -23,7 +43,7 @@ interface DataType {
 interface TableRowData {
     key: string;
     parameters: string;
-    type: "question" | "section";
+    type: typeof allNodes[number];
     children?: TableRowData[];
     [key: string]: any;
 }
@@ -89,69 +109,82 @@ function getScoreKey(sequence: number): ("Score_1" | "Score_2" | "Score_3") {
 const Evaluation_Table: React.FC = () => {
     const [selectedColumn, setSelectedColumn] = useState<string>();
     const [contentLoaded, setContentLoaded] = useState(false);
-    const [suppliers, setSuppliers] = useState<any[]>([]);
+    // const [suppliers, setSuppliers] = useState<any[]>([]);
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
     const [currentStage, setCurrentStage] = useState("");
     const [evaluatorSequence, setEvaluatorSequence] = useState(0);
+    const [isViewOnly, setIsViewOnly] = useState(true);
 
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
             // let allParams = await KFSDK.app.page.getAllParameters();
             // const sourcing_event_id = allParams.sourcing_event_id;
-            const sourcing_event_id = "Pk8r0d1ff5ag";
+            const sourcing_event_id = "Pk8sR3hY9Rmn";
             const eventStage = "RFP"
             const evaluator_sequence = 1;
+            const viewOnly = false
 
-            const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcing_event_id)
-            const suppliers = sourcingDetails["Table::Add_Existing_Suppliers"].map((supplier) => ({
-                _id: supplier.Supplier_Name_1._id,
-                Supplier_Name: supplier.First_Name_1
-            }))
             setCurrentStage(eventStage);
-            setSuppliers(suppliers)
             setSourcingEventId(sourcing_event_id)
             setEvaluatorSequence(evaluator_sequence)
+            setIsViewOnly(viewOnly);
         })()
     }, [])
 
     useEffect(() => {
-        if (sourcingEventId && suppliers) {
+        if (sourcingEventId) {
             (async () => {
-                buildColumns();
-                const sections = await getSupplierSections(sourcingEventId, currentStage);
-                const questions = await getSupplierQuestions(sourcingEventId, currentStage);
+                const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcingEventId)
+                let suppliers = sourcingDetails["Table::Add_Existing_Suppliers"].map((supplier) => ({
+                    _id: supplier.Supplier_Name_1._id,
+                    Supplier_Name: supplier.First_Name_1
+                }))
+                const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
+                let lineItemInstanceIds = responses.map((response) => response.Line_Item_instance_id)
+                let respondedSupplierIds = responses.map((s) => s.Supplier_ID)
+                let respondedSuppliers = suppliers.filter((supplier) => respondedSupplierIds.includes(supplier._id))
 
-                const tableData: TableRowData[] = [];
+                buildColumns(respondedSuppliers);
 
-                for (let i = 0; i < sections.length; i++) {
-                    const section = sections[i];
-                    let newSection: TableRowData = {
-                        id: section.Supplier_ID,
-                        key: section._id,
-                        parameters: section.Section_Name,
-                        [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)],
-                        type: "section",
-                        mergeCell: true,
-                        children: questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID)).map((q) => ({
-                            id: section.Supplier_ID,
-                            key: q._id,
-                            parameters: q.Question,
-                            [q.Supplier_ID]: q[getScoreKey(evaluatorSequence)] || 0,
-                            [getResponseKey(q.Supplier_ID)]: q.Text_Response,
-                            type: "question",
-                        }))
-                    }
-                    tableData.push(newSection)
+                const techniCalItems = await buildTechnicalItems();
+                const commercialItems = await buildCommercialItems(lineItemInstanceIds);
+
+                let questionnaires: TableRowData = {
+                    key: "questionniare",
+                    parameters: "Questionnaire",
+                    type: "questionniare",
+                    children: techniCalItems
                 }
-                console.log("tableData", tableData)
-                setData(tableData);
+
+                let commercials: TableRowData = {
+                    key: "commercial_details",
+                    parameters: "Commercials",
+                    type: "commercial_details",
+                    children: commercialItems
+                }
+
+                let overAllScore: TableRowData = {
+                    key: "root",
+                    parameters: "OverAll Score",
+                    type: "root",
+                    children: [questionnaires,commercials]
+                }
+
+                for (let i = 0; i < responses.length; i++) {
+                    const task: any = responses[i];
+                    overAllScore[task.Supplier_ID] = task[`Score_${evaluatorSequence}`] || 0;
+                    questionnaires[task.Supplier_ID] = task[`Questionnaire_Score_${evaluatorSequence}`] || 0;
+                    commercials[task.Supplier_ID] = task[`Commercial_Score_${evaluatorSequence}`] || 0;
+                }
+
+                setData([overAllScore]);
                 setContentLoaded(true);
             })()
         }
-    }, [suppliers])
+    }, [sourcingEventId])
 
     function getTitleWithCheckbox(key: string, title: string) {
         return <div style={{ display: "flex" }} >
@@ -161,16 +194,57 @@ const Evaluation_Table: React.FC = () => {
         </div>
     }
 
+    async function buildTechnicalItems() {
+        const sections = await getSupplierSections(sourcingEventId, currentStage);
+        const questions = await getSupplierQuestions(sourcingEventId, currentStage);
 
-    function buildColumns() {
+        const sectionDetails: TableRowData[] = [];
+
+        for (let i = 0; i < sections.length; i++) {
+            const section = sections[i];
+            let newSection: TableRowData = {
+                id: section.Supplier_ID,
+                key: section._id,
+                parameters: section.Section_Name,
+                [section.Supplier_ID]: section[getScoreKey(evaluatorSequence)],
+                type: "section",
+                mergeCell: true,
+                children: questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID)).map((q) => ({
+                    id: section.Supplier_ID,
+                    key: q._id,
+                    parameters: q.Question,
+                    [q.Supplier_ID]: q[getScoreKey(evaluatorSequence)] || 0,
+                    [getResponseKey(q.Supplier_ID)]: q.Text_Response,
+                    type: "question",
+                }))
+            }
+            sectionDetails.push(newSection)
+        }
+
+        return sectionDetails;
+    }
+
+    async function buildCommercialItems(instanceIds: string[]) {
+        let commercials : TableRowData[] = []
+        let commercialsInfos = {
+            key: "line_item_info",
+            parameters: "Commercials",
+            type: "line_item_info",
+        }
+        const commercialResponses = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/allitems/list`));
+
+        return commercials;
+    }
+
+    function buildColumns(suppliers: any) {
         const columns: any = [{
             title: "Parameters",
             dataIndex: 'parameters',
             key: 'parameters',
             fixed: "left",
-            width: 300
+            width: 200
         }];
-        suppliers.forEach(({ _id, Supplier_Name }) => {
+        suppliers.forEach(({ _id, Supplier_Name }: any) => {
             columns.push({
                 key: _id,
                 title: getTitleWithCheckbox(_id, Supplier_Name),
@@ -182,7 +256,7 @@ const Evaluation_Table: React.FC = () => {
                         render: (text: string, record: any) => ({
                             children: <p style={{ marginLeft: 8 }} >{text}</p>
                         }),
-                        width: 300,
+                        width: 280,
                     },
                     {
                         title: "Score",
@@ -193,9 +267,10 @@ const Evaluation_Table: React.FC = () => {
                                 record={record}
                                 mergeCell={record.mergeCell}
                                 evaluatorSequence={evaluatorSequence}
+                                isViewOnly={isViewOnly}
                             />
                         }),
-                        width: 130,
+                        width: 100,
                     }],
             })
         })
@@ -204,6 +279,49 @@ const Evaluation_Table: React.FC = () => {
 
     const getSourcingDetails = async (sourcing_event_id: string) => {
         const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcing_event_id}`));
+        return sourcingdetails;
+    }
+
+    const getSourcingSupplierResponses = async (sourcing_event_id: string) => {
+        const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`, {
+            method: "POST",
+            body: JSON.stringify({
+                Filter: {
+                    "AND": [
+                        {
+                            "LHSField": "Sourcing_Event_ID",
+                            "Operator": "EQUAL_TO",
+                            "RHSType": "Value",
+                            "RHSValue": sourcing_event_id,
+                            "RHSField": null,
+                            "RHSParam": "",
+                            "LHSAttribute": null,
+                            "RHSAttribute": null
+                        },
+                        {
+                            "LHSField": "Response_Status",
+                            "Operator": "EQUAL_TO",
+                            "RHSType": "Value",
+                            "RHSValue": ResponseStatus.Active,
+                            "RHSField": null,
+                            "RHSParam": "",
+                            "LHSAttribute": null,
+                            "RHSAttribute": null
+                        },
+                        {
+                            "LHSField": "Evaluation_Status",
+                            "Operator": "EQUAL_TO",
+                            "RHSType": "Value",
+                            "RHSValue": Evaluation_Status.Not_Completed,
+                            "RHSField": null,
+                            "RHSParam": "",
+                            "LHSAttribute": null,
+                            "RHSAttribute": null
+                        },
+                    ]
+                }
+            })
+        }));
         return sourcingdetails;
     }
 
@@ -216,7 +334,7 @@ const Evaluation_Table: React.FC = () => {
                     {
                         "AND": [
                             {
-                                "LHSField": "Sourcing_event_ID",
+                                "LHSField": "Sourcing_Event_ID",
                                 "Operator": "EQUAL_TO",
                                 "RHSType": "Value",
                                 "RHSValue": sourcing_event_id,
@@ -256,9 +374,9 @@ const Evaluation_Table: React.FC = () => {
             "Filter": {
                 "AND": [
                     {
-                        "OR": [
+                        "AND": [
                             {
-                                "LHSField": "Sourcing_event_ID",
+                                "LHSField": "Sourcing_Event_ID",
                                 "Operator": "EQUAL_TO",
                                 "RHSType": "Value",
                                 "RHSValue": sourcing_event_id,
@@ -304,13 +422,13 @@ const Evaluation_Table: React.FC = () => {
                 bordered
                 pagination={false}
                 className="custom-table"
-                scroll={{ x: window.innerWidth, y: window.innerHeight - 115 }}
+                scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 115 }}
             /> : "Loading..."}
         </div>
     );
 };
 
-function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSequence }: any) {
+function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSequence, isViewOnly = true }: any) {
     const [scoreValue, setScoreValue] = useState(0);
 
     useEffect(() => {
@@ -334,9 +452,21 @@ function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSeq
 
     return (
         <div style={{
-            display: "flex", alignItems: "center", justifyContent: "center", height: "100%"
+            display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%"
         }} >
-            {
+            {isViewOnly ?
+                <div style={{
+                    border: `0.5px solid grey`,
+                    padding: 3,
+                    width: "100%",
+                    backgroundColor: getColorCode(rest[id]),
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "90%"
+                }} >
+                    {rest[id]}
+                </div> :
                 <InputNumber
                     value={scoreValue}
                     onChange={(value) => {
@@ -351,6 +481,15 @@ function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSeq
                     }}
                     min={0}
                     max={100}
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 0,
+                        border: "0px"
+                    }}
                 />
             }
         </div>)

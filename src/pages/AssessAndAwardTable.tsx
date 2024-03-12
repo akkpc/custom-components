@@ -2,14 +2,18 @@ import { Checkbox, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { getColorCode } from '../helpers';
-import { SourcingMasterProcess } from '../helpers/constants';
+import { dataforms, processes } from '../helpers/constants';
 import { SourcingMaster } from '../types';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
-const supplierResponseTemplate = "Sourcing_Supplier_Response_Templat_A00"
-const supplierResponseSection = "Sourcing_Supplier_Response_Section_A00"
-const supplierResponseQuestion = "Sourcing_Supplier_Response_Questio_A01"
-const supplierResponseCommercials = "Sourcing_Supplier_Line_Items_A00"
+const {
+    SourcingMaster: SourcingMasterProcess
+} = processes;
+
+const {
+    supplierResponseSection,
+    supplierResponseQuestion
+} = dataforms;
 
 interface DataType {
     key: React.ReactNode;
@@ -221,7 +225,7 @@ const AssessAndAwardTable: React.FC = () => {
                     {
                         "AND": [
                             {
-                                "LHSField": "Sourcing_event_ID",
+                                "LHSField": "Sourcing_Event_ID",
                                 "Operator": "EQUAL_TO",
                                 "RHSType": "Value",
                                 "RHSValue": sourcing_event_id,
@@ -261,9 +265,9 @@ const AssessAndAwardTable: React.FC = () => {
             "Filter": {
                 "AND": [
                     {
-                        "OR": [
+                        "AND": [
                             {
-                                "LHSField": "Sourcing_event_ID",
+                                "LHSField": "Sourcing_Event_ID",
                                 "Operator": "EQUAL_TO",
                                 "RHSType": "Value",
                                 "RHSValue": sourcing_event_id,
