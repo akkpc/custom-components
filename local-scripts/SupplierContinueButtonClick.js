@@ -202,7 +202,8 @@ async function createLineItem(res) {
     Sourcing_Type: currentStage,
     Applicable_commercial_info: SourcingDetails.Applicable_commercial_info,
     // "Table::Line_Items": SourcingDetails["Table::RFQ_Configuration"],
-    Response_ID: res._id
+    Response_ID: res._id,
+    Supplier_Task_ID: id
   }
   const response = await kf.api("/process/2/" + ctx._id + "/Sourcing_Supplier_Line_Items_A00",
     {
