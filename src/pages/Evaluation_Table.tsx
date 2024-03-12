@@ -262,19 +262,21 @@ const Evaluation_Table: React.FC = () => {
             type: "line_items",
             children: [],
         }
-        let commercialSum = 0
+
         for await (const id of instanceIds) {
             const {
                 Supplier_ID,
                 ...rest
             } = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${id}`));
+            let commercialSum = 0
             applicableCommercialInfo.forEach((info: string) => {
                 let newCommercialsInfos = {
                     key: `${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`,
                     type: "line_item_info",
                     parameters: info,
                     [Supplier_ID]: rest[`${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`],
-                    editScore: true
+                    editScore: true,
+                    [`${Supplier_ID}_instance_id`]: id,
                 }
                 commercials.children?.push(newCommercialsInfos)
                 commercialSum += rest[`${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`];
@@ -287,12 +289,13 @@ const Evaluation_Table: React.FC = () => {
                     parameters: item.Item.Item,
                     [Supplier_ID]: item[`Score_${evaluatorSequence}`],
                     [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
-                    editScore: true
+                    editScore: true,
+                    [`${Supplier_ID}_instance_id`]: id,
                 })
                 lineItemsSum += item[`Score_${evaluatorSequence}`];
             });
             lineItems[Supplier_ID] = lineItemsSum;
-            commercialSum += lineItemsSum;
+            commercials[Supplier_ID] = commercialSum + lineItemsSum;
         }
         commercials.children?.push(lineItems);
         return commercials;
@@ -491,8 +494,9 @@ const Evaluation_Table: React.FC = () => {
     );
 };
 
-function RowRender({ record: { id, key, type, ...rest }, evaluatorSequence, isViewOnly = true, text, supplierId }: any) {
+function RowRender({ record: { key, type, ...rest }, evaluatorSequence, isViewOnly = true, text, supplierId }: any) {
     const [scoreValue, setScoreValue] = useState(0);
+    let processInstanceId = rest[`${supplierId}_instance_id`];
 
     useEffect(() => {
         console.log("text", rest, evaluatorSequence, text, isViewOnly)
@@ -502,15 +506,40 @@ function RowRender({ record: { id, key, type, ...rest }, evaluatorSequence, isVi
     }, [supplierId])
 
     async function saveScore() {
-        let dataform = type == "section" ? supplierResponseSection : supplierResponseQuestion;
-        let payload: any = {}
-        payload[`Score_${evaluatorSequence}`] = scoreValue;
+        switch (type) {
+            case "line_item_info":
+                let linePayload: any = {}
+                linePayload[key] = scoreValue;
+                (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${processInstanceId}`, {
+                    method: "PUT",
+                    body: JSON.stringify(linePayload)
+                }))
+                break;
+            case "line_item":
+                let commercialPayload: any = {}
+                commercialPayload[`Table::Line_Items`] = [
+                    {
+                        _id: key,
+                        [`Score_${evaluatorSequence}`]: scoreValue
+                    }
+                ];
+                (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${processInstanceId}`, {
+                    method: "PUT",
+                    body: JSON.stringify(commercialPayload)
+                }))
+                break;
+            case "section":
+            case "question":
+                let dataform = type == "section" ? supplierResponseSection : supplierResponseQuestion;
+                let payload: any = {}
+                payload[`Score_${evaluatorSequence}`] = scoreValue;
 
-        const lineDetails: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform}/${key}`, {
-            method: "POST",
-            body: JSON.stringify(payload)
-        }));
-        return lineDetails
+                (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform}/${key}`, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                }))
+                break;
+        }
     }
 
     return (
