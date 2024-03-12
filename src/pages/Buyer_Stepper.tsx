@@ -9,6 +9,7 @@ const description = 'This is a description.';
 type Steps = {
   key: string;
   title: string;
+  processKey: string;
   description?: string;
   imageName?: string;
   isCompleted?: boolean;
@@ -20,61 +21,73 @@ type StageParams = {
 
 const stepperMeta: Steps[] = [
   {
+    processKey: "Start",
     key: "event_creation_draft",
     title: "Event Creation (Draft)",
     imageName: "stepper_clarification_icon.svg",
   },
   {
+    processKey: "Awaiting RFI Response",
     key: "awaiting_rfi_response",
     title: "Awaiting RFI Response",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "RFI Evaluation & Qualification",
     key: "rfi_evaluation_qualification",
     title: "RFI Evaluation & Qualification",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "RFP Configuration",
     key: "rfp_configuration",
     title: "RFP Configuration",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "Awaiting RFP Response",
     key: "awaiting_rfp_response",
     title: "Awaiting RFP Response",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "RFP Evaluation",
     key: "rfp_technical_evaluation",
     title: "RFP / Technical Evaluation",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "RFQ Configuration",
     key: "rfq_configuration",
     title: "RFQ Configuration",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "Awaiting RFQ Response",
     key: "awaiting_rfq_response",
     title: "Awaiting RFQ Response",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "RFQ Commercial Evaluation",
     key: "rfq_commercial_evaluation",
     title: "RFQ / Commercial Evaluation",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "Assess & Award",
     key: "assess_award",
     title: "Assess & Award",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "Post Award Action",
     key: "post_award_actions",
     title: "Post Award Actions",
     imageName: "stepper_pending_icon.svg",
   },
   {
+    processKey: "Completed",
     key: "completed",
     title: "Completed",
     imageName: "stepper_award_icon.svg",
@@ -102,6 +115,12 @@ const Buyer_Stepper: React.FC = () => {
   }, [])
 
   function getStepperObject(stepperMeta: Steps[], stages: Record<string, string>, currentStage: string) {
+    let currentStep = stepperMeta.findIndex((step) => step.processKey === currentStage);
+    
+    if(currentStep >= 0) {
+      currentStage = stepperMeta[currentStep].key;
+    }
+    console.log("currentStep", currentStep, stepperMeta[currentStep])
     let columns = stepperMeta.filter(({ key }) => stages.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stages[stage.key] }))
     if (availableStages.includes(currentStage)) {
       for (let i = 0; i < columns.length; i++) {
