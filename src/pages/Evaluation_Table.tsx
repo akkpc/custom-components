@@ -37,6 +37,7 @@ interface DataType {
     children?: DataType[];
     childUrl?: string;
     showCheckBox?: boolean;
+    path: []
 }
 
 interface TableRowData {
@@ -166,6 +167,24 @@ const Evaluation_Table: React.FC = () => {
         }
     }, [sourcingEventId])
 
+    function updateValueFields(supplierId: string,value: number, diff: number, path: number[]) {
+        setData((data) => {
+            let dataObject = data;
+            let overallData = dataObject[0]
+            overallData[supplierId] = overallData[supplierId] + (diff)
+            for (let i = 0; i < path.length ; i++) {
+                if(i == path.length - 1) {
+                    overallData.children[path[i]][supplierId] = value;
+                } else {
+                    overallData.children[path[i]][supplierId] = overallData.children[path[i]][supplierId] + (diff);
+                    overallData = overallData.children[path[i]];
+                }
+            }
+            console.log("updateValueFields" , dataObject)
+            return JSON.parse(JSON.stringify(dataObject));
+        })
+    }
+
     function getTitleWithCheckbox(key: string, title: string) {
         return <div style={{ display: "flex" }} >
             {/* <Checkbox disabled={selectedColumn ? selectedColumn !== key : false}
@@ -186,18 +205,40 @@ const Evaluation_Table: React.FC = () => {
             key: `Questionnaire_Score_${evaluatorSequence}`,
             parameters: "Questionnaire",
             type: "questionniare",
+            path: [0]
         };
 
         for (let i = 0; i < sections.length; i++) {
             const section = sections[i];
             const sectionQuestion = questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID))
             let questionKey: Record<string, number> = {}
-            let questionCols: TableRowData[] = []
             let supplierSectionSum: Record<string, number> = {};
+
+            if (section.Section_Name in sectionKey) {
+                technicalItems[sectionKey[section.Section_Name]] = {
+                    ...technicalItems[sectionKey[section.Section_Name]],
+                    [section.Supplier_ID]: supplierSectionSum[section.Supplier_ID],
+                    [`${section.Supplier_ID}_instance_id`]: section._id,
+                }
+            } else {
+                technicalItems.push(
+                    {
+                        key: section._id,
+                        parameters: section.Section_Name,
+                        type: "section",
+                        [`${section.Supplier_ID}_instance_id`]: section._id,
+                        children: [],
+                        path: [0, technicalItems.length]
+                    }
+                )
+                sectionKey[section.Section_Name] = technicalItems.length - 1;
+            }
+
+            let currentItem = technicalItems[technicalItems.length - 1];
+            let questionCols = currentItem?.children || [];
 
             for (let j = 0; j < sectionQuestion.length; j++) {
                 let { Question, _id, Supplier_ID, Text_Response, ...rest } = sectionQuestion[j]
-                console.log("rest", rest, supplierSectionSum, rest[getScoreKey(evaluatorSequence)])
                 supplierSectionSum[Supplier_ID] = supplierSectionSum[Supplier_ID] ? supplierSectionSum[Supplier_ID] + rest[getScoreKey(evaluatorSequence)] : rest[getScoreKey(evaluatorSequence)] || 0;
                 if (Question in questionKey) {
                     questionCols[questionKey[Question]] = {
@@ -215,34 +256,18 @@ const Evaluation_Table: React.FC = () => {
                             [getResponseKey(Supplier_ID)]: Text_Response,
                             [`${Supplier_ID}_instance_id`]: _id,
                             type: "question",
-                            editScore: true
+                            editScore: true,
+                            path: [...currentItem.path, questionCols.length]
                         }
                     )
                     questionKey[Question] = questionCols.length - 1;
                 }
             }
+            currentItem[section.Supplier_ID] = supplierSectionSum[section.Supplier_ID];
 
             questionnaires[section.Supplier_ID] = questionnaires[section.Supplier_ID] ? questionnaires[section.Supplier_ID] + supplierSectionSum[section.Supplier_ID] : supplierSectionSum[section.Supplier_ID];
-            if (section.Section_Name in sectionKey) {
-                technicalItems[sectionKey[section.Section_Name]] = {
-                    ...technicalItems[sectionKey[section.Section_Name]],
-                    [section.Supplier_ID]: supplierSectionSum[section.Supplier_ID],
-                    [`${section.Supplier_ID}_instance_id`]: section._id,
-                }
-            } else {
-                technicalItems.push(
-                    {
-                        key: section._id,
-                        parameters: section.Section_Name,
-                        type: "section",
-                        [section.Supplier_ID]: supplierSectionSum[section.Supplier_ID],
-                        [`${section.Supplier_ID}_instance_id`]: section._id,
-                        children: questionCols
-                    }
-                )
-                sectionKey[section.Section_Name] = technicalItems.length - 1;
-            }
         }
+
         questionnaires.children = technicalItems;
 
         return questionnaires
@@ -254,7 +279,8 @@ const Evaluation_Table: React.FC = () => {
             key: `Commercial_Score_${evaluatorSequence}`,
             parameters: "Commercials",
             type: "commercial_details",
-            children: []
+            children: [],
+            path: [1]
         }
         let lineItems: TableRowData = {
             key: "Table::Line_Items",
@@ -277,6 +303,7 @@ const Evaluation_Table: React.FC = () => {
                     [Supplier_ID]: rest[`${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`],
                     editScore: true,
                     [`${Supplier_ID}_instance_id`]: id,
+                    path: [1, commercials.children?.length]
                 }
                 commercials.children?.push(newCommercialsInfos)
                 commercialSum += rest[`${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`];
@@ -291,6 +318,7 @@ const Evaluation_Table: React.FC = () => {
                     [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
                     editScore: true,
                     [`${Supplier_ID}_instance_id`]: id,
+                    path: [1, commercials.children?.length, lineItems?.children.length]
                 })
                 lineItemsSum += item[`Score_${evaluatorSequence}`];
             });
@@ -334,6 +362,7 @@ const Evaluation_Table: React.FC = () => {
                                 isViewOnly={isViewOnly || !record.editScore}
                                 text={text}
                                 supplierId={_id}
+                                updateValueFields={updateValueFields}
                             />
                         }),
                         width: 100,
@@ -494,16 +523,15 @@ const Evaluation_Table: React.FC = () => {
     );
 };
 
-function RowRender({ record: { key, type, ...rest }, evaluatorSequence, isViewOnly = true, text, supplierId }: any) {
+function RowRender({ record: { key, type, path, ...rest }, evaluatorSequence, isViewOnly = true, text, supplierId, updateValueFields }: any) {
     const [scoreValue, setScoreValue] = useState(0);
     let processInstanceId = rest[`${supplierId}_instance_id`];
 
     useEffect(() => {
-        console.log("text", rest, evaluatorSequence, text, isViewOnly)
-        if (supplierId) {
+        if (rest[supplierId]) {
             setScoreValue(rest[supplierId])
         }
-    }, [supplierId])
+    }, [rest[supplierId]])
 
     async function saveScore() {
         switch (type) {
@@ -558,7 +586,9 @@ function RowRender({ record: { key, type, ...rest }, evaluatorSequence, isViewOn
                         }
                     }}
                     onBlur={async () => {
-                        if (scoreValue != rest[key]) {
+                        if (scoreValue != rest[supplierId]) {
+                            let diff = scoreValue - rest[supplierId];
+                            await updateValueFields(supplierId,scoreValue,diff,path)
                             await saveScore()
                         }
                     }}
