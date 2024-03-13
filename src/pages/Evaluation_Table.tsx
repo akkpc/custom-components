@@ -572,10 +572,10 @@ function RowRender({ record: { key, type, path, ...rest }, evaluatorSequence, is
 
     return (
         <div style={{
-            height: "100%", width: "100%", display: "flex", alignItems: "center"
+            height: "100%", width: "100%", display: "flex", alignItems: "center",  backgroundColor: "#fafafa"
         }} >
             {isViewOnly ?
-                <div style={{ textAlign: "left", paddingLeft: 15 }} >
+                <div style={{ textAlign: "left", paddingLeft: 15}} >
                     {scoreValue}
                 </div> :
                 <InputNumber
@@ -588,7 +588,7 @@ function RowRender({ record: { key, type, path, ...rest }, evaluatorSequence, is
                     onBlur={async () => {
                         if (scoreValue != rest[supplierId]) {
                             let diff = scoreValue - rest[supplierId];
-                            await updateValueFields(supplierId,scoreValue,diff,path)
+                            updateValueFields(supplierId,scoreValue,diff,path)
                             await saveScore()
                         }
                     }}
