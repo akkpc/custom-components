@@ -165,5 +165,6 @@ export interface SourcingSupplierResponses {
     Commercial_Score_1: number;
     Commercial_Score_2: number;
     Commercial_Score_3: number;
+    Supplier_Name?: string;
     _id: string;
 }
