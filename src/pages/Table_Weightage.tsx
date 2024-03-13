@@ -234,7 +234,7 @@ const AccordionTableWeightage: React.FC = () => {
             "Filter": {
                 "AND": [
                     {
-                        "OR": [
+                        "AND": [
                             {
                                 "LHSField": "Sourcing_Event_ID",
                                 "Operator": "EQUAL_TO",
@@ -286,9 +286,9 @@ const AccordionTableWeightage: React.FC = () => {
             "Filter": {
                 "AND": [
                     {
-                        "OR": [
+                        "AND": [
                             {
-                                "LHSField": "Sourcing_Event_Id",
+                                "LHSField": "Sourcing_Event_ID",
                                 "Operator": "EQUAL_TO",
                                 "RHSType": "Value",
                                 "RHSValue": sourcing_event_id,
