@@ -334,7 +334,7 @@ const Evaluation_Table: React.FC = () => {
             }
             currentItem[Supplier_ID] = supplierSectionSum[Supplier_ID];
             questionnaires[`${Supplier_ID}_instance_id`] = supplierResponse?._id
-            questionnaires[Supplier_ID] = questionnaires[Supplier_ID] ? questionnaires[Supplier_ID] + supplierSectionSum[Supplier_ID] : supplierSectionSum[Supplier_ID];
+            questionnaires[Supplier_ID] = questionnaires[Supplier_ID] ? questionnaires[Supplier_ID] + supplierSectionSum[Supplier_ID] : supplierSectionSum[Supplier_ID] || 0;
         }
 
         questionnaires.children = technicalItems;
