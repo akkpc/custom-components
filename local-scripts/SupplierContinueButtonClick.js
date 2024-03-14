@@ -12,7 +12,7 @@ const SourcingDetails = await kf.api(`/process/2/${kf.account._id}/admin/Sourcin
 
 const {
   _id: sourcingEventId,
-  _created_by: {Name}
+  _created_by: { Name }
 } = SourcingDetails;
 
 const response_list = await kf.api("/form/2/" + kf.account._id + `/${dataform}/allitems/list?page_size=1000`,
@@ -74,7 +74,7 @@ const response_list = await kf.api("/form/2/" + kf.account._id + `/${dataform}/a
 const prevResponses = response_list.Data;
 const currentStage = SourcingDetails.Current_Stage;
 
-console.log("prevResponses",prevResponses)
+console.log("prevResponses", prevResponses)
 
 let payload = {
   sourcingEventId,
@@ -161,7 +161,7 @@ if (currentStage == "RFQ") {
   availableTabs.push(lineTab)
   initialTab = lineTab.key;
 }
-console.log("Payload : " , payload)
+console.log("Payload : ", payload)
 const Sourcing_Event_Number = await kf.app.page.getVariable("Sourcing_Event_Number");
 // kf.app.openPage("Sourcing_Supplier_Response_Page_A00", payload);
 await kf.app.setVariable("sourcing_custom_tab_key", "questionnaires")
@@ -202,10 +202,19 @@ async function createLineItem(res) {
     Sourcing_Type: currentStage,
     Applicable_commercial_info: SourcingDetails.Applicable_commercial_info,
     "Table::Line_Items": SourcingDetails["Table::RFQ_Configuration"].map((items) => {
-      let {sourcing_event_id, ...rest} = items;
+      let { _id, Item, Item_Description, Unit_of_Measure, Quantity, Request_Quote_For, Weightage, sourcing_event_id } = items;
       return {
-        ...rest,
-        sourcing_event_id_1: sourcing_event_id
+        Item: {
+          _id: _id,
+          _parent_id: sourcingEventId,
+          Item: Item,
+          Item_Description: Item_Description,
+          Unit_of_Measure: Unit_of_Measure,
+          Quantity: Quantity,
+          Request_Quote_For: Request_Quote_For,
+          Weightage: Weightage,
+          sourcing_event_id: sourcing_event_id
+        }
       }
     }),
     Response_ID: res._id,
