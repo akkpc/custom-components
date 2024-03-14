@@ -201,7 +201,13 @@ async function createLineItem(res) {
     Supplier_ID: supplierId,
     Sourcing_Type: currentStage,
     Applicable_commercial_info: SourcingDetails.Applicable_commercial_info,
-    "Table::Line_Items": SourcingDetails["Table::RFQ_Configuration"],
+    "Table::Line_Items": SourcingDetails["Table::RFQ_Configuration"].map((items) => {
+      let {sourcing_event_id, ...rest} = items;
+      return {
+        ...rest,
+        sourcing_event_id_1: sourcing_event_id
+      }
+    }),
     Response_ID: res._id,
     Supplier_Task_ID: id
   }

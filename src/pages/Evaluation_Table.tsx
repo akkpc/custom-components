@@ -192,9 +192,9 @@ const Evaluation_Table: React.FC = () => {
         let dataObject = JSON.parse(JSON.stringify(prevData.current));
         let overallData = dataObject[0]
         overallData[supplierId] = overallData[supplierId] + (diff)
-        let updatePromises = []
-        updatePromises.push(update(overallData, overallData[supplierId], supplierId))
-        path.map(async (index, i) => {
+        // let updatePromises = []
+        update(overallData, overallData[supplierId], supplierId)
+        path.map((index, i) => {
             let currentData = overallData.children[index];
 
             if (i == path.length - 1) {
@@ -204,10 +204,10 @@ const Evaluation_Table: React.FC = () => {
                 [supplierId] + (diff);
                 overallData = overallData.children[index];
             }
-            updatePromises.push(update(currentData, currentData[supplierId], supplierId))
+            update(currentData, currentData[supplierId], supplierId)
         })
         // await Promise.all(
-            
+
         // )
         prevData.current = dataObject;
         setData(() => (dataObject))
@@ -619,16 +619,16 @@ const Evaluation_Table: React.FC = () => {
 
     return (
 
-        <div>
+        <div style={{ height: window.innerHeight - 10 }} >
             {contentLoaded ? <Table
-                style={{ marginBottom: 20 }}
+                style={{ marginBottom: 20, height: "100%" }}
                 columns={columns}
                 rowSelection={{ ...rowSelection }}
                 dataSource={data}
                 bordered
                 pagination={false}
                 className="custom-table"
-                scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 115 }}
+                scroll={{ x: window.innerWidth - 100 }}
             /> : "Loading..."}
         </div>
     );
