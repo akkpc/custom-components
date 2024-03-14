@@ -73,7 +73,6 @@ export default function CustomTab() {
                             name={name}
                             setCurrentTab={setCurrentTab}
                             onClick={async () => {
-                                await hideAll();
                                 const activeComponent = await KFSDK.app.page.getComponent(componentId);
                                 activeComponent.show();
                                 setCurrentTab(key);
