@@ -6,7 +6,7 @@ const ctx = kf.account;
 const id = await kf.app.page.getParameter('supplierTaskId');
 
 const taskDetails = await kf.api(`/form/2/${kf.account._id}/Sourcing_Supplier_Tasks_A00/${id}`);
-const { Event_ID: eventId, Supplier_ID: supplierId, Supplier_Email: supplier_email } = taskDetails;
+const { Event_ID: eventId, Supplier_ID: supplierId, Supplier_Email: supplier_email, Supplier_Name } = taskDetails;
 
 const SourcingDetails = await kf.api(`/process/2/${kf.account._id}/admin/Sourcing_Master_A00/${eventId}`);
 
@@ -162,7 +162,8 @@ if (currentStage == "RFQ") {
   initialTab = lineTab.key;
 }
 console.log("Payload : ", payload)
-const Sourcing_Event_Number = await kf.app.page.getVariable("Sourcing_Event_Number");
+
+const sourcing_event_number = await kf.app.page.getParameter('sourcing_event_number');
 // kf.app.openPage("Sourcing_Supplier_Response_Page_A00", payload);
 await kf.app.setVariable("sourcing_custom_tab_key", "questionnaires")
 kf.app.openPage("Sourcing_Supplier_Response_Page_A00", {
@@ -172,7 +173,7 @@ kf.app.openPage("Sourcing_Supplier_Response_Page_A00", {
   sourcing_event_id: sourcingEventId,
   availableTabs: JSON.stringify(availableTabs),
   initialTab,
-  sourcing_event_number: Sourcing_Event_Number
+  sourcing_event_number
 });
 
 
@@ -180,6 +181,7 @@ async function createResponse(additionalPayload = {}) {
   const payload = {
     Sourcing_Event_ID: sourcingEventId,
     Supplier_ID: supplierId,
+    Supplier_Name,
     Response_Type: currentStage,
     Response_Status: "Draft",
     _is_created: true,
