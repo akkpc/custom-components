@@ -122,7 +122,7 @@ const Evaluation_Table: React.FC = () => {
             await KFSDK.initialize();
             // let allParams = await KFSDK.app.page.getAllParameters();
             // const sourcing_event_id = allParams.sourcing_event_id;
-            const sourcing_event_id = "Pk8spa0mak6B";
+            const sourcing_event_id = "Pk8suZ_8AnD8";
             const evaluator_sequence = 1;
             const viewOnly = false
             setSourcingEventId(sourcing_event_id)
@@ -192,22 +192,23 @@ const Evaluation_Table: React.FC = () => {
         let dataObject = JSON.parse(JSON.stringify(prevData.current));
         let overallData = dataObject[0]
         overallData[supplierId] = overallData[supplierId] + (diff)
-        await update(overallData, overallData[supplierId], supplierId);
+        let updatePromises = []
+        updatePromises.push(update(overallData, overallData[supplierId], supplierId))
+        path.map(async (index, i) => {
+            let currentData = overallData.children[index];
 
-        await Promise.all(
-            path.map(async (index, i) => {
-                let currentData = overallData.children[index];
-
-                if (i == path.length - 1) {
-                    currentData[supplierId] = value;
-                } else {
-                    currentData[supplierId] = overallData.children[index]
-                    [supplierId] + (diff);
-                    overallData = overallData.children[index];
-                }
-                await update(currentData, currentData[supplierId], supplierId);
-            })
-        )
+            if (i == path.length - 1) {
+                currentData[supplierId] = value;
+            } else {
+                currentData[supplierId] = overallData.children[index]
+                [supplierId] + (diff);
+                overallData = overallData.children[index];
+            }
+            updatePromises.push(update(currentData, currentData[supplierId], supplierId))
+        })
+        // await Promise.all(
+            
+        // )
         prevData.current = dataObject;
         setData(() => (dataObject))
     }
@@ -252,7 +253,7 @@ const Evaluation_Table: React.FC = () => {
                 let payload: any = {}
                 payload[`Score_${evaluatorSequence}`] = scoreValue;
 
-                (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform}/${key}`, {
+                (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform}/${dataInstanceId}`, {
                     method: "POST",
                     body: JSON.stringify(payload)
                 }))
@@ -272,8 +273,10 @@ const Evaluation_Table: React.FC = () => {
             key: `Questionnaire_Score_${evaluatorSequence}`,
             parameters: "Questionnaire",
             type: "questionnaire",
-            path: [0]
+            path: [0],
+            children: []
         };
+        // let sectionsColumns = questionnaires.children ? questionnaires.children : [];
 
         for (let i = 0; i < sections.length; i++) {
             const { Supplier_ID, ...section } = sections[i];
@@ -284,24 +287,23 @@ const Evaluation_Table: React.FC = () => {
             if (section.Section_ID in sectionKey) {
                 technicalItems[sectionKey[section.Section_ID]] = {
                     ...technicalItems[sectionKey[section.Section_ID]],
-                    [Supplier_ID]: supplierSectionSum[Supplier_ID],
                     [`${Supplier_ID}_instance_id`]: section._id,
                 }
             } else {
                 technicalItems.push(
                     {
-                        key: section._id,
+                        key: section.Section_ID,
                         parameters: section.Section_Name,
                         type: "section",
-                        [`${Supplier_ID}_instance_id`]: section._id,
                         children: [],
-                        path: [0, technicalItems.length]
+                        path: [0, technicalItems.length],
+                        [`${Supplier_ID}_instance_id`]: section._id,
                     }
                 )
                 sectionKey[section.Section_ID] = technicalItems.length - 1;
             }
 
-            let currentItem = technicalItems[technicalItems.length - 1];
+            let currentItem = technicalItems[sectionKey[section.Section_ID]];
             let questionCols = currentItem?.children || [];
 
             for (let j = 0; j < sectionQuestion.length; j++) {
@@ -317,14 +319,14 @@ const Evaluation_Table: React.FC = () => {
                 } else {
                     questionCols.push(
                         {
-                            key: _id,
+                            key: Question_ID,
                             parameters: Question,
+                            type: "question",
+                            editScore: true,
+                            path: [...currentItem.path, questionCols.length],
                             [Supplier_ID]: rest[getScoreKey(evaluatorSequence)] || 0,
                             [getResponseKey(Supplier_ID)]: Text_Response,
                             [`${Supplier_ID}_instance_id`]: _id,
-                            type: "question",
-                            editScore: true,
-                            path: [...currentItem.path, questionCols.length]
                         }
                     )
                     questionKey[Question_ID] = questionCols.length - 1;
@@ -398,7 +400,7 @@ const Evaluation_Table: React.FC = () => {
 
             if (lines.length > 0) {
                 for (const item of lines) {
-                    console.log("item" , item)
+                    console.log("item", item)
                     let key = item.Item?._id;
                     if (key in commercialInfoKeys && lineItems.children) {
                         lineItems.children[commercialInfoKeys[key]] = {
@@ -441,7 +443,7 @@ const Evaluation_Table: React.FC = () => {
             dataIndex: 'parameters',
             key: 'parameters',
             fixed: "left",
-            width: 200
+            width: 500
         }];
         suppliers.forEach(({ Supplier_ID: _id, Supplier_Name }) => {
             columns.push({
@@ -455,7 +457,7 @@ const Evaluation_Table: React.FC = () => {
                         render: (text: string, record: any) => ({
                             children: <p style={{ marginLeft: 8 }} >{text}</p>
                         }),
-                        width: 280,
+                        width: 300,
                     },
                     {
                         title: "Score",
@@ -472,7 +474,7 @@ const Evaluation_Table: React.FC = () => {
                             // data={data}
                             />
                         }),
-                        width: 100,
+                        width: 130,
                     }],
             })
         })
@@ -616,19 +618,18 @@ const Evaluation_Table: React.FC = () => {
     }
 
     return (
-        <div style={{ display: "flex", alignItems: "center", flexDirection: "column", height: window.innerHeight }} >
-            <div>
-                {contentLoaded ? <Table
-                    style={{ marginBottom: 20 }}
-                    columns={columns}
-                    rowSelection={{ ...rowSelection }}
-                    dataSource={data}
-                    bordered
-                    pagination={false}
-                    className="custom-table"
-                    scroll={{ x: window.innerWidth - 100 }}
-                /> : "Loading..."}
-            </div>
+
+        <div>
+            {contentLoaded ? <Table
+                style={{ marginBottom: 20 }}
+                columns={columns}
+                rowSelection={{ ...rowSelection }}
+                dataSource={data}
+                bordered
+                pagination={false}
+                className="custom-table"
+                scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 115 }}
+            /> : "Loading..."}
         </div>
     );
 };
