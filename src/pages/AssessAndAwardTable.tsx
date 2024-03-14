@@ -1,19 +1,33 @@
 import { Checkbox, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
-import { getColorCode } from '../helpers';
-import { dataforms, processes } from '../helpers/constants';
-import { SourcingMaster } from '../types';
+import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
+import { SourcingMaster, SourcingSupplierResponses } from '../types';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const {
-    SourcingMaster: SourcingMasterProcess
-} = processes;
-
-const {
+    supplierResponses,
     supplierResponseSection,
     supplierResponseQuestion
 } = dataforms;
+
+const {
+    SourcingMaster: SourcingMasterProcess,
+    SupplierLineItem
+} = processes;
+
+let rootNodes = oldRootNode.concat("root");
+const allNodes = rootNodes.concat(leafNodes)
+
+enum ResponseStatus {
+    Active = "Active",
+    Draft = "Draft"
+}
+
+enum Evaluation_Status {
+    Completed = "Completed",
+    Not_Completed = "Not Completed"
+}
 
 interface DataType {
     key: React.ReactNode;
@@ -23,12 +37,13 @@ interface DataType {
     children?: DataType[];
     childUrl?: string;
     showCheckBox?: boolean;
+    path: []
 }
 
 interface TableRowData {
     key: string;
     parameters: string;
-    type: "question" | "section";
+    type: typeof allNodes[number];
     children?: TableRowData[];
     [key: string]: any;
 }
@@ -84,83 +99,73 @@ const rowSelection: TableRowSelection<DataType> = {
     hideSelectAll: true,
 };
 
-function getScoreKey(sequence: number): ("Score_1" | "Score_2" | "Score_3") {
-    if (sequence == 1) return "Score_1"
-    if (sequence == 2) return "Score_1"
-    return "Score_3"
-}
-
-function getResponseKey(id: string) {
-    return `${id}_response`
-}
-
-
 const AssessAndAwardTable: React.FC = () => {
-    const [selectedColumn, setSelectedColumn] = useState<string>();
+    const [selectedColumn,setSelectedColumn] = useState("")
     const [contentLoaded, setContentLoaded] = useState(false);
-    const [suppliers, setSuppliers] = useState<any[]>([]);
+    // const [suppliers, setSuppliers] = useState<any[]>([]);
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
-    const [currentStage, setCurrentStage] = useState("");
-    const [evaluatorSequence, setEvaluatorSequence] = useState(0);
+    const [isViewOnly, setIsViewOnly] = useState(true);
 
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
             // let allParams = await KFSDK.app.page.getAllParameters();
             // const sourcing_event_id = allParams.sourcing_event_id;
-            const sourcing_event_id = "Pk8qwoggRz6U";
-            const eventStage = "RFP"
-            const evaluator_sequence = 1;
-
-            const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcing_event_id)
-            const suppliers = sourcingDetails["Table::Add_Existing_Suppliers"].map((supplier) => ({
-                _id: supplier.Supplier_Name_1._id,
-                Supplier_Name: supplier.First_Name_1
-            }))
-            setCurrentStage(eventStage);
-            setSuppliers(suppliers)
+            const sourcing_event_id = "Pk8suZ_8AnD8";
+            const viewOnly = false
             setSourcingEventId(sourcing_event_id)
-            setEvaluatorSequence(evaluator_sequence)
-        })()
+            setIsViewOnly(viewOnly);
+        })();
     }, [])
 
     useEffect(() => {
-        if (sourcingEventId && suppliers) {
+        if (sourcingEventId) {
             (async () => {
-                buildColumns();
-                const sections = await getSupplierSections(sourcingEventId, currentStage);
-                const questions = await getSupplierQuestions(sourcingEventId, currentStage);
+                const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcingEventId)
+                const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
 
-                const tableData: TableRowData[] = [];
-
-                for (let i = 0; i < sections.length; i++) {
-                    const section = sections[i];
-                    let newSection: TableRowData = {
-                        id: section.Supplier_ID,
-                        key: section._id,
-                        parameters: section.Section_Name,
-                        [section.Supplier_ID]: section["Score"],
-                        type: "section",
-                        mergeCell: true,
-                        children: questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == section.Supplier_ID)).map((q) => ({
-                            id: section.Supplier_ID,
-                            key: q._id,
-                            parameters: q.Question,
-                            [q.Supplier_ID]: q["Score"] || 0,
-                            [getResponseKey(q.Supplier_ID)]: q.Text_Response,
-                            type: "question",
-                        }))
+                let respondedSuppliers = responses.map((response, index) => {
+                    let supplierIndex = sourcingDetails["Table::Add_Existing_Suppliers"].findIndex((s) => s.Supplier_Name_1._id == response.Supplier_ID)
+                    if (supplierIndex >= 0) {
+                        let { First_Name_1 } = sourcingDetails["Table::Add_Existing_Suppliers"][supplierIndex]
+                        return {
+                            ...response,
+                            Supplier_Name: First_Name_1
+                        }
                     }
-                    tableData.push(newSection)
+                    return {
+                        ...response,
+                        Supplier_Name: `Supplier ${index + 1}`
+                    }
+                })
+
+                const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage);
+                const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails);
+
+                let overAllScore: TableRowData = {
+                    key: `Score`,
+                    parameters: "OverAll Score",
+                    type: "root",
+                    children: [questionnaires, commercials]
                 }
-                console.log("tableData", tableData)
-                setData(tableData);
+
+                for (let i = 0; i < respondedSuppliers.length; i++) {
+                    const { Supplier_ID: supplierId } = respondedSuppliers[i];
+                    overAllScore[supplierId] = questionnaires[supplierId] + commercials[supplierId];
+                    overAllScore[`${supplierId}_instance_id`] = respondedSuppliers[i]._id;
+                }
+
+                console.log("overAllScore: ", overAllScore)
+
+                setData([overAllScore]);
+                buildColumns(respondedSuppliers);
                 setContentLoaded(true);
             })()
         }
-    }, [suppliers])
+    }, [sourcingEventId])
+
 
     function getTitleWithCheckbox(key: string, title: string) {
         return <div style={{ display: "flex" }} >
@@ -170,28 +175,201 @@ const AssessAndAwardTable: React.FC = () => {
         </div>
     }
 
+    async function buildTechnicalItems(respondedSuppliers: SourcingSupplierResponses[], currentStage: string) {
+        let sections = await getSupplierSections(sourcingEventId, currentStage);
+        let questions = await getSupplierQuestions(sourcingEventId, currentStage);
 
-    function buildColumns() {
+        let technicalItems: TableRowData[] = [];
+        let sectionKey: Record<string, number> = {}
+        let questionKey: Record<string, number> = {}
+
+        let questionnaires: TableRowData = {
+            key: `Questionnaire_Score`,
+            parameters: "Questionnaire",
+            type: "questionnaire",
+            path: [0],
+            children: []
+        };
+        // let sectionsColumns = questionnaires.children ? questionnaires.children : [];
+
+        for (let i = 0; i < sections.length; i++) {
+            const { Supplier_ID, ...section } = sections[i];
+            const supplierResponse = respondedSuppliers.find((supplier) => supplier.Supplier_ID == Supplier_ID)
+            const sectionQuestion = questions.filter((q) => (q.Section_ID == section.Section_ID && q.Supplier_ID == Supplier_ID))
+
+            if (section.Section_ID in sectionKey) {
+                technicalItems[sectionKey[section.Section_ID]] = {
+                    ...technicalItems[sectionKey[section.Section_ID]],
+                    [`${Supplier_ID}_instance_id`]: section._id,
+                    [`${Supplier_ID}`]: section.Score,
+                }
+            } else {
+                technicalItems.push(
+                    {
+                        key: section.Section_ID,
+                        parameters: section.Section_Name,
+                        type: "section",
+                        children: [],
+                        path: [0, technicalItems.length],
+                        [`${Supplier_ID}_instance_id`]: section._id,
+                        [`${Supplier_ID}`]: section.Score
+                    }
+                )
+                sectionKey[section.Section_ID] = technicalItems.length - 1;
+            }
+
+            let currentItem = technicalItems[sectionKey[section.Section_ID]];
+            let questionCols = currentItem?.children || [];
+
+            for (let j = 0; j < sectionQuestion.length; j++) {
+                let { Question_ID, Question, _id, Text_Response, ...rest } = sectionQuestion[j]
+                if (Question_ID in questionKey) {
+                    questionCols[questionKey[Question_ID]] = {
+                        ...questionCols[questionKey[Question_ID]],
+                        [Supplier_ID]: rest["Score"] || 0,
+                        [getResponseKey(Supplier_ID)]: Text_Response,
+                        [`${Supplier_ID}_instance_id`]: _id,
+                    }
+                } else {
+                    questionCols.push(
+                        {
+                            key: Question_ID,
+                            parameters: Question,
+                            type: "question",
+                            editScore: true,
+                            path: [...currentItem.path, questionCols.length],
+                            [Supplier_ID]: rest["Score"] || 0,
+                            [getResponseKey(Supplier_ID)]: Text_Response,
+                            [`${Supplier_ID}_instance_id`]: _id,
+                        }
+                    )
+                    questionKey[Question_ID] = questionCols.length - 1;
+                }
+            }
+            questionnaires[`${Supplier_ID}_instance_id`] = supplierResponse?._id
+            questionnaires[Supplier_ID] = supplierResponse?.Questionnaire_Score;
+        }
+
+        questionnaires.children = technicalItems;
+
+        return questionnaires
+    }
+
+    async function buildCommercialItems(supplierResponses: SourcingSupplierResponses[], SourcingDetails: any) {
+        const applicableCommercialInfo = SourcingDetails[Applicable_commercial_info]
+        const commercialInfoKeys: Record<string, number> = {};
+        let commercials: TableRowData = {
+            key: `Commercial_Score`,
+            parameters: "Commercials",
+            type: "commercial_details",
+            children: [],
+            path: [1]
+        }
+        let lineItems: TableRowData = {
+            key: `Line_Items_Score`,
+            parameters: "Line Items",
+            type: "line_items",
+            children: [],
+        }
+
+        for await (const response of supplierResponses) {
+            const {
+                Line_Item_instance_id: id,
+                _id
+            } = response;
+            const {
+                Supplier_ID,
+                ...rest
+            } = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${id}`));
+            let commercialSum = 0
+
+            for (const info of applicableCommercialInfo) {
+                let key = `${info.replaceAll(" ", "_")}_Score`;
+
+                if (key in commercialInfoKeys && commercials.children) {
+                    commercials.children[commercialInfoKeys[key]] = {
+                        ...commercials.children[commercialInfoKeys[key]],
+                        [Supplier_ID]: rest[key],
+                        [`${Supplier_ID}_instance_id`]: id,
+                    }
+                } else {
+                    commercialInfoKeys[key] = commercials.children ? commercials.children?.length : 0;
+                    commercials.children?.push({
+                        key,
+                        type: "line_item_info",
+                        parameters: info,
+                        editScore: true,
+                        path: [1, commercials.children?.length],
+                        [Supplier_ID]: rest[key],
+                        [`${Supplier_ID}_instance_id`]: id,
+                    })
+                }
+
+                commercialSum += rest[key];
+            }
+
+            let lines = rest[`Table::Line_Items`];
+            let lineItemsSum = 0;
+
+            if (lines.length > 0) {
+                for (const item of lines) {
+                    let key = item.Item?._id;
+                    if (key in commercialInfoKeys && lineItems.children) {
+                        lineItems.children[commercialInfoKeys[key]] = {
+                            ...lineItems.children[commercialInfoKeys[key]],
+                            [`${Supplier_ID}_instance_id`]: id,
+                            [Supplier_ID]: item["Score"],
+                            [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
+                        }
+                    } else {
+                        commercialInfoKeys[key] = lineItems.children ? lineItems.children?.length : 0;
+                        lineItems.children?.push({
+                            key: item._id,
+                            type: "line_item",
+                            parameters: item.Item?.Item,
+                            editScore: true,
+                            path: [1, commercials.children?.length, lineItems.children?.length],
+                            [`${Supplier_ID}_instance_id`]: id,
+                            [Supplier_ID]: item[`Score`],
+                            [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
+                            showCheckBox: true
+                        })
+                    }
+                    lineItemsSum += item[`Score`];
+                }
+            }
+
+            lineItems[Supplier_ID] = lineItemsSum;
+            commercials[Supplier_ID] = commercialSum + lineItemsSum;
+
+            lineItems[`${Supplier_ID}_instance_id`] = id;
+            commercials[`${Supplier_ID}_instance_id`] = _id;
+        }
+        commercials.children?.push(lineItems);
+        return commercials;
+    }
+
+    function buildColumns(suppliers: SourcingSupplierResponses[]) {
         const columns: any = [{
             title: "Parameters",
             dataIndex: 'parameters',
             key: 'parameters',
             fixed: "left",
-            width: 300
+            width: 500
         }];
-        suppliers.forEach(({ _id, Supplier_Name }) => {
+        suppliers.forEach(({ Supplier_ID: _id, Supplier_Name }) => {
             columns.push({
                 key: _id,
-                title: getTitleWithCheckbox(_id, Supplier_Name),
+                title: getTitleWithCheckbox(_id, Supplier_Name || ""),
                 children: [
                     {
                         title: "Response",
                         dataIndex: getResponseKey(_id),
                         key: getResponseKey(_id),
                         render: (text: string, record: any) => ({
-                            children: <p style={{ marginLeft: 8 }} >{record[getResponseKey(record.id)]}</p>
+                            children: <p style={{ marginLeft: 8 }} >{text}</p>
                         }),
-                        width: 200,
+                        width: 300,
                     },
                     {
                         title: "Score",
@@ -200,8 +378,10 @@ const AssessAndAwardTable: React.FC = () => {
                         render: (text: string, record: any) => ({
                             children: <RowRender
                                 record={record}
-                                mergeCell={record.mergeCell}
-                                evaluatorSequence={evaluatorSequence}
+                                isViewOnly={isViewOnly || !record.editScore}
+                                text={text}
+                                supplierId={_id}
+                            // data={data}
                             />
                         }),
                         width: 130,
@@ -213,6 +393,49 @@ const AssessAndAwardTable: React.FC = () => {
 
     const getSourcingDetails = async (sourcing_event_id: string) => {
         const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcing_event_id}`));
+        return sourcingdetails;
+    }
+
+    const getSourcingSupplierResponses = async (sourcing_event_id: string) => {
+        const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`, {
+            method: "POST",
+            body: JSON.stringify({
+                Filter: {
+                    "AND": [
+                        {
+                            "LHSField": "Sourcing_Event_ID",
+                            "Operator": "EQUAL_TO",
+                            "RHSType": "Value",
+                            "RHSValue": sourcing_event_id,
+                            "RHSField": null,
+                            "RHSParam": "",
+                            "LHSAttribute": null,
+                            "RHSAttribute": null
+                        },
+                        {
+                            "LHSField": "Response_Status",
+                            "Operator": "EQUAL_TO",
+                            "RHSType": "Value",
+                            "RHSValue": ResponseStatus.Active,
+                            "RHSField": null,
+                            "RHSParam": "",
+                            "LHSAttribute": null,
+                            "RHSAttribute": null
+                        },
+                        {
+                            "LHSField": "Evaluation_Status",
+                            "Operator": "EQUAL_TO",
+                            "RHSType": "Value",
+                            "RHSValue": Evaluation_Status.Not_Completed,
+                            "RHSField": null,
+                            "RHSParam": "",
+                            "LHSAttribute": null,
+                            "RHSAttribute": null
+                        },
+                    ]
+                }
+            })
+        }));
         return sourcingdetails;
     }
 
@@ -300,39 +523,43 @@ const AssessAndAwardTable: React.FC = () => {
         return questions;
     }
 
+    function getResponseKey(id: string) {
+        return `${id}_response`
+    }
+
     return (
-        <div>
+
+        <div style={{ height: window.innerHeight - 10 }} >
             {contentLoaded ? <Table
+                style={{ marginBottom: 20, height: "100%" }}
                 columns={columns}
                 rowSelection={{ ...rowSelection }}
                 dataSource={data}
                 bordered
                 pagination={false}
                 className="custom-table"
-                scroll={{ x: window.innerWidth, y: window.innerHeight - 115 }}
+                scroll={{ x: window.innerWidth - 100 }}
             /> : "Loading..."}
         </div>
     );
 };
 
-function RowRender({ record: { id, key, type, ...rest }, mergeCell, evaluatorSequence }: any) {
+function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: any) {
+    const [scoreValue, setScoreValue] = useState(0);
+
+    useEffect(() => {
+        if (rest[supplierId]) {
+            setScoreValue(Number(rest[supplierId].toFixed(0)))
+        }
+    }, [rest[supplierId]])
 
     return (
         <div style={{
-            display: "flex", alignItems: "center", justifyContent: "center", height: "100%"
+            height: "100%", width: "100%", display: "flex", alignItems: "center", backgroundColor: "#fafafa"
         }} >
             {
-                <div style={{
-                    border: `0.5px solid grey`,
-                    padding: 3,
-                    width: "100%",
-                    backgroundColor: getColorCode(rest[id]),
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "90%"
-                }} >
-                    {rest[id]}
+                <div style={{ textAlign: "left", paddingLeft: 15 }} >
+                    {scoreValue}
                 </div>
             }
         </div>)
