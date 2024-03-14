@@ -555,7 +555,9 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
 
     return (
         <div style={{
-            height: "100%", width: "100%", display: "flex", alignItems: "center", backgroundColor: "#fafafa"
+            height: "100%", width: "100%", display: "flex", alignItems: "center", 
+            // backgroundColor: "#fafafa"
+            backgroundColor: "transparent"
         }} >
             {
                 <div style={{ textAlign: "left", paddingLeft: 15 }} >
