@@ -21,7 +21,8 @@ const {
   Event_Short_Description,
   Category,
   _current_step,
-  _status
+  _status,
+  _current_assigned_to
 } = SourcingDetails;
 
 if (_status == "Draft") {
@@ -101,12 +102,12 @@ if (_status == "Draft") {
       name: "Event",
       hideComponents: []
     },
-    {
-      key: "Supplier",
-      componentId: "Container_XQUsOfW1X",
-      name: "Supplier",
-      hideComponents: []
-    },
+    // {
+    //   key: "Supplier",
+    //   componentId: "Container_XQUsOfW1X",
+    //   name: "Supplier",
+    //   hideComponents: []
+    // },
     {
       key: "QnA",
       componentId: "Container_HMbQnrRvH",
@@ -115,10 +116,9 @@ if (_status == "Draft") {
     }
   ]
 
-  let _activity_instance_id = _current_step.includes("Evaluation") ? _last_completed_step :  _current_context[0]._context_activity_instance_id
   const payload = {
     id: _id,
-    aid: _activity_instance_id,
+    aid: _current_context[0]._context_activity_instance_id,
     timer_date: getDate(SourcingDetails[`${Current_Stage}_End_Date`]),
     event_owner_name: _created_by.Name,
     event_owner_email: _created_by.Email,
@@ -134,9 +134,35 @@ if (_status == "Draft") {
     sourcing_event_id: _id,
     stepper: JSON.stringify(stepperObj)
   }
-  console.log("stepperObj : ", payload)
-  kf.app.openPage("Sourcing_Buyer_Dashboard_A01", payload)
 
+  if (_current_step.includes("Evaluation")) {
+    let isEvaluator = _current_assigned_to.findIndex(({ _id }) => kf.user._id);
+    if (isEvaluator >= 0) {
+      availableTabs.push(
+        {
+          key: "Evaluation",
+          componentId: "Container_XQUsOfW1X",
+          name: "Evalution",
+          hideComponents: []
+        },
+      )
+    } else {
+      payload.aid = _last_completed_step;
+    }
+  } else if (_current_step == "Assess & Award") {
+    availableTabs.push(
+      {
+        key: "Supplier",
+        componentId: "Container_3wWraW-Xd",
+        name: "Supplier",
+        hideComponents: []
+      },
+    )
+  }
+
+  console.log("stepperObj : ", payload)
+
+  kf.app.openPage("Sourcing_Buyer_Dashboard_A01", payload)
 }
 
 function convertStringToDate(dateString) {
