@@ -102,7 +102,7 @@ const rowSelection: TableRowSelection<DataType> = {
 const AssessAndAwardTable: React.FC = () => {
     const [selectedColumn,setSelectedColumn] = useState("")
     const [contentLoaded, setContentLoaded] = useState(false);
-    // const [suppliers, setSuppliers] = useState<any[]>([]);
+    const [suppliers, setSuppliers] = useState<any[]>([]);
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
@@ -111,9 +111,10 @@ const AssessAndAwardTable: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let {sourcing_event_id, suppliers} = await KFSDK.app.page.getAllParameters();
-            console.log("suppliers" ,suppliers, sourcing_event_id)
+            let {sourcing_event_id, supplierIds} = await KFSDK.app.page.getAllParameters();
+            console.log("suppliers" ,supplierIds, sourcing_event_id)
             const viewOnly = false
+            setSuppliers(JSON.parse(supplierIds))
             setSourcingEventId(sourcing_event_id)
             setIsViewOnly(viewOnly);
         })();
@@ -123,9 +124,9 @@ const AssessAndAwardTable: React.FC = () => {
         if (sourcingEventId) {
             (async () => {
                 const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcingEventId)
-                const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
+                // const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
 
-                let respondedSuppliers = responses.map((response, index) => {
+                let respondedSuppliers = suppliers.map((response, index) => {
                     let supplierIndex = sourcingDetails["Table::Add_Existing_Suppliers"].findIndex((s) => s.Supplier_Name_1._id == response.Supplier_ID)
                     if (supplierIndex >= 0) {
                         let { First_Name_1 } = sourcingDetails["Table::Add_Existing_Suppliers"][supplierIndex]
