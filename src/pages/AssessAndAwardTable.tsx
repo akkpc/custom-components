@@ -111,10 +111,10 @@ const AssessAndAwardTable: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let {sourcing_event_id, supplierIds} = await KFSDK.app.page.getAllParameters();
+            let {sourcing_event_id = "Pk8tSMkhCnRj", supplierIds} = await KFSDK.app.page.getAllParameters();
             console.log("suppliers" ,supplierIds, sourcing_event_id)
             const viewOnly = false
-            setSuppliers(JSON.parse(supplierIds))
+            // setSuppliers(JSON.parse(supplierIds))
             setSourcingEventId(sourcing_event_id)
             setIsViewOnly(viewOnly);
         })();
@@ -124,9 +124,9 @@ const AssessAndAwardTable: React.FC = () => {
         if (sourcingEventId) {
             (async () => {
                 const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcingEventId)
-                // const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
+                const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
 
-                let respondedSuppliers = suppliers.map((response, index) => {
+                let respondedSuppliers = responses.map((response, index) => {
                     let supplierIndex = sourcingDetails["Table::Add_Existing_Suppliers"].findIndex((s) => s.Supplier_Name_1._id == response.Supplier_ID)
                     if (supplierIndex >= 0) {
                         let { First_Name_1 } = sourcingDetails["Table::Add_Existing_Suppliers"][supplierIndex]
@@ -291,6 +291,7 @@ const AssessAndAwardTable: React.FC = () => {
                         ...commercials.children[commercialInfoKeys[key]],
                         [Supplier_ID]: rest[key],
                         [`${Supplier_ID}_instance_id`]: id,
+                        [getResponseKey(Supplier_ID)]: rest[info.replaceAll(" ", "_")]
                     }
                 } else {
                     commercialInfoKeys[key] = commercials.children ? commercials.children?.length : 0;
@@ -302,6 +303,7 @@ const AssessAndAwardTable: React.FC = () => {
                         path: [1, commercials.children?.length],
                         [Supplier_ID]: rest[key],
                         [`${Supplier_ID}_instance_id`]: id,
+                        [getResponseKey(Supplier_ID)]: rest[info.replaceAll(" ", "_")]
                     })
                 }
 
