@@ -121,7 +121,6 @@ const Evaluation_Table: React.FC = () => {
         (async () => {
             await KFSDK.initialize();
             let { sourcing_event_id, supplierIds } = await KFSDK.app.page.getAllParameters();
-            console.log("suppliers", supplierIds, sourcing_event_id)
             const viewOnly = false
             const sourcing_details: SourcingMaster = await getSourcingDetails(sourcing_event_id)
             const es = findSequence(sourcing_details)
@@ -384,12 +383,12 @@ const Evaluation_Table: React.FC = () => {
 
             for (const info of applicableCommercialInfo) {
                 let key = `${info.replaceAll(" ", "_")}_Score_${evaluatorSequence}`;
-
                 if (key in commercialInfoKeys && commercials.children) {
                     commercials.children[commercialInfoKeys[key]] = {
                         ...commercials.children[commercialInfoKeys[key]],
                         [Supplier_ID]: rest[key],
                         [`${Supplier_ID}_instance_id`]: id,
+                        [getResponseKey(Supplier_ID)]: rest[`${info.replaceAll(" ", "_")}`],
                     }
                 } else {
                     commercialInfoKeys[key] = commercials.children ? commercials.children?.length : 0;
@@ -401,6 +400,7 @@ const Evaluation_Table: React.FC = () => {
                         path: [1, commercials.children?.length],
                         [Supplier_ID]: rest[key],
                         [`${Supplier_ID}_instance_id`]: id,
+                        [getResponseKey(Supplier_ID)]: rest[`${info.replaceAll(" ", "_")}`],
                     })
                 }
 
@@ -410,9 +410,10 @@ const Evaluation_Table: React.FC = () => {
             let lines = rest[`Table::Line_Items`];
             let lineItemsSum = 0;
 
+            console.log("lines", rest)
+
             if (lines.length > 0) {
                 for (const item of lines) {
-                    console.log("item", item)
                     let key = item.Item?._id;
                     if (key in commercialInfoKeys && lineItems.children) {
                         lineItems.children[commercialInfoKeys[key]] = {
@@ -436,7 +437,6 @@ const Evaluation_Table: React.FC = () => {
                     }
                     lineItemsSum += item[`Score_${evaluatorSequence}`];
                 }
-                console.log("commercialInfoKeys", commercialInfoKeys, lines)
             }
 
             lineItems[Supplier_ID] = lineItemsSum;
@@ -498,48 +498,48 @@ const Evaluation_Table: React.FC = () => {
         return sourcingdetails;
     }
 
-    const getSourcingSupplierResponses = async (sourcing_event_id: string) => {
-        const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`, {
-            method: "POST",
-            body: JSON.stringify({
-                Filter: {
-                    "AND": [
-                        {
-                            "LHSField": "Sourcing_Event_ID",
-                            "Operator": "EQUAL_TO",
-                            "RHSType": "Value",
-                            "RHSValue": sourcing_event_id,
-                            "RHSField": null,
-                            "RHSParam": "",
-                            "LHSAttribute": null,
-                            "RHSAttribute": null
-                        },
-                        {
-                            "LHSField": "Response_Status",
-                            "Operator": "EQUAL_TO",
-                            "RHSType": "Value",
-                            "RHSValue": ResponseStatus.Active,
-                            "RHSField": null,
-                            "RHSParam": "",
-                            "LHSAttribute": null,
-                            "RHSAttribute": null
-                        },
-                        {
-                            "LHSField": "Evaluation_Status",
-                            "Operator": "EQUAL_TO",
-                            "RHSType": "Value",
-                            "RHSValue": Evaluation_Status.Not_Completed,
-                            "RHSField": null,
-                            "RHSParam": "",
-                            "LHSAttribute": null,
-                            "RHSAttribute": null
-                        },
-                    ]
-                }
-            })
-        }));
-        return sourcingdetails;
-    }
+    // const getSourcingSupplierResponses = async (sourcing_event_id: string) => {
+    //     const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`, {
+    //         method: "POST",
+    //         body: JSON.stringify({
+    //             Filter: {
+    //                 "AND": [
+    //                     {
+    //                         "LHSField": "Sourcing_Event_ID",
+    //                         "Operator": "EQUAL_TO",
+    //                         "RHSType": "Value",
+    //                         "RHSValue": sourcing_event_id,
+    //                         "RHSField": null,
+    //                         "RHSParam": "",
+    //                         "LHSAttribute": null,
+    //                         "RHSAttribute": null
+    //                     },
+    //                     {
+    //                         "LHSField": "Response_Status",
+    //                         "Operator": "EQUAL_TO",
+    //                         "RHSType": "Value",
+    //                         "RHSValue": ResponseStatus.Active,
+    //                         "RHSField": null,
+    //                         "RHSParam": "",
+    //                         "LHSAttribute": null,
+    //                         "RHSAttribute": null
+    //                     },
+    //                     {
+    //                         "LHSField": "Evaluation_Status",
+    //                         "Operator": "EQUAL_TO",
+    //                         "RHSType": "Value",
+    //                         "RHSValue": Evaluation_Status.Not_Completed,
+    //                         "RHSField": null,
+    //                         "RHSParam": "",
+    //                         "LHSAttribute": null,
+    //                         "RHSAttribute": null
+    //                     },
+    //                 ]
+    //             }
+    //         })
+    //     }));
+    //     return sourcingdetails;
+    // }
 
     const getSupplierSections = async (sourcing_event_id: string, currentStage: string) => {
         const queries = `page_number=1&page_size=100000`
