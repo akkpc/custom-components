@@ -120,13 +120,10 @@ const Evaluation_Table: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            // let allParams = await KFSDK.app.page.getAllParameters();
-            // const sourcing_event_id = allParams.sourcing_event_id;
-            const sourcing_event_id = "Pk8suZ_8AnD8";
-            const evaluator_sequence = 1;
+            let { sourcing_event_id, suppliers } = await KFSDK.app.page.getAllParameters();
+            console.log("suppliers", suppliers, sourcing_event_id)
             const viewOnly = false
             setSourcingEventId(sourcing_event_id)
-            setEvaluatorSequence(evaluator_sequence)
             setIsViewOnly(viewOnly);
         })();
     }, [])
@@ -136,7 +133,7 @@ const Evaluation_Table: React.FC = () => {
             (async () => {
                 const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcingEventId)
                 const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
-
+                const evaluator_sequence = findSequence(sourcingDetails)
                 let respondedSuppliers = responses.map((response, index) => {
                     let supplierIndex = sourcingDetails["Table::Add_Existing_Suppliers"].findIndex((s) => s.Supplier_Name_1._id == response.Supplier_ID)
                     if (supplierIndex >= 0) {
@@ -156,7 +153,7 @@ const Evaluation_Table: React.FC = () => {
                 const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails);
 
                 let overAllScore: TableRowData = {
-                    key: `Score_${evaluatorSequence}`,
+                    key: `Score_${evaluator_sequence}`,
                     parameters: "OverAll Score",
                     type: "root",
                     children: [questionnaires, commercials]
@@ -169,14 +166,25 @@ const Evaluation_Table: React.FC = () => {
                 }
 
                 console.log("overAllScore: ", overAllScore)
-
-                setData([overAllScore]);
                 prevData.current = [overAllScore];
-                buildColumns(respondedSuppliers);
+
+                setEvaluatorSequence(evaluator_sequence)
+                setData([overAllScore]);
+                buildColumns(respondedSuppliers, evaluator_sequence);
                 setContentLoaded(true);
             })()
         }
     }, [sourcingEventId])
+
+    function findSequence(sourcingDetails: SourcingMaster) {
+        if (sourcingDetails.Evaluator_1._id === KFSDK.user._id) {
+            return 1
+        } else if (sourcingDetails?.Evaluator_2?._id === KFSDK.user._id) {
+            return 2
+        } else {
+            return 4
+        }
+    }
 
 
     function getTitleWithCheckbox(key: string, title: string) {
@@ -437,7 +445,7 @@ const Evaluation_Table: React.FC = () => {
         return commercials;
     }
 
-    function buildColumns(suppliers: SourcingSupplierResponses[]) {
+    function buildColumns(suppliers: SourcingSupplierResponses[], evaluator_sequence: number) {
         const columns: any = [{
             title: "Parameters",
             dataIndex: 'parameters',
@@ -466,7 +474,7 @@ const Evaluation_Table: React.FC = () => {
                         render: (text: string, record: any) => ({
                             children: <RowRender
                                 record={record}
-                                evaluatorSequence={evaluatorSequence}
+                                evaluatorSequence={evaluator_sequence}
                                 isViewOnly={isViewOnly || !record.editScore}
                                 text={text}
                                 supplierId={_id}

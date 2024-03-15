@@ -111,9 +111,8 @@ const AssessAndAwardTable: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            // let allParams = await KFSDK.app.page.getAllParameters();
-            // const sourcing_event_id = allParams.sourcing_event_id;
-            const sourcing_event_id = "Pk8suZ_8AnD8";
+            let {sourcing_event_id, suppliers} = await KFSDK.app.page.getAllParameters();
+            console.log("suppliers" ,suppliers, sourcing_event_id)
             const viewOnly = false
             setSourcingEventId(sourcing_event_id)
             setIsViewOnly(viewOnly);
