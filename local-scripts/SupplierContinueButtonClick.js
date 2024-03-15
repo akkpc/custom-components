@@ -43,16 +43,16 @@ const response_list = await kf.api("/form/2/" + kf.account._id + `/${dataform}/a
                 "LHSAttribute": null,
                 "RHSAttribute": null
               },
-              {
-                "LHSField": "Response_Status",
-                "Operator": "EQUAL_TO",
-                "RHSType": "Value",
-                "RHSValue": "Draft",
-                "RHSField": null,
-                "RHSParam": "",
-                "LHSAttribute": null,
-                "RHSAttribute": null
-              },
+              // {
+              //   "LHSField": "Response_Status",
+              //   "Operator": "EQUAL_TO",
+              //   "RHSType": "Value",
+              //   "RHSValue": "Draft",
+              //   "RHSField": null,
+              //   "RHSParam": "",
+              //   "LHSAttribute": null,
+              //   "RHSAttribute": null
+              // },
               {
                 "LHSField": "Supplier_ID",
                 "Operator": "EQUAL_TO",
