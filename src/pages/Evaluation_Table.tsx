@@ -107,34 +107,37 @@ function getScoreKey(sequence: number): ("Score_1" | "Score_2" | "Score_3") {
 
 
 const Evaluation_Table: React.FC = () => {
-    const [selectedColumn, setSelectedColumn] = useState<string>();
     const [contentLoaded, setContentLoaded] = useState(false);
-    // const [suppliers, setSuppliers] = useState<any[]>([]);
+    const [selectedSuppliers, setSelectedSuppliers] = useState<any[]>([]);
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
     const [evaluatorSequence, setEvaluatorSequence] = useState(0);
     const [isViewOnly, setIsViewOnly] = useState(true);
+    const [sourcingDetails,setSourcingDetails] = useState<SourcingMaster>();
     const prevData = useRef(data);
 
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let { sourcing_event_id, suppliers } = await KFSDK.app.page.getAllParameters();
-            console.log("suppliers", suppliers, sourcing_event_id)
+            let { sourcing_event_id, supplierIds } = await KFSDK.app.page.getAllParameters();
+            console.log("suppliers", supplierIds, sourcing_event_id)
             const viewOnly = false
+            const sourcing_details: SourcingMaster = await getSourcingDetails(sourcing_event_id)
+            const es = findSequence(sourcing_details)
+            setSelectedSuppliers(JSON.parse(supplierIds));
+            setEvaluatorSequence(es)
+            setSourcingDetails(sourcing_details);
             setSourcingEventId(sourcing_event_id)
             setIsViewOnly(viewOnly);
         })();
     }, [])
 
     useEffect(() => {
-        if (sourcingEventId) {
+        if (sourcingDetails) {
             (async () => {
-                const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcingEventId)
-                const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
-                const evaluator_sequence = findSequence(sourcingDetails)
-                let respondedSuppliers = responses.map((response, index) => {
+                // const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
+                let respondedSuppliers = selectedSuppliers.map((response, index) => {
                     let supplierIndex = sourcingDetails["Table::Add_Existing_Suppliers"].findIndex((s) => s.Supplier_Name_1._id == response.Supplier_ID)
                     if (supplierIndex >= 0) {
                         let { First_Name_1 } = sourcingDetails["Table::Add_Existing_Suppliers"][supplierIndex]
@@ -149,11 +152,11 @@ const Evaluation_Table: React.FC = () => {
                     }
                 })
 
-                const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage);
-                const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails);
+                const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage, evaluatorSequence);
+                const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails,evaluatorSequence);
 
                 let overAllScore: TableRowData = {
-                    key: `Score_${evaluator_sequence}`,
+                    key: `Score_${evaluatorSequence}`,
                     parameters: "OverAll Score",
                     type: "root",
                     children: [questionnaires, commercials]
@@ -167,22 +170,23 @@ const Evaluation_Table: React.FC = () => {
 
                 console.log("overAllScore: ", overAllScore)
                 prevData.current = [overAllScore];
-
-                setEvaluatorSequence(evaluator_sequence)
                 setData([overAllScore]);
-                buildColumns(respondedSuppliers, evaluator_sequence);
+                buildColumns(respondedSuppliers, evaluatorSequence);
                 setContentLoaded(true);
             })()
         }
-    }, [sourcingEventId])
+    }, [sourcingDetails])
 
     function findSequence(sourcingDetails: SourcingMaster) {
-        if (sourcingDetails.Evaluator_1._id === KFSDK.user._id) {
+        if (sourcingDetails.Evaluator_1.Email_address === KFSDK.user.Email) {
             return 1
-        } else if (sourcingDetails?.Evaluator_2?._id === KFSDK.user._id) {
+        } else if (sourcingDetails?.Evaluator_2?.Email_address === KFSDK.user.Email) {
             return 2
+        } else if(sourcingDetails?.Evaluator_3?.Email_address === KFSDK.user.Email) {
+            return 3
         } else {
-            return 4
+            KFSDK.client.showInfo("Something went wrong");
+            return 0;
         }
     }
 
@@ -269,7 +273,7 @@ const Evaluation_Table: React.FC = () => {
         }
     }
 
-    async function buildTechnicalItems(respondedSuppliers: SourcingSupplierResponses[], currentStage: string) {
+    async function buildTechnicalItems(respondedSuppliers: SourcingSupplierResponses[], currentStage: string, evaluatorSequence: number) {
         let sections = await getSupplierSections(sourcingEventId, currentStage);
         let questions = await getSupplierQuestions(sourcingEventId, currentStage);
 
@@ -305,7 +309,7 @@ const Evaluation_Table: React.FC = () => {
                         type: "section",
                         children: [],
                         path: [0, technicalItems.length],
-                        [`${Supplier_ID}_instance_id`]: section._id,
+                        [`${Supplier_ID}_instance_id`]: section._id
                     }
                 )
                 sectionKey[section.Section_ID] = technicalItems.length - 1;
@@ -350,7 +354,7 @@ const Evaluation_Table: React.FC = () => {
         return questionnaires
     }
 
-    async function buildCommercialItems(supplierResponses: SourcingSupplierResponses[], SourcingDetails: any) {
+    async function buildCommercialItems(supplierResponses: SourcingSupplierResponses[], SourcingDetails: any, evaluatorSequence: number) {
         const applicableCommercialInfo = SourcingDetails[Applicable_commercial_info]
         const commercialInfoKeys: Record<string, number> = {};
         let commercials: TableRowData = {
@@ -445,7 +449,7 @@ const Evaluation_Table: React.FC = () => {
         return commercials;
     }
 
-    function buildColumns(suppliers: SourcingSupplierResponses[], evaluator_sequence: number) {
+    function buildColumns(suppliers: SourcingSupplierResponses[], evaluatorSequence: number) {
         const columns: any = [{
             title: "Parameters",
             dataIndex: 'parameters',
@@ -474,7 +478,7 @@ const Evaluation_Table: React.FC = () => {
                         render: (text: string, record: any) => ({
                             children: <RowRender
                                 record={record}
-                                evaluatorSequence={evaluator_sequence}
+                                evaluatorSequence={evaluatorSequence}
                                 isViewOnly={isViewOnly || !record.editScore}
                                 text={text}
                                 supplierId={_id}
@@ -642,7 +646,7 @@ const Evaluation_Table: React.FC = () => {
     );
 };
 
-function RowRender({ record: { key, type, path, ...rest }, evaluatorSequence, isViewOnly = true, text, supplierId, updateValueFields }: any) {
+function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, text, supplierId, updateValueFields }: any) {
     const [scoreValue, setScoreValue] = useState(0);
 
     useEffect(() => {
