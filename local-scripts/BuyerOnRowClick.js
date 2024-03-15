@@ -126,7 +126,6 @@ if (_status == "Draft") {
     current_status: _current_step,
     category: Category,
     locale_event_end_date: convertStringToDate(SourcingDetails[`${Current_Stage}_End_Date`]),
-    availableTabs: JSON.stringify(availableTabs),
     user_type: "buyer",
     event_name: Event_Name,
     event_description: Event_Short_Description,
@@ -136,12 +135,13 @@ if (_status == "Draft") {
   }
 
   if (_current_step.includes("Evaluation")) {
-    let isEvaluator = _current_assigned_to.findIndex(({ _id }) => kf.user._id);
+    let isEvaluator = _current_assigned_to.findIndex(({ _id }) => _id == kf.user._id);
+    console.log("_current_assigned_to", _current_assigned_to, kf.user._id, isEvaluator)
     if (isEvaluator >= 0) {
       availableTabs.push(
         {
           key: "Evaluation",
-          componentId: "Container_XQUsOfW1X",
+          componentId: "Container_3wWraW-Xd",
           name: "Evalution",
           hideComponents: []
         },
@@ -153,7 +153,7 @@ if (_status == "Draft") {
     availableTabs.push(
       {
         key: "Supplier",
-        componentId: "Container_3wWraW-Xd",
+        componentId: "Container_XQUsOfW1X",
         name: "Supplier",
         hideComponents: []
       },
@@ -162,7 +162,10 @@ if (_status == "Draft") {
 
   console.log("stepperObj : ", payload)
 
-  kf.app.openPage("Sourcing_Buyer_Dashboard_A01", payload)
+  kf.app.openPage("Sourcing_Buyer_Dashboard_A01", {
+    ...payload,
+    availableTabs: JSON.stringify(availableTabs),
+  })
 }
 
 function convertStringToDate(dateString) {
