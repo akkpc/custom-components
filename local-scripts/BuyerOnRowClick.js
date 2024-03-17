@@ -123,7 +123,7 @@ if (_status == "Draft") {
     event_owner_name: _created_by.Name,
     event_owner_email: _created_by.Email,
     current_stage: Current_Stage,
-    current_status: _current_step,
+    current_status: encodeURIComponent(_current_step),
     category: Category,
     locale_event_end_date: convertStringToDate(SourcingDetails[`${Current_Stage}_End_Date`]),
     user_type: "buyer",
