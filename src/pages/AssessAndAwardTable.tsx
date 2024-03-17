@@ -83,36 +83,40 @@ interface SupplierQuestion {
     Text_Response: string;
 };
 
-const rowSelection: TableRowSelection<DataType> = {
-    onChange: (selectedRowKeys, selectedRows) => {
-        console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
-    },
-    onSelect: (record, selected, selectedRows) => {
-        console.log(record, selected, selectedRows);
-    },
-    onSelectAll: (selected, selectedRows, changeRows) => {
-        console.log(selected, selectedRows, changeRows);
-    },
-    getCheckboxProps: (record) => ({
-        className: record.showCheckBox ? "" : "hide-row"
-    }),
-    hideSelectAll: true,
-};
 
 const AssessAndAwardTable: React.FC = () => {
-    const [selectedColumn,setSelectedColumn] = useState("")
+    const [selectedSupplier, setSelectedSupplier] = useState("")
     const [contentLoaded, setContentLoaded] = useState(false);
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
     const [isViewOnly, setIsViewOnly] = useState(true);
+    const [selectedLineItems, setSelectedLineItems] = useState<any[]>([]);
+    const [respondedSuppliers, setRespondedSuppliers] = useState<SourcingSupplierResponses[]>([]);
+
+
+    const rowSelection: TableRowSelection<DataType> = {
+        onChange: (selectedRowKeys, selectedRows) => {
+            setSelectedLineItems(selectedRows);
+        },
+        onSelect: (record, selected, selectedRows) => {
+            console.log(record, selected, selectedRows);
+        },
+        onSelectAll: (selected, selectedRows, changeRows) => {
+            console.log(selected, selectedRows, changeRows);
+        },
+        getCheckboxProps: (record) => ({
+            className: record.showCheckBox ? "" : "hide-row"
+        }),
+        hideSelectAll: true,
+    };
 
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let {sourcing_event_id = "Pk8tSMkhCnRj", supplierIds} = await KFSDK.app.page.getAllParameters();
-            console.log("suppliers" ,supplierIds, sourcing_event_id)
+            let { sourcing_event_id = "Pk8tSMkhCnRj", supplierIds } = await KFSDK.app.page.getAllParameters();
+            console.log("suppliers", supplierIds, sourcing_event_id)
             const viewOnly = false
             // setSuppliers(JSON.parse(supplierIds))
             setSourcingEventId(sourcing_event_id)
@@ -158,22 +162,28 @@ const AssessAndAwardTable: React.FC = () => {
                 }
 
                 console.log("overAllScore: ", overAllScore)
-
+                setRespondedSuppliers(respondedSuppliers);
                 setData([overAllScore]);
-                buildColumns(respondedSuppliers);
+                buildColumns(respondedSuppliers, "");
                 setContentLoaded(true);
             })()
         }
     }, [sourcingEventId])
 
+    useEffect(() => {
+        if (selectedSupplier != undefined) {
+            buildColumns(respondedSuppliers, selectedSupplier);
+        }
+    }, [selectedSupplier])
 
-    function getTitleWithCheckbox(key: string, title: string) {
-        return <div style={{ display: "flex" }} >
-            <Checkbox disabled={selectedColumn ? selectedColumn !== key : false}
-                onChange={(event) => event.target.checked ? setSelectedColumn(key) : setSelectedColumn("")} style={{ marginRight: 5 }} ></Checkbox>
-            <p>{title}</p>
-        </div>
-    }
+    useEffect(() => {
+        if (selectedSupplier && selectedLineItems.length > 0) {
+            let response = respondedSuppliers.find((s) => s.Supplier_ID ==  selectedSupplier)
+            console.log("selectedLineItems", selectedSupplier,response?._id, selectedLineItems)
+        }
+    }, [selectedSupplier, selectedLineItems])
+
+
 
     async function buildTechnicalItems(respondedSuppliers: SourcingSupplierResponses[], currentStage: string) {
         let sections = await getSupplierSections(sourcingEventId, currentStage);
@@ -351,7 +361,7 @@ const AssessAndAwardTable: React.FC = () => {
         return commercials;
     }
 
-    function buildColumns(suppliers: SourcingSupplierResponses[]) {
+    function buildColumns(suppliers: SourcingSupplierResponses[], selectedSupplier: string) {
         const columns: any = [{
             title: "Parameters",
             dataIndex: 'parameters',
@@ -359,10 +369,16 @@ const AssessAndAwardTable: React.FC = () => {
             fixed: "left",
             width: 500
         }];
-        suppliers.forEach(({ Supplier_ID: _id, Supplier_Name }) => {
+        suppliers.forEach(({ Supplier_ID: _id, Supplier_Name }, index) => {
             columns.push({
                 key: _id,
-                title: getTitleWithCheckbox(_id, Supplier_Name || ""),
+                title: <CustomTitle
+                    key={index}
+                    _id={_id}
+                    title={Supplier_Name}
+                    selectedSupplier={selectedSupplier}
+                    setSelectedSupplier={setSelectedSupplier}
+                />,
                 children: [
                     {
                         title: "Response",
@@ -557,7 +573,7 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
 
     return (
         <div style={{
-            height: "100%", width: "100%", display: "flex", alignItems: "center", 
+            height: "100%", width: "100%", display: "flex", alignItems: "center",
             // backgroundColor: "#fafafa"
             backgroundColor: "transparent"
         }} >
@@ -568,4 +584,20 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
             }
         </div>)
 }
+
+function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier }: { _id: string, title: string | undefined, selectedSupplier: string, setSelectedSupplier: React.Dispatch<React.SetStateAction<string>> }) {
+    return (
+        <div key={_id} style={{ display: "flex" }} >
+            <Checkbox disabled={selectedSupplier ? selectedSupplier != _id : false}
+                onChange={(event) => {
+                    if (event.target.checked) {
+                        setSelectedSupplier(() => _id)
+                    } else {
+                        setSelectedSupplier(() => "")
+                    }
+                }} style={{ marginRight: 5 }} ></Checkbox>
+            <p>{title}</p>
+        </div>)
+}
+
 export { AssessAndAwardTable };
