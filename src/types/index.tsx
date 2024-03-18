@@ -156,7 +156,9 @@ export interface SourcingSupplierResponses {
     Score_2: number;
     Score_3: number;
     Questionnaire_Score: number;
+    Weighted_Questionnaire_Score: number;
     Commercial_Score: number;
+    Weighted_Commercial_Score: number;
     Score: number;
     Evaluation_Status: string;
     Questionnaire_Score_1: number;

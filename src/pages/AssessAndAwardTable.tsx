@@ -1,6 +1,7 @@
 import { Checkbox, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
+import { KFButton } from '../components/KFButton';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
@@ -8,7 +9,8 @@ const KFSDK = require("@kissflow/lowcode-client-sdk")
 const {
     supplierResponses,
     supplierResponseSection,
-    supplierResponseQuestion
+    supplierResponseQuestion,
+    supplierAwardingForm
 } = dataforms;
 
 const {
@@ -62,6 +64,7 @@ interface SupplierSection {
     Score_1: number;
     Score_2: number;
     Score_3: number;
+    Weighted_Score: number;
 };
 interface SupplierQuestion {
     _id: string;
@@ -81,6 +84,7 @@ interface SupplierQuestion {
     Score_2: number;
     Score_3: number;
     Text_Response: string;
+    Weighted_Score: number;
 };
 
 
@@ -94,6 +98,7 @@ const AssessAndAwardTable: React.FC = () => {
     const [isViewOnly, setIsViewOnly] = useState(true);
     const [selectedLineItems, setSelectedLineItems] = useState<any[]>([]);
     const [respondedSuppliers, setRespondedSuppliers] = useState<SourcingSupplierResponses[]>([]);
+    const [enableAwarding, setEnableAwarding] = useState(false);
 
 
     const rowSelection: TableRowSelection<DataType> = {
@@ -115,10 +120,11 @@ const AssessAndAwardTable: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let { sourcing_event_id = "Pk8tSMkhCnRj", supplierIds } = await KFSDK.app.page.getAllParameters();
+            // let { sourcing_event_id = "Pk8tSMkhCnRj", supplierIds } = await KFSDK.app.page.getAllParameters();
+            let { sourcing_event_id, supplierIds } = await KFSDK.app.page.getAllParameters();
             console.log("suppliers", supplierIds, sourcing_event_id)
             const viewOnly = false
-            // setSuppliers(JSON.parse(supplierIds))
+            setSuppliers(JSON.parse(supplierIds))
             setSourcingEventId(sourcing_event_id)
             setIsViewOnly(viewOnly);
         })();
@@ -128,9 +134,9 @@ const AssessAndAwardTable: React.FC = () => {
         if (sourcingEventId) {
             (async () => {
                 const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcingEventId)
-                const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
+                // const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
 
-                let respondedSuppliers = responses.map((response, index) => {
+                let respondedSuppliers = suppliers.map((response, index) => {
                     let supplierIndex = sourcingDetails["Table::Add_Existing_Suppliers"].findIndex((s) => s.Supplier_Name_1._id == response.Supplier_ID)
                     if (supplierIndex >= 0) {
                         let { First_Name_1 } = sourcingDetails["Table::Add_Existing_Suppliers"][supplierIndex]
@@ -156,8 +162,8 @@ const AssessAndAwardTable: React.FC = () => {
                 }
 
                 for (let i = 0; i < respondedSuppliers.length; i++) {
-                    const { Supplier_ID: supplierId } = respondedSuppliers[i];
-                    overAllScore[supplierId] = questionnaires[supplierId] + commercials[supplierId];
+                    const { Supplier_ID: supplierId, Score } = respondedSuppliers[i];
+                    overAllScore[supplierId] = Score;
                     overAllScore[`${supplierId}_instance_id`] = respondedSuppliers[i]._id;
                 }
 
@@ -178,10 +184,21 @@ const AssessAndAwardTable: React.FC = () => {
 
     useEffect(() => {
         if (selectedSupplier && selectedLineItems.length > 0) {
-            let response = respondedSuppliers.find((s) => s.Supplier_ID ==  selectedSupplier)
-            console.log("selectedLineItems", selectedSupplier,response?._id, selectedLineItems)
+            setEnableAwarding(true);
         }
     }, [selectedSupplier, selectedLineItems])
+
+    async function updateAwarding() {
+        let response = respondedSuppliers.find((s) => s.Supplier_ID == selectedSupplier)
+        const payload = selectedLineItems.map((lineItem) => ({
+            Line_Item_ID: lineItem[`${selectedSupplier}_instance_id`],
+            Response_ID: response?._id
+        }))
+        const award = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierAwardingForm}/batch/create`, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        }));
+    }
 
 
 
@@ -211,7 +228,7 @@ const AssessAndAwardTable: React.FC = () => {
                 technicalItems[sectionKey[section.Section_ID]] = {
                     ...technicalItems[sectionKey[section.Section_ID]],
                     [`${Supplier_ID}_instance_id`]: section._id,
-                    [`${Supplier_ID}`]: section.Score,
+                    [`${Supplier_ID}`]: section.Weighted_Score,
                 }
             } else {
                 technicalItems.push(
@@ -222,7 +239,7 @@ const AssessAndAwardTable: React.FC = () => {
                         children: [],
                         path: [0, technicalItems.length],
                         [`${Supplier_ID}_instance_id`]: section._id,
-                        [`${Supplier_ID}`]: section.Score
+                        [`${Supplier_ID}`]: section.Weighted_Score
                     }
                 )
                 sectionKey[section.Section_ID] = technicalItems.length - 1;
@@ -236,7 +253,7 @@ const AssessAndAwardTable: React.FC = () => {
                 if (Question_ID in questionKey) {
                     questionCols[questionKey[Question_ID]] = {
                         ...questionCols[questionKey[Question_ID]],
-                        [Supplier_ID]: rest["Score"] || 0,
+                        [Supplier_ID]: rest.Weighted_Score || 0,
                         [getResponseKey(Supplier_ID)]: Text_Response,
                         [`${Supplier_ID}_instance_id`]: _id,
                     }
@@ -248,7 +265,7 @@ const AssessAndAwardTable: React.FC = () => {
                             type: "question",
                             editScore: true,
                             path: [...currentItem.path, questionCols.length],
-                            [Supplier_ID]: rest["Score"] || 0,
+                            [Supplier_ID]: rest.Weighted_Score || 0,
                             [getResponseKey(Supplier_ID)]: Text_Response,
                             [`${Supplier_ID}_instance_id`]: _id,
                         }
@@ -257,7 +274,7 @@ const AssessAndAwardTable: React.FC = () => {
                 }
             }
             questionnaires[`${Supplier_ID}_instance_id`] = supplierResponse?._id
-            questionnaires[Supplier_ID] = supplierResponse?.Questionnaire_Score;
+            questionnaires[Supplier_ID] = supplierResponse?.Weighted_Questionnaire_Score;
         }
 
         questionnaires.children = technicalItems;
@@ -285,7 +302,8 @@ const AssessAndAwardTable: React.FC = () => {
         for await (const response of supplierResponses) {
             const {
                 Line_Item_instance_id: id,
-                _id
+                _id,
+                Weighted_Commercial_Score
             } = response;
             const {
                 Supplier_ID,
@@ -294,7 +312,7 @@ const AssessAndAwardTable: React.FC = () => {
             let commercialSum = 0
 
             for (const info of applicableCommercialInfo) {
-                let key = `${info.replaceAll(" ", "_")}_Score`;
+                let key = `${info.replaceAll(" ", "_")}_Weighted_Score`;
 
                 if (key in commercialInfoKeys && commercials.children) {
                     commercials.children[commercialInfoKeys[key]] = {
@@ -321,7 +339,7 @@ const AssessAndAwardTable: React.FC = () => {
             }
 
             let lines = rest[`Table::Line_Items`];
-            let lineItemsSum = 0;
+            // let lineItemsSum = 0;
 
             if (lines.length > 0) {
                 for (const item of lines) {
@@ -330,7 +348,7 @@ const AssessAndAwardTable: React.FC = () => {
                         lineItems.children[commercialInfoKeys[key]] = {
                             ...lineItems.children[commercialInfoKeys[key]],
                             [`${Supplier_ID}_instance_id`]: id,
-                            [Supplier_ID]: item["Score"],
+                            [Supplier_ID]: item.Weighted_Score,
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
                         }
                     } else {
@@ -342,17 +360,17 @@ const AssessAndAwardTable: React.FC = () => {
                             editScore: true,
                             path: [1, commercials.children?.length, lineItems.children?.length],
                             [`${Supplier_ID}_instance_id`]: id,
-                            [Supplier_ID]: item[`Score`],
+                            [Supplier_ID]: item.Weighted_Score,
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
                             showCheckBox: true
                         })
                     }
-                    lineItemsSum += item[`Score`];
+                    // lineItemsSum += item[`Score`];
                 }
             }
 
-            lineItems[Supplier_ID] = lineItemsSum;
-            commercials[Supplier_ID] = commercialSum + lineItemsSum;
+            lineItems[Supplier_ID] = rest.Line_Item_Weighted_Score;
+            commercials[Supplier_ID] = Weighted_Commercial_Score;
 
             lineItems[`${Supplier_ID}_instance_id`] = id;
             commercials[`${Supplier_ID}_instance_id`] = _id;
@@ -548,6 +566,9 @@ const AssessAndAwardTable: React.FC = () => {
     return (
 
         <div style={{ height: window.innerHeight - 10 }} >
+            <div style={{display:""}} >
+            {enableAwarding && <KFButton buttonType='primary' >Award</KFButton>}
+            </div>
             {contentLoaded ? <Table
                 style={{ marginBottom: 20, height: "100%" }}
                 columns={columns}

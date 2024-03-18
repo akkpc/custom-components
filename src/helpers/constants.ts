@@ -13,6 +13,7 @@ const supplierResponseTemplate = "Sourcing_Supplier_Response_Templat_A00"
 const supplierResponseSection = "Sourcing_Supplier_Response_Section_A00"
 const supplierResponseQuestion = "Sourcing_Supplier_Response_Questio_A01"
 const supplierResponseCommercials = "Sourcing_Supplier_Line_Items_A00"
+const supplierAwardingForm = "Sourcing_Supplier_Awarding_A00"
 
 const dataforms = {
     supplierResponses,
@@ -22,7 +23,8 @@ const dataforms = {
     supplierResponseTemplate,
     supplierResponseSection,
     supplierResponseQuestion,
-    supplierResponseCommercials
+    supplierResponseCommercials,
+    supplierAwardingForm
 }
 const processes = {
     SourcingMaster,
