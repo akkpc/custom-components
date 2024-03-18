@@ -291,7 +291,7 @@ async function addQuestionnaireToSupplier(instance_id) {
     ...flowLogicPayload,
     Section_Name: section.Section_Name,
     Section_Sequence: section.Section_Sequence,
-    Weightage: section.Section_Weightage,
+    Weightage: section.Weightage,
     Template_ID: section.Template_ID,
     Section_ID: section.Section_ID,
     Evaluator_Count,
