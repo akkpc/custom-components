@@ -1,5 +1,4 @@
-import { CaretRightOutlined } from '@ant-design/icons';
-import { Button, Collapse, Modal, Typography, theme } from 'antd';
+import { Button, Modal, Typography, theme } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { QuestionCard } from '../components/QuestionCard';
 import { getUniqueString, parseJSON } from '../helpers';
@@ -85,7 +84,7 @@ export function SourcingTemplate() {
   const [activeTemplate, setActiveTemplate] = useState<string>();
   const [sourcingEventId, setSourcingEventId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
-  const [eventStage,setEventStage] = useState("");
+  const [eventStage, setEventStage] = useState("");
   const { alertContext, showInvalidInputError, showSuccessInput } = useAlert();
   const prevQuestionState = useRef(questions);
   const { token } = theme.useToken();
@@ -104,7 +103,7 @@ export function SourcingTemplate() {
       if (allParams.Sourcing_Event_ID) {
         setSourcingEventId(allParams.Sourcing_Event_ID)
       }
-      if(allParams.eventStage) {
+      if (allParams.eventStage) {
         setEventStage(allParams.eventStage)
       }
     })()
@@ -113,18 +112,10 @@ export function SourcingTemplate() {
   useEffect(() => {
     (async () => {
       if (sourcingEventId) {
-        await getTemplatesBySourcingEvent();
+        await getSections();
       }
     })()
   }, [sourcingEventId])
-
-  useEffect(() => {
-    (async () => {
-      if (activeTemplate) {
-        await getSectionsByTemplate();
-      }
-    })()
-  }, [activeTemplate])
 
   useEffect(() => {
     (async () => {
@@ -147,47 +138,7 @@ export function SourcingTemplate() {
     }
   }, [questions])
 
-  async function getTemplatesBySourcingEvent() {
-    const templatesResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Templates_A01/allitems/list?&page_number=1&page_size=10000`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          Filter: {
-            "AND": [
-              {
-                "AND": [
-                  {
-                    "LHSField": "Sourcing_Event_ID",
-                    "Operator": "EQUAL_TO",
-                    "RHSType": "Value",
-                    "RHSValue": sourcingEventId,
-                    "RHSField": null,
-                    "LHSAttribute": null,
-                    "RHSAttribute": null
-                  },
-                  {
-                    "LHSField": "Event_Stage",
-                    "Operator": "EQUAL_TO",
-                    "RHSType": "Value",
-                    "RHSValue": eventStage,
-                    "RHSField": null,
-                    "LHSAttribute": null,
-                    "RHSAttribute": null
-                  },
-                ]
-              }
-            ]
-          }
-        })
-      }).catch((err: any) => console.log("cannot fetch", err))
-    const templates: Template[] = templatesResponse.Data;
-    setTemplates(templates)
-    if (templates.length > 0) {
-      setActiveTemplate(templates[0].Template_ID)
-    }
-  }
-
-  async function getSectionsByTemplate() {
+  async function getSections() {
     const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
       {
         method: "POST",
@@ -201,15 +152,6 @@ export function SourcingTemplate() {
                     "Operator": "EQUAL_TO",
                     "RHSType": "Value",
                     "RHSValue": sourcingEventId,
-                    "RHSField": null,
-                    "LHSAttribute": null,
-                    "RHSAttribute": null
-                  },
-                  {
-                    "LHSField": "Template_ID",
-                    "Operator": "EQUAL_TO",
-                    "RHSType": "Value",
-                    "RHSValue": activeTemplate,
                     "RHSField": null,
                     "LHSAttribute": null,
                     "RHSAttribute": null
@@ -305,7 +247,7 @@ export function SourcingTemplate() {
           _is_created: true
         }])
       }).catch((err: any) => console.log("cannot fetch", err))
-    await getSectionsByTemplate();
+    await getSections();
     setActiveSection({
       _id: newSection[0]._id,
       Section_ID: newSection[0].Section_ID
@@ -410,7 +352,7 @@ export function SourcingTemplate() {
           _id: sectionId
         })
       }).catch((err: any) => console.log("cannot fetch", err))
-    await getSectionsByTemplate();
+    await getSections();
   }
 
   async function deleteSection(sectionId: string) {
@@ -422,7 +364,7 @@ export function SourcingTemplate() {
           _id: sectionId
         }])
       }).catch((err: any) => console.log("cannot fetch", err))
-    await getSectionsByTemplate();
+    await getSections();
   }
 
   async function deleteQuestions(data: any[]) {
@@ -463,82 +405,61 @@ export function SourcingTemplate() {
         }} >
           <div className='scrollable-container'
             style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "35%", borderRight: `1px solid ${borderColor}`, backgroundColor: primaryBackground, padding: 5 }} >
-            <Collapse
-              // ghost
-              style={{ backgroundColor: "transparent" }}
-              bordered={false}
-              defaultActiveKey={activeTemplate}
-              expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
-              onChange={(templateId) => {
-                setSections([]);
-                setActiveTemplate(templateId[templateId.length - 1]);
-              }}
-              activeKey={activeTemplate ? [activeTemplate] : activeTemplate}
-              items={templates.map(({ Template_Name, Template_ID, _id }, index) => (
-                {
-                  key: Template_ID,
-                  label: Template_Name,
-                  style: panelStyle,
-                  children: (
-                    <div style={{ margin: 10 }} >
-                      {/* <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography> */}
-                      {
-                        sections.map((section, index) =>
-                          <div key={index} style={{ marginTop: 10 }} >
-                            <Section
-                              index={index + 1}
-                              section_name={section.Section_Name}
-                              rest={section}
-                              isEditActive={section._id == editActiveIndex?._id}
-                              isActive={activeSection?._id == section._id}
-                              onClick={() => {
-                                const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
-                                if (delta.length > 0 || deletedDelta.length > 0) {
-                                  setOpenDiscardAlert(true);
-                                } else {
-                                  setActiveSection({
-                                    _id: section._id,
-                                    Section_ID: section.Section_ID
-                                  })
-                                }
-                              }}
-                              onPressEnter={async (e) => {
-                                let sectionName = e.currentTarget.value
-                                await updateSection(section._id, sectionName);
-                                setEditActiveIndex({
-                                  _id: section._id,
-                                  Section_ID: section.Section_ID
-                                })
-                              }}
-                              onEdit={() => setEditActiveIndex({
-                                _id: section._id,
-                                Section_ID: section.Section_ID
-                              })}
-                              onDelete={async () => await deleteSection(section._id)}
-                              onKeyUp={(e) => {
-                                e.preventDefault();
-                                if (e.key == "Escape") {
-                                  setEditActiveIndex({
-                                    _id: "",
-                                    Section_ID: ""
-                                  });
-                                }
-                              }}
-                            />
-                          </div>
-                        )
-                      }
-                      <Button
-                        onClick={async () => {
-                          await createSection("");
-                        }}
-                        style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Section</Button>
-                    </div>
-                  )
-                }
-              ))}
-            >
-            </Collapse>
+
+            <div style={{ margin: 10 }} >
+              {/* <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography> */}
+              {
+                sections.map((section, index) =>
+                  <div key={index} style={{ marginTop: 10 }} >
+                    <Section
+                      index={index + 1}
+                      section_name={section.Section_Name}
+                      rest={section}
+                      isEditActive={section._id == editActiveIndex?._id}
+                      isActive={activeSection?._id == section._id}
+                      onClick={() => {
+                        const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
+                        if (delta.length > 0 || deletedDelta.length > 0) {
+                          setOpenDiscardAlert(true);
+                        } else {
+                          setActiveSection({
+                            _id: section._id,
+                            Section_ID: section.Section_ID
+                          })
+                        }
+                      }}
+                      onPressEnter={async (e) => {
+                        let sectionName = e.currentTarget.value
+                        await updateSection(section._id, sectionName);
+                        setEditActiveIndex({
+                          _id: section._id,
+                          Section_ID: section.Section_ID
+                        })
+                      }}
+                      onEdit={() => setEditActiveIndex({
+                        _id: section._id,
+                        Section_ID: section.Section_ID
+                      })}
+                      onDelete={async () => await deleteSection(section._id)}
+                      onKeyUp={(e) => {
+                        e.preventDefault();
+                        if (e.key == "Escape") {
+                          setEditActiveIndex({
+                            _id: "",
+                            Section_ID: ""
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                )
+              }
+              <Button
+                onClick={async () => {
+                  await createSection("");
+                }}
+                style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Section</Button>
+            </div>
           </div>
           <div className='scrollable-container' style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "100%", backgroundColor: questionnaireBackground }}>
             <div style={{ margin: 10 }} >
@@ -569,7 +490,7 @@ export function SourcingTemplate() {
                         Question: "",
                         Section_ID: activeSection?.Section_ID,
                         Sourcing_Event_Question_ID: n_id,
-                        Template_ID: activeTemplate,
+                        Template_ID: "",
                         Sourcing_Event_ID: sourcingEventId,
                         Event_Stage: eventStage,
                       }]
