@@ -10,8 +10,8 @@ const KFSDK = require("@kissflow/lowcode-client-sdk")
 const { Text } = Typography;
 
 const {
-    supplierResponseSection,
-    supplierResponseQuestion
+    sourcingSection,
+    sourcingQuestion
 } = dataforms;
 
 const {
@@ -488,10 +488,10 @@ const AccordionTableWeightage: React.FC = () => {
                             if (isValid) {
                                 setWeightageError(false)
                                 if (delta["section"] && delta["section"].length > 0) {
-                                    await updateWeightage(delta["section"], supplierResponseSection);
+                                    await updateWeightage(delta["section"], sourcingSection);
                                 }
                                 if (delta["question"] && delta["question"].length > 0) {
-                                    await updateWeightage(delta["question"], supplierResponseQuestion);
+                                    await updateWeightage(delta["question"], sourcingQuestion);
                                 }
 
                                 let processPayload: Record<string, any> = {}
