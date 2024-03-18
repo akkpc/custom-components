@@ -152,9 +152,9 @@ if (_status == "Draft") {
   } else if (_current_step == "Assess & Award") {
     availableTabs.push(
       {
-        key: "Supplier",
+        key: "Responses",
         componentId: "Container_XQUsOfW1X",
-        name: "Supplier",
+        name: "Responses",
         hideComponents: []
       },
     )
