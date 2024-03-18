@@ -163,7 +163,7 @@ const AssessAndAwardTable: React.FC = () => {
 
                 for (let i = 0; i < respondedSuppliers.length; i++) {
                     const { Supplier_ID: supplierId, Score } = respondedSuppliers[i];
-                    overAllScore[supplierId] = Score;
+                    overAllScore[supplierId] = questionnaires[supplierId] + commercials[supplierId];
                     overAllScore[`${supplierId}_instance_id`] = respondedSuppliers[i]._id;
                 }
 
@@ -312,7 +312,7 @@ const AssessAndAwardTable: React.FC = () => {
             let commercialSum = 0
 
             for (const info of applicableCommercialInfo) {
-                let key = `${info.replaceAll(" ", "_")}_Weighted_Score`;
+                let key = `Weighted_${info.replaceAll(" ", "_")}_Score`;
 
                 if (key in commercialInfoKeys && commercials.children) {
                     commercials.children[commercialInfoKeys[key]] = {
