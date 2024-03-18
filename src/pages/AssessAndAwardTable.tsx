@@ -185,6 +185,8 @@ const AssessAndAwardTable: React.FC = () => {
     useEffect(() => {
         if (selectedSupplier && selectedLineItems.length > 0) {
             setEnableAwarding(true);
+        } else {
+            setEnableAwarding(false);
         }
     }, [selectedSupplier, selectedLineItems])
 
@@ -608,8 +610,16 @@ const AssessAndAwardTable: React.FC = () => {
     return (
 
         <div style={{ height: window.innerHeight - 10 }} >
-            <div style={{ display: "" }} >
-                {enableAwarding && <KFButton onClick={updateAwarding} buttonType='primary' >Award</KFButton>}
+            <div style={{ 
+                display: "flex", 
+                alignItems:"center" , 
+                justifyContent: "flex-end",
+                padding: 10
+                }} >
+                <KFButton
+                    onClick={updateAwarding} buttonType='primary'
+                    disabled={!enableAwarding}
+                >Award</KFButton>
             </div>
             {contentLoaded ? <Table
                 style={{ marginBottom: 20, height: "100%" }}
