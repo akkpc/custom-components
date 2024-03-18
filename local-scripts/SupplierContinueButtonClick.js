@@ -12,7 +12,8 @@ const SourcingDetails = await kf.api(`/process/2/${kf.account._id}/admin/Sourcin
 
 const {
   _id: sourcingEventId,
-  _created_by: { Name }
+  _created_by: { Name },
+  Evaluator_Count
 } = SourcingDetails;
 
 const response_list = await kf.api("/form/2/" + kf.account._id + `/${dataform}/allitems/list?page_size=1000`,
@@ -204,7 +205,7 @@ async function createLineItem(res) {
     Sourcing_Type: currentStage,
     Applicable_commercial_info: SourcingDetails.Applicable_commercial_info,
     "Table::Line_Items": SourcingDetails["Table::RFQ_Configuration"].map((items) => {
-      let { _id, Item, Item_Description, Unit_of_Measure, Quantity, Request_Quote_For, Weightage, sourcing_event_id } = items;
+      let { _id, Item, Item_Description, Unit_of_Measure, Quantity, Request_Quote_For, Weightage, sourcing_event_id, item_id} = items;
       return {
         Item: {
           _id: _id,
@@ -215,7 +216,8 @@ async function createLineItem(res) {
           Quantity: Quantity,
           Request_Quote_For: Request_Quote_For,
           Weightage: Weightage,
-          sourcing_event_id: sourcing_event_id
+          sourcing_event_id: sourcing_event_id,
+          item_id
         }
       }
     }),
@@ -281,6 +283,7 @@ async function addQuestionnaireToSupplier(instance_id) {
     ...flowLogicPayload,
     Template_Name: template.Template_Name,
     Weightage: template.Weightage,
+    Evaluator_Count,
     _is_created: true
   }]
 
@@ -291,6 +294,7 @@ async function addQuestionnaireToSupplier(instance_id) {
     Weightage: section.Section_Weightage,
     Template_ID: section.Template_ID,
     Section_ID: section.Section_ID,
+    Evaluator_Count,
     _is_created: true
   }))
 
@@ -303,6 +307,7 @@ async function addQuestionnaireToSupplier(instance_id) {
     Template_ID: question.Template_ID,
     Section_ID: question.Section_ID,
     Question_ID: question.Question_ID,
+    Evaluator_Count,
     _is_created: true
   }))
 
