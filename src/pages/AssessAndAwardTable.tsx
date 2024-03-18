@@ -3,6 +3,7 @@ import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
+import { showMessage } from '../hooks/KFFunctions';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
@@ -122,7 +123,6 @@ const AssessAndAwardTable: React.FC = () => {
             await KFSDK.initialize();
             // let { sourcing_event_id = "Pk8tSMkhCnRj", supplierIds } = await KFSDK.app.page.getAllParameters();
             let { sourcing_event_id, supplierIds } = await KFSDK.app.page.getAllParameters();
-            console.log("suppliers", supplierIds, sourcing_event_id)
             const viewOnly = false
             setSuppliers(JSON.parse(supplierIds))
             setSourcingEventId(sourcing_event_id)
@@ -190,14 +190,56 @@ const AssessAndAwardTable: React.FC = () => {
 
     async function updateAwarding() {
         let response = respondedSuppliers.find((s) => s.Supplier_ID == selectedSupplier)
-        const payload = selectedLineItems.map((lineItem) => ({
-            Line_Item_ID: lineItem[`${selectedSupplier}_instance_id`],
-            Response_ID: response?._id
-        }))
-        const award = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierAwardingForm}/batch/create`, {
+        let lineItemFilter: Record<string, any>[] = []
+        const payload = selectedLineItems.map((lineItem) => {
+            lineItemFilter.push({
+                "LHSField": "Line_Item_ID",
+                "Operator": "EQUAL_TO",
+                "RHSType": "Value",
+                "RHSValue": lineItem["key"],
+                "RHSField": null,
+                "RHSParam": "",
+                "LHSAttribute": null,
+                "RHSAttribute": null
+            })
+            return ({
+                Line_Item_ID: lineItem["key"],
+                Response_ID: response?._id,
+                _is_created: true
+            })
+        }
+        )
+        const previousLines = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierAwardingForm}/allitems/list`, {
             method: "POST",
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                Filter: {
+                    "AND": [
+                        {
+                            "LHSField": "Response_ID",
+                            "Operator": "EQUAL_TO",
+                            "RHSType": "Value",
+                            "RHSValue": response?._id,
+                            "RHSField": null,
+                            "RHSParam": "",
+                            "LHSAttribute": null,
+                            "RHSAttribute": null
+                        },
+                        {
+                            "OR": lineItemFilter
+                        }
+                    ]
+                }
+            })
         }));
+        console.log("previousLines.Data", previousLines.Data, payload)
+        if (previousLines.Data.length > 0) {
+            showMessage(KFSDK, "Item already awarded to the selected supplier")
+        } else {
+            (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierAwardingForm}/batch`, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            }));
+        }
     }
 
 
@@ -566,8 +608,8 @@ const AssessAndAwardTable: React.FC = () => {
     return (
 
         <div style={{ height: window.innerHeight - 10 }} >
-            <div style={{display:""}} >
-            {enableAwarding && <KFButton buttonType='primary' >Award</KFButton>}
+            <div style={{ display: "" }} >
+                {enableAwarding && <KFButton onClick={updateAwarding} buttonType='primary' >Award</KFButton>}
             </div>
             {contentLoaded ? <Table
                 style={{ marginBottom: 20, height: "100%" }}

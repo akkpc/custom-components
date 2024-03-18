@@ -5,6 +5,7 @@ import { KFButton } from '../components/KFButton';
 import { calculateSplitValue, getKey } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
 import { Applicable_commercial_info, Commercial_Details, Line_Items, Questionnaire, dataforms, leafNodes, lineItemTableKey, processes, rootNodes } from '../helpers/constants';
+import { showMessage } from '../hooks/KFFunctions';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
@@ -117,7 +118,7 @@ const AccordionTableWeightage: React.FC = () => {
 
     useEffect(() => {
         if (showWeightageError) {
-            showMessage("Please confirm total percentage equals 100%")
+            showMessage(KFSDK, "Please confirm total percentage equals 100%")
         }
     }, [showWeightageError])
 
@@ -416,10 +417,6 @@ const AccordionTableWeightage: React.FC = () => {
         }
     }
 
-    function showMessage(message: string) {
-        KFSDK.client.showInfo(message)
-    }
-
     return (
         <div>
             {contentLoaded && data ?
@@ -515,7 +512,7 @@ const AccordionTableWeightage: React.FC = () => {
                                 }
                                 await updateProcessWeightages(processPayload);
                                 prevData.current = data;
-                                showMessage("Weightage has been saved successfully!")
+                                showMessage(KFSDK, "Weightage has been saved successfully!")
                             } else {
                                 setWeightageError(() => true)
                             }
