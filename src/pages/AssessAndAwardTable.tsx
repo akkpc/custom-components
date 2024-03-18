@@ -274,7 +274,7 @@ const AssessAndAwardTable: React.FC = () => {
                 }
             }
             questionnaires[`${Supplier_ID}_instance_id`] = supplierResponse?._id
-            questionnaires[Supplier_ID] = supplierResponse?.Weighted_Questionnaire_Score;
+            questionnaires[Supplier_ID] = supplierResponse?.Questionnaire_Weighted_Score;
         }
 
         questionnaires.children = technicalItems;
@@ -303,7 +303,7 @@ const AssessAndAwardTable: React.FC = () => {
             const {
                 Line_Item_instance_id: id,
                 _id,
-                Weighted_Commercial_Score
+                Commercial_Weighted_Score
             } = response;
             const {
                 Supplier_ID,
@@ -370,7 +370,7 @@ const AssessAndAwardTable: React.FC = () => {
             }
 
             lineItems[Supplier_ID] = rest.Line_Item_Weighted_Score;
-            commercials[Supplier_ID] = Weighted_Commercial_Score;
+            commercials[Supplier_ID] = Commercial_Weighted_Score;
 
             lineItems[`${Supplier_ID}_instance_id`] = id;
             commercials[`${Supplier_ID}_instance_id`] = _id;
@@ -408,7 +408,7 @@ const AssessAndAwardTable: React.FC = () => {
                         width: 300,
                     },
                     {
-                        title: "Score",
+                        title: "Rating",
                         dataIndex: _id,
                         key: _id,
                         render: (text: string, record: any) => ({
