@@ -89,12 +89,13 @@ let payload = {
 };
 
 if (prevResponses.length > 0) {
-  const { Line_Item_instance_id, Line_item_activity_instance_id } = prevResponses[0];
+  const { Line_Item_instance_id, Line_item_activity_instance_id, Response_Status } = prevResponses[0];
   if (lineItemTypes.includes(currentStage) && Line_item_activity_instance_id && Line_Item_instance_id) {
     payload = {
       ...payload,
       line_id: Line_Item_instance_id,
       line_aid: Line_item_activity_instance_id,
+      Response_Status
     }
   }
 } else {
