@@ -22,7 +22,8 @@ const {
   Category,
   _current_step,
   _status,
-  _current_assigned_to
+  _current_assigned_to,
+  Freeze_Award
 } = SourcingDetails;
 
 if (_status == "Draft") {
@@ -151,21 +152,24 @@ if (_status == "Draft") {
       payload.aid = _last_completed_step;
     }
   } else if (_current_step == "Assess & Award") {
-    availableTabs = [
-      ...availableTabs,
-      {
-        key: "Responses",
-        componentId: "Container_XQUsOfW1X",
-        name: "Responses",
-        hideComponents: []
-      },
+    if (!Freeze_Award) {
+      availableTabs.push(
+        {
+          key: "Responses",
+          componentId: "Container_XQUsOfW1X",
+          name: "Responses",
+          hideComponents: []
+        },
+      )
+    }
+    availableTabs.push(
       {
         key: "Awarded_Items",
         componentId: "Container_rYxUj_KKv",
         name: "Awarded Items",
         hideComponents: []
       }
-    ]
+    )
   }
 
   console.log("stepperObj : ", payload)
