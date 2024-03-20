@@ -60,10 +60,12 @@ export default function CustomTab() {
 
     return (
         <div style={{
-            padding: 5,
+            paddingLeft:5,
             display: "flex",
             alignItems: "center",
-            gap: 15
+            columnGap: 15,
+            height: "100vh",
+            overflow:"-moz-hidden-unscrollable"
         }}>
             {
                 tabs.map(({ key, componentId, name }) => {
