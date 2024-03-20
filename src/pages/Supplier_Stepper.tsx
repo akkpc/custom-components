@@ -1,7 +1,7 @@
 import { Typography } from "antd";
 import React, { useEffect, useState } from 'react';
-import { stepperEdgeColor, stepperEdgeCompletedColor } from "../helpers/colors";
 import { convertStringToDate, getDateObj } from "../helpers";
+import { stepperEdgeColor, stepperEdgeCompletedColor } from "../helpers/colors";
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const description = 'This is a description.';
@@ -115,6 +115,10 @@ const Supplier_Stepper: React.FC = () => {
           currentStage = "AwardCommunicaiton";
         }
       }
+    }
+
+    if(taskDetails.Response_Status == "Responded") {
+      currentStage = "RFP_Supplier_Clarification";
     }
 
     let columns = stepsMetaData.filter(({ key }) => stepperObj.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stepperObj[stage.key] }))
