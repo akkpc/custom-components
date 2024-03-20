@@ -3,6 +3,8 @@ import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
+import { KFButton } from '../components/KFButton';
+import { lightBlue } from '../helpers/colors';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const {
@@ -114,7 +116,7 @@ const Evaluation_Table: React.FC = () => {
     const [data, setData] = useState<any[]>([])
     const [evaluatorSequence, setEvaluatorSequence] = useState(0);
     const [isViewOnly, setIsViewOnly] = useState(true);
-    const [sourcingDetails,setSourcingDetails] = useState<SourcingMaster>();
+    const [sourcingDetails, setSourcingDetails] = useState<SourcingMaster>();
     const prevData = useRef(data);
 
     useEffect(() => {
@@ -152,7 +154,7 @@ const Evaluation_Table: React.FC = () => {
                 })
 
                 const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage, evaluatorSequence);
-                const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails,evaluatorSequence);
+                const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails, evaluatorSequence);
 
                 let overAllScore: TableRowData = {
                     key: `Score_${evaluatorSequence}`,
@@ -181,7 +183,7 @@ const Evaluation_Table: React.FC = () => {
             return 1
         } else if (sourcingDetails?.Evaluator_2?.Email_address === KFSDK.user.Email) {
             return 2
-        } else if(sourcingDetails?.Evaluator_3?.Email_address === KFSDK.user.Email) {
+        } else if (sourcingDetails?.Evaluator_3?.Email_address === KFSDK.user.Email) {
             return 3
         } else {
             KFSDK.client.showInfo("Something went wrong");
@@ -630,18 +632,40 @@ const Evaluation_Table: React.FC = () => {
     }
 
     return (
-
-        <div style={{ height: window.innerHeight - 10 }} >
-            {contentLoaded ? <Table
-                style={{ marginBottom: 20, height: "100%" }}
-                columns={columns}
-                rowSelection={{ ...rowSelection }}
-                dataSource={data}
-                bordered
-                pagination={false}
-                className="custom-table"
-                scroll={{ x: window.innerWidth - 100 }}
-            /> : "Loading..."}
+        <div style={{display:"flex",flexDirection: "column", overflow:"hidden"}} >
+            <div style={{height: 700}} >
+                {contentLoaded ? <Table
+                    style={{ 
+                        marginBottom: 20, 
+                        height: window.innerHeight - 70, 
+                        // position: "fixed" 
+                    }}
+                    columns={columns}
+                    rowSelection={{ ...rowSelection }}
+                    dataSource={data}
+                    bordered
+                    pagination={false}
+                    className="custom-table"
+                    scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 172 }}
+                /> : "Loading..."}
+            </div>
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent:"flex-end",
+                    position: "fixed",
+                    height: 60,
+                    width: "100%",
+                    bottom:0,
+                    left:0,
+                    right:0,
+                    // borderTop: "1px solid #deeaff",
+                    zIndex: 1000
+                }}
+            >
+                <KFButton buttonType='primary' style={{marginRight: 10}} >Save & Close</KFButton>
+            </div>
         </div>
     );
 };

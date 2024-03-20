@@ -125,6 +125,7 @@ export interface SourcingMaster {
         Quantity: number;
         sourcing_event_id: string;
     }[];
+    Freeze_Award: boolean;
     _current_context: {
         _context_current_step: string;
         _context_assigned_to: {
