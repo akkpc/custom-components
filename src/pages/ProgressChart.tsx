@@ -136,7 +136,7 @@ export function ProgressChart() {
                 {
                     chartData.map((v, index) => {
                         return (
-                            <Tooltip color={v.color} title={`${v.value} ${v.label}`} placement="top">
+                            <Tooltip key={index} color={v.color} title={`${v.value} ${v.label}`} placement="top">
                                 <div key={index} style={{
                                     backgroundColor: v.color,
                                     borderRadius: 20,
@@ -168,7 +168,7 @@ export function ProgressChart() {
                     {
                         value.map(({ label, color }, index) => {
                             return (
-                                <Col span={12} style={{ marginTop: 2 }}>
+                                <Col key={index} span={12} style={{ marginTop: 2 }}>
                                     <Label key={index} label={label} color={color} />
                                 </Col>
                             )

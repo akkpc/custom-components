@@ -1,4 +1,5 @@
 import { Typography } from 'antd'
+import moment from 'moment'
 import { useEffect, useState } from 'react'
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
@@ -22,14 +23,28 @@ export function TimerComponent() {
     return !isNaN(date.getTime()) && date.toString() !== "Invalid Date";
   }
 
+  function parseDateStringWithTimezone(dateString: string) {
+    var dateParts = dateString.split(" ");
+    var dateComponent = dateParts.slice(0, 4).join(" ");
+    var timeComponent = dateParts[4] + " " + dateParts[5];
+
+    var date = new Date(dateComponent);
+    var timeMatch: any = timeComponent.match(/(\d+):(\d+)/);
+    var hours = parseInt(timeMatch[1]);
+    var minutes = parseInt(timeMatch[2]);
+    var timezoneOffsetHours = parseInt(dateParts[6].substring(3, 6)) / 100;
+    hours -= timezoneOffsetHours;
+
+    date.setHours(hours, minutes);
+
+    return date;
+}
+
   function convertStringToDate(dateString: string | Date): Date {
     if (typeof dateString == "string") {
-      if (isValidDate(dateString)) return new Date(dateString);
-
-      let dateTimePart = dateString.split(' ')[0];
-      let dateObject = new Date(dateTimePart);
-
-      return dateObject;
+      // if (isValidDate(dateString)) return new Date(dateString);
+      let dateObject = moment(dateString, 'ddd MMM DD YYYY HH:mm:ss [GMT] ZZ (zz)');
+      return dateObject.toDate();
     }
     return dateString
   }
@@ -42,7 +57,8 @@ export function TimerComponent() {
       const date = allParams.timer_date;
 
       if (date) {
-        const parsedDate = convertStringToDate(date);
+        const parsedDate = parseDateStringWithTimezone(date);
+        console.log("parsedDate",parsedDate,parsedDate.getTime())
         if (!isNaN(parsedDate.getTime())) {
           const timer = setInterval(() => {
             const now = new Date()
@@ -80,10 +96,10 @@ export function TimerComponent() {
 
   return (
     <div style={{
-       display: "flex", 
-       alignItems: "center", 
-       justifyContent: "start" 
-       }} >
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "start"
+    }} >
       <div style={{ display: "flex", gap: 10 }} >
         {
           Object.keys(timeData).map((key: string, index) => (

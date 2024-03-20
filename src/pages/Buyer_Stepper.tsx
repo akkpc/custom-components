@@ -109,7 +109,6 @@ const Buyer_Stepper: React.FC = () => {
       const stages: Record<string, string> = JSON.parse(allParams.stepper || "{}");
       const currentStage = decodeURIComponent(allParams.current_status);
       const dynamicStages: any[] = getStepperObject(stepperMeta, stages, currentStage)
-      console.log("Stages : ", dynamicStages, currentStage)
       setSteps(dynamicStages);
     })()
   }, [])
