@@ -26,7 +26,7 @@ export function ProgressChart() {
         {
             key: "Invited",
             label: "Invited",
-            color: "#7EBC7C"
+            color: "#F09541"
         },
         {
             key: "Accepted",
@@ -46,7 +46,7 @@ export function ProgressChart() {
         {
             key: "Responded",
             label: "Responded",
-            color: "#F09541"
+            color: "#7EBC7C"
         },
     ]
 
