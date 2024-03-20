@@ -89,7 +89,7 @@ if (_status == "Draft") {
     }
   }
 
-  const availableTabs = [
+  let availableTabs = [
     {
       key: "Summary",
       componentId: "Container_DMRyxcgut",
@@ -131,7 +131,8 @@ if (_status == "Draft") {
     event_description: Event_Short_Description,
     eventNumber: Event_Number,
     sourcing_event_id: _id,
-    stepper: JSON.stringify(stepperObj)
+    stepper: JSON.stringify(stepperObj),
+    end_date: SourcingDetails[`${Current_Stage}_End_Date`]
   }
 
   if (_current_step.includes("Evaluation")) {
@@ -150,14 +151,21 @@ if (_status == "Draft") {
       payload.aid = _last_completed_step;
     }
   } else if (_current_step == "Assess & Award") {
-    availableTabs.push(
+    availableTabs = [
+      ...availableTabs,
       {
         key: "Responses",
         componentId: "Container_XQUsOfW1X",
         name: "Responses",
         hideComponents: []
       },
-    )
+      {
+        key: "Awarded_Items",
+        componentId: "Container_rYxUj_KKv",
+        name: "Awarded Items",
+        hideComponents: []
+      }
+    ]
   }
 
   console.log("stepperObj : ", payload)
