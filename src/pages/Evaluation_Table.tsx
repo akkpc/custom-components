@@ -663,6 +663,9 @@ const Evaluation_Table: React.FC = () => {
                     // borderTop: "1px solid #deeaff",
                     zIndex: 1000
                 }}
+                onClick={() => {
+                    // KFSDK.app.openPage("Sourcing_Buyer_Dashboard_A01")
+                }}
             >
                 <KFButton buttonType='primary' style={{marginRight: 10}} >Save & Close</KFButton>
             </div>

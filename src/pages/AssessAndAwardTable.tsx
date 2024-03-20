@@ -100,7 +100,7 @@ const AssessAndAwardTable: React.FC = () => {
     const [selectedLineItems, setSelectedLineItems] = useState<any[]>([]);
     const [respondedSuppliers, setRespondedSuppliers] = useState<SourcingSupplierResponses[]>([]);
     const [enableAwarding, setEnableAwarding] = useState(false);
-
+    const [freezeAwarding,setFreezeAwarding] = useState(false)
 
     const rowSelection: TableRowSelection<DataType> = {
         onChange: (selectedRowKeys, selectedRows) => {
@@ -168,6 +168,9 @@ const AssessAndAwardTable: React.FC = () => {
                 }
 
                 console.log("overAllScore: ", overAllScore)
+                if(sourcingDetails.Freeze_Award) { 
+                    setFreezeAwarding(true);
+                }
                 setRespondedSuppliers(respondedSuppliers);
                 setData([overAllScore]);
                 buildColumns(respondedSuppliers, "");
@@ -606,7 +609,6 @@ const AssessAndAwardTable: React.FC = () => {
     function getResponseKey(id: string) {
         return `${id}_response`
     }
-
     return (
 
         <div style={{ height: window.innerHeight - 10 }} >
@@ -617,8 +619,14 @@ const AssessAndAwardTable: React.FC = () => {
                 padding: 10
                 }} >
                 <KFButton
-                    onClick={updateAwarding} buttonType='primary'
-                    disabled={!enableAwarding}
+                    onClick={async () => {
+                        if(freezeAwarding) {
+                            showMessage(KFSDK, "Awarding has been freezed")
+                        } else {
+                            await updateAwarding()
+                        }
+                    }} buttonType='primary'
+                    disabled={!enableAwarding || freezeAwarding}
                 >Award</KFButton>
             </div>
             {contentLoaded ? <Table

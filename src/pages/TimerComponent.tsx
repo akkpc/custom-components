@@ -24,6 +24,7 @@ export function TimerComponent() {
   }
 
   function parseDateStringWithTimezone(dateString: string) {
+    // if (isValidDate(dateString)) return new Date(dateString);
     var dateParts = dateString.split(" ");
     var dateComponent = dateParts.slice(0, 4).join(" ");
     var timeComponent = dateParts[4] + " " + dateParts[5];
@@ -42,9 +43,11 @@ export function TimerComponent() {
 
   function convertStringToDate(dateString: string | Date): Date {
     if (typeof dateString == "string") {
-      // if (isValidDate(dateString)) return new Date(dateString);
-      let dateObject = moment(dateString, 'ddd MMM DD YYYY HH:mm:ss [GMT] ZZ (zz)');
-      return dateObject.toDate();
+      if (isValidDate(dateString)) return new Date(dateString);
+      let dateTimePart = dateString.split(' ')[0];
+      let dateObject = new Date(dateTimePart);
+
+      return dateObject;
     }
     return dateString
   }
@@ -55,7 +58,7 @@ export function TimerComponent() {
       await KFSDK.initialize();
       let allParams = await KFSDK.app.page.getAllParameters();
       const date = allParams.timer_date;
-
+      
       if (date) {
         const parsedDate = parseDateStringWithTimezone(date);
         console.log("parsedDate",parsedDate,parsedDate.getTime())
