@@ -80,6 +80,7 @@ const SupplierResponseQuestions: React.FC = () => {
     const [sections, setSections] = useState<SourcingSupplierSection[]>([])
     const [eventTypes, setEventTypes] = useState<string[]>([])
     const [supplierId, setSupplierId] = useState("");
+    const [showSubmitButton,setShowSubmitButton] = useState(true)
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
@@ -92,7 +93,7 @@ const SupplierResponseQuestions: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let { currentStage, sourcingEventId, Event_Type } = await KFSDK.app.page.getAllParameters();
+            let { currentStage, sourcingEventId, Event_Type, Response_Status } = await KFSDK.app.page.getAllParameters();
             const eventTypes: string[] = JSON.parse(Event_Type || "[]");
             const supplier_id = await KFSDK.app.getVariable("currentSupplierId");
             if (sourcingEventId) {
@@ -102,6 +103,9 @@ const SupplierResponseQuestions: React.FC = () => {
                 setSections(sections);
                 setEventTypes(eventTypes);
                 setSupplierId(supplier_id)
+                if(Response_Status == "Active"){ 
+                    setShowSubmitButton(false);
+                }
             }
         })()
     }, [])
@@ -185,7 +189,10 @@ const SupplierResponseQuestions: React.FC = () => {
                 />
                 <div style={{ height: 60 }} ></div>
             </div>
-            {currentStage != "RFQ" && <div
+            {
+            currentStage != "RFQ" && 
+            showSubmitButton &&
+            <div
                 style={{
                     position: "fixed",
                     width: "100%",
