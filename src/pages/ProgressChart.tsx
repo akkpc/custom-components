@@ -53,7 +53,7 @@ export function ProgressChart() {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            const sourcingEventId = "Pk8v30tNL3Kt";
+            const { id: sourcingEventId } = await KFSDK.app.page.getAllParameters();
             const { Data } = await getSourcingTasks(sourcingEventId);
             let total = Data.length;
             let accepted = Data.filter((res: any) => res.Consent_Status == "Accepted").length
