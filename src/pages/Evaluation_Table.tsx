@@ -1,10 +1,9 @@
 import { InputNumber, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
+import { KFButton } from '../components/KFButton';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
-import { KFButton } from '../components/KFButton';
-import { lightBlue } from '../helpers/colors';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const {
@@ -631,13 +630,44 @@ const Evaluation_Table: React.FC = () => {
         return `${id}_response`
     }
 
+    async function evaluateCompletionStatus() {
+        for (let i = 0; i < selectedSuppliers.length; i++) {
+            const { Supplier_ID, _id } = selectedSuppliers[i]
+            let status: any = calculate(data, Supplier_ID)
+            let evalStatus = status ? "Completed" : "Not Completed";
+            await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/${_id}`, {
+                method: "POST",
+                body: JSON.stringify({
+                    Evaluation_Status: evalStatus
+                })
+            });
+        }
+    }
+
+    function calculate(data: any[], supplierId: string): any {
+        let queue = [...data]
+        while (queue.length > 0) {
+            let curr: any = queue.shift();
+            if (curr[supplierId] == 0) {
+                return false
+            }
+            if (curr.children && curr.children.length > 0) {
+                queue = [
+                    ...queue,
+                    ...curr.children
+                ]
+            }
+        }
+        return true
+    }
+
     return (
-        <div style={{display:"flex",flexDirection: "column", overflow:"hidden"}} >
-            <div style={{height: 700}} >
+        <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }} >
+            <div style={{ height: 700 }} >
                 {contentLoaded ? <Table
-                    style={{ 
-                        marginBottom: 20, 
-                        height: window.innerHeight - 70, 
+                    style={{
+                        marginBottom: 20,
+                        height: window.innerHeight - 70,
                         // position: "fixed" 
                     }}
                     columns={columns}
@@ -653,21 +683,24 @@ const Evaluation_Table: React.FC = () => {
                 style={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent:"flex-end",
+                    justifyContent: "flex-end",
                     position: "fixed",
                     height: 60,
                     width: "100%",
-                    bottom:0,
-                    left:0,
-                    right:0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     // borderTop: "1px solid #deeaff",
                     zIndex: 1000
                 }}
-                onClick={() => {
-                    // KFSDK.app.openPage("Sourcing_Buyer_Dashboard_A01")
-                }}
             >
-                <KFButton buttonType='primary' style={{marginRight: 10}} >Save & Close</KFButton>
+                <KFButton
+                    buttonType='primary' style={{ marginRight: 10 }}
+                    onClick={async () => {
+                        await evaluateCompletionStatus()
+                        // KFSDK.app.openPage("Sourcing_Buyer_Dashboard_A01")
+                    }}
+                >Save</KFButton>
             </div>
         </div>
     );
