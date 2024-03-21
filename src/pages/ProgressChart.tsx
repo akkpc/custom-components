@@ -136,7 +136,13 @@ export function ProgressChart() {
                 {
                     chartData.map((v, index) => {
                         return (
-                            <Tooltip key={index} color={v.color} title={`${v.value} ${v.label}`} placement="top">
+                            <Tooltip
+                                key={index}
+                                title={`${v.value} ${v.label}`}
+                                placement="bottom"
+                                color={v.color}
+                                overlayInnerStyle={{color: "black"}}
+                            >
                                 <div key={index} style={{
                                     backgroundColor: v.color,
                                     borderRadius: 20,
