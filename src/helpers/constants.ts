@@ -14,6 +14,7 @@ const supplierResponseSection = "Sourcing_Supplier_Response_Section_A00"
 const supplierResponseQuestion = "Sourcing_Supplier_Response_Questio_A01"
 const supplierResponseCommercials = "Sourcing_Supplier_Line_Items_A00"
 const supplierAwardingForm = "Sourcing_Supplier_Awarding_A00"
+const lineItemTypes = ["RFP", "RFQ"]
 
 const dataforms = {
     supplierResponses,
@@ -39,10 +40,14 @@ const Questionnaire = "Questionnaire"
 const leafNodes = ["question", "line_item_info", "line_item"]
 const rootNodes = ["questionnaire", "section", "commercial_details", "line_items"]
 
+const questionnaireComponentId = "Container_VRSTDYbWW"
+const lineComponentId = "Container_ZUfUF-TIt"
+
 
 export {
     Applicable_Commercial_Info_Weightages, Applicable_commercial_info,
     Commercial_Details, Line_Items, Questionnaire,
-    baseUrl, dataforms, leafNodes, lineItemTableKey, processes, rootNodes
+    baseUrl, dataforms, leafNodes, lineItemTableKey, processes, rootNodes, lineItemTypes,
+    questionnaireComponentId, lineComponentId
 }
 
