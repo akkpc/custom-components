@@ -1,6 +1,7 @@
 import { Checkbox, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
+import { dataforms } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 enum StatusType {
@@ -15,6 +16,10 @@ const continueComponentId = "Container_bcpG-cP9H"
 const inputComponentId = "Container_ltTuhc3t6"
 const customComponent = "CustomComponents_0CHJdOkX1c"
 const stepperComponent = "CustomComponents_xEiBBj1Ypy"
+
+const {
+    sourcingSupplierTasks
+} = dataforms;
 
 export function CheckboxComponent() {
 
@@ -105,7 +110,10 @@ export function CheckboxComponent() {
                     <Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} />
                     <Typography style={{ marginLeft: 8, fontSize: 15 }} >
                         Read and Accept
-                        <a>&nbsp;Terms & Conditions</a>
+                        <a
+                        target='__blank'
+                        href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
+                        >&nbsp;Terms & Conditions</a>
                     </Typography>
                 </div> :
                     (currentConsentStatus == StatusType.Accepted) ? <Typography style={{ marginLeft: 8, fontSize: 15 }} >
