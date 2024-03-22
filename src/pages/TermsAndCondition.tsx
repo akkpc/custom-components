@@ -25,7 +25,8 @@ export function CheckboxComponent() {
 
     const [checked, setChecked] = useState(false)
     const [supplierTaskId, setSupplierTaskID] = useState("")
-    const [currentConsentStatus, setCurrentConsentStatus] = useState<StatusType>(StatusType.Not_Responded)
+    const [currentConsentStatus, setCurrentConsentStatus] = useState<StatusType>()
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         (async () => {
@@ -64,7 +65,7 @@ export function CheckboxComponent() {
         const { Event_ID: eventId, Supplier_Email: supplier_email } = taskDetails;
         const SourcingDetails = await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
         const prevResponses = await getPrevSupplierResponses(taskDetails, SourcingDetails);
-        
+
         const {
             _id: sourcingEventId,
             _created_by: { Name },
@@ -159,7 +160,7 @@ export function CheckboxComponent() {
             initialTab,
             sourcing_event_number
         });
-
+        setLoading(false);
     }
 
     async function getPrevSupplierResponses(taskDetails: Record<string, any>, SourcingDetails: Record<string, any>) {
@@ -406,7 +407,7 @@ export function CheckboxComponent() {
             // backgroundColor: "red",
             height: "100vh"
         }} >
-            <div style={{
+            {currentConsentStatus && <div style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -440,7 +441,9 @@ export function CheckboxComponent() {
                         buttonType='primary'
                         // style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
                         // className=""
+                        loading={loading}
                         onClick={async () => {
+                            setLoading(true);
                             await createOrContinueSupplierResponses();
                         }}
                     >Continue</KFButton>
@@ -468,11 +471,13 @@ export function CheckboxComponent() {
                                     }}
                                 >Reject Invite</KFButton>
                                 <KFButton
+                                    loading={loading}
                                     buttonType="primary"
                                     disabled={!checked}
                                     style={{ backgroundColor: "green", color: "white", fontWeight: "600" }}
                                     className=""
                                     onClick={async () => {
+                                        setLoading(true);
                                         await updateConsent(true)
                                         await createOrContinueSupplierResponses();
                                     }}
@@ -480,7 +485,7 @@ export function CheckboxComponent() {
                             </div>
                     }
                 </div>
-            </div>
+            </div>}
         </div>
     )
 }
