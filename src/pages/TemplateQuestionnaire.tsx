@@ -42,10 +42,13 @@ export function TemplateQuestionnaire() {
   useEffect(() => {
     (async () => {
       await KFSDK.initialize();
-      let allParams = await KFSDK.app.page.popup.getAllParameters();
-      if (allParams.template_id) {
-        setTemplateId(allParams.template_id)
-      }
+      // let allParams = await KFSDK.app.page.popup.getAllParameters();
+      let sid = "Pk8qlYcGIz7o"
+      console.log("Id : ", sid)
+      setTemplateId(sid)
+      // if (allParams.template_id) {
+      //   setTemplateId(allParams.template_id)
+      // }
     })()
   }, [])
 
@@ -329,10 +332,17 @@ export function TemplateQuestionnaire() {
         <div style={{
           display: "flex",
           flexDirection: "row",
-          height: window.innerHeight - appBarHeight,
+          height: "94vh",
         }} >
-          <div className='scrollable-container'
-            style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "35%", borderRight: `1px solid ${borderColor}`, backgroundColor: primaryBackground, padding: 15 }} >
+          <div
+            // className='scrollable-container'
+            style={{
+              overflow: "scroll",
+              width: "30%",
+              borderRight: `1px solid ${borderColor}`,
+              backgroundColor: primaryBackground,
+              padding: 15
+            }} >
             <div>
               <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
               {
@@ -377,78 +387,86 @@ export function TemplateQuestionnaire() {
                 style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Section</Button>
             </div>
           </div>
-          <div className='scrollable-container' style={{ height: window.innerHeight - appBarHeight, overflow: "scroll", width: "100%", backgroundColor: questionnaireBackground }}>
-            <div style={{ margin: 10, height: "100%" }} >
-              {questions.length > 0 && <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>}
-              {
-                questions.length ? questions.map((question, index) => {
-                  return (
-                    <div key={index} style={{ marginTop: 10 }} >
-                      <QuestionCard
-                        index={index}
-                        question={question}
-                        setQuestions={setQuestions}
-                      />
-                    </div>
-                  )
-                }) :
-                  <EmptyPage>
-                    <Button
-                      onClick={async () => {
-                        setQuestions((prevQuestions: any[]) => {
-                          return [...prevQuestions, {
-                            Question_ID: getUniqueString(),
-                            Response_Type: "short_text",
-                            Weightage: 0,
-                            Question: "",
-                            Section_ID: activeSection
-                          }]
-                        })
-                      }}
-                      style={{
-                        color: "rgba(0, 60, 156, 1)",
-                        backgroundColor: "rgba(238, 245, 255, 1)",
-                        borderColor: "rgba(0, 60, 156, 1)",
-                        // marginTop: 10
-                      }}
-                    >Add Questionnaire</Button>
-                  </EmptyPage>
-              }
-              {
-                questions.length > 0 &&
-                <Button
-                  onClick={async () => {
-                    // await createQuestion("", "");
-                    setQuestions((prevQuestions: any[]) => {
-                      return [...prevQuestions, {
-                        Question_ID: getUniqueString(),
-                        Response_Type: "short_text",
-                        Weightage: 0,
-                        Question: "",
-                        Section_ID: activeSection
-                      }]
-                    })
-                  }}
-                  style={{
-                    color: "rgba(0, 60, 156, 1)",
-                    backgroundColor: "rgba(238, 245, 255, 1)",
-                    borderColor: "rgba(0, 60, 156, 1)",
-                    marginTop: 10
-                  }}
-                >Add Questionnaire</Button>
-              }
-            </div>
+          <div
+            // className='scrollable-container'
+            style={{
+              height: questions.length == 0 ? "100%" : "auto",
+              overflow: "scroll",
+              width: "70%",
+              backgroundColor: questionnaireBackground,
+              padding: questions.length == 0 ? "0px" : 15
+            }}>
+            {questions.length > 0 && <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>}
+            {
+              questions.length ? questions.map((question, index) => {
+                return (
+                  <div key={index} style={{ marginTop: 10 }} >
+                    <QuestionCard
+                      index={index}
+                      question={question}
+                      setQuestions={setQuestions}
+                    />
+                  </div>
+                )
+              }) :
+                <EmptyPage>
+                  <Button
+                    onClick={async () => {
+                      setQuestions((prevQuestions: any[]) => {
+                        return [...prevQuestions, {
+                          Question_ID: getUniqueString(),
+                          Response_Type: "short_text",
+                          Weightage: 0,
+                          Question: "",
+                          Section_ID: activeSection
+                        }]
+                      })
+                    }}
+                    style={{
+                      color: "rgba(0, 60, 156, 1)",
+                      backgroundColor: "rgba(238, 245, 255, 1)",
+                      borderColor: "rgba(0, 60, 156, 1)",
+                      // marginTop: 10
+                    }}
+                  >Add Questionnaire</Button>
+                </EmptyPage>
+            }
+            {
+              questions.length > 0 &&
+              <Button
+                onClick={async () => {
+                  // await createQuestion("", "");
+                  setQuestions((prevQuestions: any[]) => {
+                    return [...prevQuestions, {
+                      Question_ID: getUniqueString(),
+                      Response_Type: "short_text",
+                      Weightage: 0,
+                      Question: "",
+                      Section_ID: activeSection
+                    }]
+                  })
+                }}
+                style={{
+                  color: "rgba(0, 60, 156, 1)",
+                  backgroundColor: "rgba(238, 245, 255, 1)",
+                  borderColor: "rgba(0, 60, 156, 1)",
+                  marginTop: 10
+                }}
+              >Add Questionnaire</Button>
+            }
           </div>
         </div> : <div>Loading....</div>}
       <div style={{
         backgroundColor: "white",
-        position: "fixed",
-        bottom: 0,
         width: "100%",
         height: appBarHeight,
         display: "flex",
         justifyContent: "flex-end",
-        alignItems: "center"
+        alignItems: "center",
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0
       }} >
         <div style={{ padding: 20 }} >
           <Button onClick={() => setOpenDiscardAlert(true)} style={{ marginRight: 3, backgroundColor: primaryBackground }}  >Discard</Button>
