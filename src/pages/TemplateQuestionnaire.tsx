@@ -1,12 +1,11 @@
-import { Button, Card, Input, Modal, Typography } from 'antd';
+import { Modal, Typography } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { KFButton } from '../components/KFButton';
-import { KFLoader } from '../components/KFLoader';
 import { QuestionCard } from '../components/QuestionCard';
-import { getUniqueString, parseJSON } from '../helpers';
-import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
-import { useAlert } from '../hooks/useAlert';
 import { SectionCard } from '../components/SectionCard';
+import { getUniqueString, parseJSON } from '../helpers';
+import { borderColor, primaryBackground, questionnaireBackground } from '../helpers/colors';
+import { useAlert } from '../hooks/useAlert';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 export type Section = {
@@ -69,7 +68,7 @@ export function TemplateQuestionnaire() {
   useEffect(() => {
     (async () => {
       if (activeSection) {
-        const newQuestions = await getQuestionsBySection();
+        const newQuestions = await getQuestionsBySection(activeSection);
         prevQuestionState.current = JSON.parse(JSON.stringify(newQuestions));
         setQuestions(newQuestions);
       }
@@ -115,11 +114,11 @@ export function TemplateQuestionnaire() {
     if (sections.length > 0) {
       setActiveSection(sections[0].Section_ID)
     } else {
-      await createSection("");
+      await createSection(`Section 1`);
     }
   }
 
-  async function getQuestionsBySection() {
+  async function getQuestionsBySection(sectionId: string) {
     const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/allitems/list?&page_number=1&page_size=10000`,
       {
         method: "POST",
@@ -132,7 +131,7 @@ export function TemplateQuestionnaire() {
                     "LHSField": "Section_ID",
                     "Operator": "EQUAL_TO",
                     "RHSType": "Value",
-                    "RHSValue": activeSection,
+                    "RHSValue": sectionId,
                     "RHSField": null,
                     "LHSAttribute": null,
                     "RHSAttribute": null
@@ -214,7 +213,8 @@ export function TemplateQuestionnaire() {
   }
 
   async function deleteSection(sectionId: string) {
-    await deleteQuestions(questions.map((q) => ({ _id: q._id }))).catch((err) => console.log("error", err))
+    const sectionQuestions = await getQuestionsBySection(sectionId);
+    await deleteQuestions(sectionQuestions.map((q) => ({ _id: q._id }))).catch((err) => console.log("error", err))
     await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/batch/delete`,
       {
         method: "POST",
@@ -308,7 +308,7 @@ export function TemplateQuestionnaire() {
                         setEditActiveIndex("")
                       }}
                       onEdit={() => setEditActiveIndex(section.Section_ID)}
-                      onDelete={async () => deleteSection(section.Section_ID)}
+                      onDelete={async () => await deleteSection(section.Section_ID)}
                       onKeyUp={(e) => {
                         e.preventDefault()
                         if (e.key == "Escape") {
@@ -324,7 +324,7 @@ export function TemplateQuestionnaire() {
                   buttonType='primary'
                   onClick={async () => {
                     showValidationMessages(async () => {
-                      await createSection("");
+                      await createSection(`Section ${sections.length + 1}`);
                     });
                   }}
                   style={{
@@ -359,7 +359,8 @@ export function TemplateQuestionnaire() {
                 )
               }) :
                 <EmptyPage>
-                  <Button
+                  <KFButton
+                    buttonType='primary'
                     onClick={async () => {
                       setQuestions((prevQuestions: any[]) => {
                         return [...prevQuestions, {
@@ -372,17 +373,18 @@ export function TemplateQuestionnaire() {
                       })
                     }}
                     style={{
-                      color: "rgba(0, 60, 156, 1)",
-                      backgroundColor: "rgba(238, 245, 255, 1)",
-                      borderColor: "rgba(0, 60, 156, 1)",
+                      // color: "rgba(0, 60, 156, 1)",
+                      // backgroundColor: "rgba(238, 245, 255, 1)",
+                      // borderColor: "rgba(0, 60, 156, 1)",
                       // marginTop: 10
                     }}
-                  >Add Questionnaire</Button>
+                  >Add Questionnaire</KFButton>
                 </EmptyPage>
             }
             {
               questions.length > 0 &&
-              <Button
+              <KFButton
+                buttonType='primary'
                 onClick={async () => {
                   // await createQuestion("", "");
                   setQuestions((prevQuestions: any[]) => {
@@ -396,12 +398,12 @@ export function TemplateQuestionnaire() {
                   })
                 }}
                 style={{
-                  color: "rgba(0, 60, 156, 1)",
-                  backgroundColor: "rgba(238, 245, 255, 1)",
-                  borderColor: "rgba(0, 60, 156, 1)",
+                  // color: "rgba(0, 60, 156, 1)",
+                  // backgroundColor: "rgba(238, 245, 255, 1)",
+                  // borderColor: "rgba(0, 60, 156, 1)",
                   marginTop: 10
                 }}
-              >Add Questionnaire</Button>
+              >Add Questionnaire</KFButton>
             }
           </div>
         </div> : <div>Loading....</div>}
@@ -418,20 +420,25 @@ export function TemplateQuestionnaire() {
         right: 0
       }} >
         <div style={{ padding: 20 }} >
-          <Button
+          <KFButton
+            buttonType='secondary'
             onClick={() => {
               showValidationMessages(() => { });
             }}
-            style={{ marginRight: 3, backgroundColor: primaryBackground }}
+            style={{
+               marginRight: 3,
+                // backgroundColor: primaryBackground 
+              }}
           >
             Discard
-          </Button>
-          <Button
-            style={{ backgroundColor: buttonDarkBlue, color: "white" }}
+          </KFButton>
+          <KFButton
+            buttonType='primary'
+            // style={{ backgroundColor: buttonDarkBlue, color: "white" }}
             onClick={onSave}
           >
             Save
-          </Button>
+          </KFButton>
         </div>
       </div>
       <Modal
