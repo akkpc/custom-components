@@ -1,5 +1,6 @@
 import { Button, Card, Input, Modal, Typography } from 'antd';
 import { useEffect, useRef, useState } from 'react';
+import { KFButton } from '../components/KFButton';
 import { KFLoader } from '../components/KFLoader';
 import { QuestionCard } from '../components/QuestionCard';
 import { getUniqueString, parseJSON } from '../helpers';
@@ -40,6 +41,8 @@ export function TemplateQuestionnaire() {
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
   const { alertContext, showInvalidInputError, showSuccessInput } = useAlert();
   const prevQuestionState = useRef(questions);
+  const [openSectionDiscard, setOpenSectionDiscard] = useState(false);
+  const [newSectionLoading, setNewSectionLoading] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -171,6 +174,7 @@ export function TemplateQuestionnaire() {
   }
 
   async function createSection(sectionName: string) {
+    setNewSectionLoading(true);
     const newSection = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/batch`,
       {
         method: "POST",
@@ -184,6 +188,7 @@ export function TemplateQuestionnaire() {
     await getSectionsByTemplate();
     setActiveSection(newSection[0]._id)
     setEditActiveIndex(newSection[0]._id)
+    setNewSectionLoading(false);
   }
 
   function calculateDelta(current: Question[], prev: Question[]) {
@@ -327,6 +332,21 @@ export function TemplateQuestionnaire() {
     }
   }
 
+  function showValidationMessages(callback: () => void, section?: Section) {
+    const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
+    if (delta.length > 0 || deletedDelta.length > 0) {
+      setOpenDiscardAlert(true);
+    } else {
+      if (questions.length == 0) {
+        if (!section || activeSection != section.Section_ID) {
+          setOpenSectionDiscard(true);
+        }
+      } else {
+        callback();
+      }
+    }
+  }
+
   return (
     <div>
       {alertContext}
@@ -357,12 +377,9 @@ export function TemplateQuestionnaire() {
                       isEditActive={section.Section_ID == editActiveIndex}
                       isActive={activeSection == section.Section_ID}
                       onClick={() => {
-                        const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
-                        if (delta.length > 0 || deletedDelta.length > 0) {
-                          setOpenDiscardAlert(true);
-                        } else {
-                          setActiveSection(section.Section_ID)
-                        }
+                        showValidationMessages(() => {
+                          setActiveSection(section._id)
+                        }, section);
                       }}
                       onPressEnter={async (e) => {
                         let sectionName = e.currentTarget.value;
@@ -382,18 +399,21 @@ export function TemplateQuestionnaire() {
                   </div>
                 )
               }
-              <Button
-                onClick={async () => {
-                  await createSection("");
-                }}
-                style={{
-                  color: "rgba(0, 60, 156, 1)",
-                  backgroundColor: "rgba(238, 245, 255, 1)",
-                  borderColor: "rgba(0, 60, 156, 1)",
-                  marginTop: 10
-                }}
-              >Add Section
-              </Button>
+              {
+                <KFButton
+                  buttonType='primary'
+                  onClick={async () => {
+                    showValidationMessages(async () => {
+                      await createSection("");
+                    });
+                  }}
+                  style={{
+                    marginTop: 10
+                  }}
+                  loading={newSectionLoading}
+                >Add Section
+                </KFButton>
+              }
             </div>
           </div>
           <div
@@ -478,7 +498,14 @@ export function TemplateQuestionnaire() {
         right: 0
       }} >
         <div style={{ padding: 20 }} >
-          <Button onClick={() => setOpenDiscardAlert(true)} style={{ marginRight: 3, backgroundColor: primaryBackground }}  >Discard</Button>
+          <Button
+            onClick={() => {
+              showValidationMessages(() => { });
+            }}
+            style={{ marginRight: 3, backgroundColor: primaryBackground }}
+          >
+            Discard
+          </Button>
           <Button
             style={{ backgroundColor: buttonDarkBlue, color: "white" }}
             onClick={onSave}
@@ -499,6 +526,23 @@ export function TemplateQuestionnaire() {
         }}
       >
         <p>Are you sure want to discard changes ?</p>
+      </Modal>
+      <Modal
+        title="Discard Section"
+        open={openSectionDiscard}
+        onOk={async () => {
+          if (activeSection) {
+            await deleteSection(activeSection)
+          }
+          setOpenSectionDiscard(false)
+        }}
+        onCancel={() => {
+          setOpenSectionDiscard(false)
+        }}
+      >
+        <p>
+          Current section is empty, are you sure want to discard the section ?
+        </p>
       </Modal>
     </div>
   )
@@ -522,6 +566,7 @@ export function Section(props: SectionProps) {
   const [hover, setHover] = useState(false)
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     if (section_name) {
       setInputValue(section_name);
