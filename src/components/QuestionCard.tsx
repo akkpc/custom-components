@@ -7,7 +7,7 @@ import { Question } from '../pages/TemplateQuestionnaire';
 interface Props {
     index: number;
     question: Question;
-    setQuestions: React.Dispatch<React.SetStateAction<Question[]>>
+    setQuestions: React.Dispatch<React.SetStateAction<Question[]>>;
 }
 interface OptionProps {
     _id: string,
@@ -40,6 +40,7 @@ export function QuestionCard(props: Props) {
     const [question, setQuestion] = useState<Question>({} as any);
     const [options, setOptions] = useState<{ Name: string, _id: string }[]>([])
     const [activeOption, setActiveOption] = useState<string>("")
+    const [mouseEnteredKey, setMouseEnteredKey] = useState("")
 
     useEffect(() => {
         if (questionProps) {
@@ -93,7 +94,15 @@ export function QuestionCard(props: Props) {
 
     return (
         <div key={index} >
-            <Card key={index} style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 10 }}>
+            <Card
+                onMouseEnter={() => {
+                    setMouseEnteredKey(() => question.Question_ID)
+                }}
+                onMouseLeave={() => setMouseEnteredKey("")}
+                key={index}
+                style={{
+                    borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 10
+                }}>
                 <Row align={"middle"} >
                     {/* <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} > */}
                     <Col span={22} >
@@ -106,18 +115,19 @@ export function QuestionCard(props: Props) {
                         />
                     </Col>
                     <Col span={2} >
-                        <div style={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }} >
-                            <img
-                                onClick={() => copyQuestion(index)}
-                                style={{ cursor: "pointer", marginRight: 5 }}
-                                src={process.env.PUBLIC_URL + '/svgs/copy_icon.svg'}
-                            />
-                            <img onClick={() => {
-                                setQuestions((prevQuestions: Question[]) => {
-                                    return prevQuestions.filter((currQuestion) => currQuestion.Question_ID != question.Question_ID)
-                                });
-                            }} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
-                        </div>
+                        {mouseEnteredKey == question.Question_ID &&
+                            <div style={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }} >
+                                <img
+                                    onClick={() => copyQuestion(index)}
+                                    style={{ cursor: "pointer", marginRight: 5 }}
+                                    src={process.env.PUBLIC_URL + '/svgs/copy_icon.svg'}
+                                />
+                                <img onClick={() => {
+                                    setQuestions((prevQuestions: Question[]) => {
+                                        return prevQuestions.filter((currQuestion) => currQuestion.Question_ID != question.Question_ID)
+                                    });
+                                }} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
+                            </div>}
                     </Col>
                     {/* </div> */}
                 </Row>

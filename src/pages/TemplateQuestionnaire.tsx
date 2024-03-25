@@ -1,5 +1,6 @@
 import { Button, Card, Input, Modal, Typography } from 'antd';
 import { useEffect, useRef, useState } from 'react';
+import { KFLoader } from '../components/KFLoader';
 import { QuestionCard } from '../components/QuestionCard';
 import { getUniqueString, parseJSON } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
@@ -12,6 +13,7 @@ export type Section = {
   Section_Sequence: number;
   Template_ID: string;
   _id: string;
+  _is_created?: boolean;
 };
 
 export type Question = {
@@ -30,7 +32,7 @@ export type Question = {
 
 const appBarHeight = 50;
 export function TemplateQuestionnaire() {
-  const [items, setItems] = useState<Section[]>([])
+  const [sections, setSections] = useState<Section[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [editActiveIndex, setEditActiveIndex] = useState<string>();
   const [activeSection, setActiveSection] = useState<string>();
@@ -126,7 +128,7 @@ export function TemplateQuestionnaire() {
         })
       }).catch((err: any) => console.log("cannot fetch", err))
     const sections: Section[] = sectionResponse.Data;
-    setItems(sections)
+    setSections(sections)
     if (sections.length > 0) {
       setActiveSection(sections[0].Section_ID)
     } else {
@@ -174,7 +176,7 @@ export function TemplateQuestionnaire() {
         method: "POST",
         body: JSON.stringify([{
           Section_Name: sectionName,
-          Section_Sequence: items.length + 1,
+          Section_Sequence: sections.length + 1,
           Template_ID: templateId,
           _is_created: true
         }])
@@ -346,7 +348,7 @@ export function TemplateQuestionnaire() {
             <div>
               <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
               {
-                items.map((section, index) =>
+                sections.map((section, index) =>
                   <div key={index} style={{ marginTop: 10 }} >
                     <Section
                       index={index + 1}
@@ -363,10 +365,10 @@ export function TemplateQuestionnaire() {
                         }
                       }}
                       onPressEnter={async (e) => {
-                        let sectionName = e.currentTarget.value
+                        let sectionName = e.currentTarget.value;
                         await updateSection(section.Section_ID, sectionName);
-                        setEditActiveIndex("")
                         setActiveSection(section.Section_ID)
+                        setEditActiveIndex("")
                       }}
                       onEdit={() => setEditActiveIndex(section.Section_ID)}
                       onDelete={async () => deleteSection(section.Section_ID)}
@@ -384,7 +386,14 @@ export function TemplateQuestionnaire() {
                 onClick={async () => {
                   await createSection("");
                 }}
-                style={{ color: "rgba(0, 60, 156, 1)", backgroundColor: "rgba(238, 245, 255, 1)", borderColor: "rgba(0, 60, 156, 1)", marginTop: 10 }} >Add Section</Button>
+                style={{
+                  color: "rgba(0, 60, 156, 1)",
+                  backgroundColor: "rgba(238, 245, 255, 1)",
+                  borderColor: "rgba(0, 60, 156, 1)",
+                  marginTop: 10
+                }}
+              >Add Section
+              </Button>
             </div>
           </div>
           <div
@@ -495,38 +504,75 @@ export function TemplateQuestionnaire() {
   )
 }
 
-export function Section(props: { index: number, section_name: string, rest: any, isEditActive: boolean, isActive: boolean, onPressEnter: (e: any) => void, onEdit: () => void, onDelete: () => void, onClick: () => void, onKeyUp: (e: any) => void }) {
+interface SectionProps {
+  index: number,
+  section_name: string,
+  rest: any,
+  isEditActive: boolean,
+  isActive: boolean,
+  onPressEnter: (e: any) => Promise<void>,
+  onEdit: () => void,
+  onDelete: () => void,
+  onClick: () => void,
+  onKeyUp: (e: any) => void
+}
+
+export function Section(props: SectionProps) {
   const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick, onKeyUp } = props;
   const [hover, setHover] = useState(false)
+  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (section_name) {
+      setInputValue(section_name);
+    }
+  }, [section_name])
+
+  async function saveSection(e: any) {
+    setLoading(true);
+    await onPressEnter(e);
+    setLoading(false);
+  }
   return (
     <div key={index} >
       <Card
-        style={{ borderRadius: 4, borderColor: "rgba(222, 234, 255, 1)", padding: 5, backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "white" }}
+        style={{
+          borderRadius: 4,
+          borderColor: "rgba(222, 234, 255, 1)",
+          padding: 5,
+          backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "white"
+        }}
         onClick={onClick}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
       >
-        <div>
+        {<div>
           <Typography style={{ fontSize: 12 }}  >Section {index}</Typography>
-          {
-            isEditActive ?
-              <Input
-                onBlur={onPressEnter}
-                onPressEnter={onPressEnter}
-                placeholder={section_name}
-                style={{ fontSize: 15 }}
-                onKeyUp={onKeyUp}
-              /> :
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 30 }} >
-                <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
-                {hover &&
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
-                    <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
-                    <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
-                  </div>}
-              </div>
+          {!loading ?
+            <div>
+              {
+                isEditActive ?
+                  <Input
+                    onBlur={saveSection}
+                    onPressEnter={saveSection}
+                    style={{ fontSize: 15 }}
+                    onKeyUp={onKeyUp}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                  /> :
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 30 }} >
+                    <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
+                    {hover &&
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
+                        <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
+                        <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
+                      </div>}
+                  </div>
+              }
+            </div> : <KFLoader />
           }
         </div>
+        }
       </Card>
     </div>
   )
