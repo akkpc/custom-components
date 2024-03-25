@@ -6,6 +6,7 @@ import { QuestionCard } from '../components/QuestionCard';
 import { getUniqueString, parseJSON } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { useAlert } from '../hooks/useAlert';
+import { SectionCard } from '../components/SectionCard';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 export type Section = {
@@ -78,33 +79,12 @@ export function TemplateQuestionnaire() {
   useEffect(() => {
     if (questions && KFSDK?.app) {
       (async () => {
-        console.log("isUnsavedQuestion : ", await KFSDK.app.getVariable("isUnsavedQuestion"))
         await KFSDK.app.setVariable({
           isUnsavedQuestion: true
         })
       })()
     }
   }, [questions])
-
-  // useEffect(() => {
-  //   const { delta, deletedDelta } = calculateDelta(questions, prevQuestionState.current);
-  //   if (delta.length > 0 || deletedDelta.length > 0) {
-  //     window.addEventListener('beforeunload', handleBeforeUnload);
-  //     window.addEventListener('popstate', function (event) {
-  //       window.history.pushState(null, "", document.URL);
-  //     });
-  //   }
-
-  //   return () => {
-  //     window.removeEventListener('beforeunload', handleBeforeUnload);
-  //   };
-  // }, [questions]);
-
-  // const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-  //   setOpenDiscardAlert(true);
-  //   event.preventDefault();
-  // };
-
 
   async function getSectionsByTemplate() {
     const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
@@ -191,66 +171,6 @@ export function TemplateQuestionnaire() {
     setNewSectionLoading(false);
   }
 
-  function calculateDelta(current: Question[], prev: Question[]) {
-    const delta = []
-    let prevQuestionIndex: number[] = []
-    for (let i = 0; i < current.length; i++) {
-      let currentQ = current[i];
-      const index = prev.findIndex((q) => q.Question_ID == currentQ.Question_ID);
-
-      // if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options) {
-      //   currentQ = { ...currentQ, "Table::Dropdown_options": currentQ.Dropdown_options }
-      // }
-
-      if (index >= 0) {
-        const prevState = prev[index];
-        prevQuestionIndex.push(index);
-        let changed = false;
-
-        if (prevState.Question == currentQ.Question && prevState.Response_Type == currentQ.Response_Type) {
-          if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options) {
-            if (prevState.Dropdown_options?.length == currentQ.Dropdown_options?.length) {
-              for (let j = 0; j < prevState.Dropdown_options?.length; j++) {
-                if (prevState.Dropdown_options[j].Name != currentQ.Dropdown_options[j].Name) {
-                  changed = true;
-                  break;
-                }
-              }
-            } else {
-              changed = true;
-            }
-          }
-        } else {
-          changed = true;
-        }
-        if (changed) {
-          delta.push({
-            ...currentQ,
-            // "Table::Dropdown_options": currentQ.Dropdown_options,
-            Dropdown_options: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options) : null,
-            Template_ID: templateId
-          })
-        }
-      } else {
-        delta.push({
-          ...currentQ,
-          _id: undefined,
-          Question_ID: undefined,
-          _is_created: true,
-          Dropdown_options: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options) : null,
-          Template_ID: templateId
-        })
-      }
-    }
-
-    const deletedDelta = prev.filter((_, index) => !prevQuestionIndex.includes(index)).map(({ _id }) => ({ _id }))
-
-    return {
-      delta,
-      deletedDelta
-    };
-  }
-
   function validateInput(current: Question[]) {
     const invalidIds = []
     for (let i = 0; i < current.length; i++) {
@@ -318,7 +238,7 @@ export function TemplateQuestionnaire() {
     if (invalidIds.length > 0) {
       showInvalidInputError("Please fill all the empty fields");
     } else {
-      const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
+      const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current, templateId);
       console.log("delta", delta, deletedDelta)
       if (delta.length > 0) {
         await saveQuestionChanges(delta);
@@ -333,7 +253,7 @@ export function TemplateQuestionnaire() {
   }
 
   function showValidationMessages(callback: () => void, section?: Section) {
-    const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current);
+    const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current, templateId);
     if (delta.length > 0 || deletedDelta.length > 0) {
       setOpenDiscardAlert(true);
     } else {
@@ -370,7 +290,7 @@ export function TemplateQuestionnaire() {
               {
                 sections.map((section, index) =>
                   <div key={index} style={{ marginTop: 10 }} >
-                    <Section
+                    <SectionCard
                       index={index + 1}
                       section_name={section.Section_Name}
                       rest={section}
@@ -548,80 +468,6 @@ export function TemplateQuestionnaire() {
   )
 }
 
-interface SectionProps {
-  index: number,
-  section_name: string,
-  rest: any,
-  isEditActive: boolean,
-  isActive: boolean,
-  onPressEnter: (e: any) => Promise<void>,
-  onEdit: () => void,
-  onDelete: () => void,
-  onClick: () => void,
-  onKeyUp: (e: any) => void
-}
-
-export function Section(props: SectionProps) {
-  const { index, section_name, isEditActive, isActive, onPressEnter, onEdit, onDelete, onClick, onKeyUp } = props;
-  const [hover, setHover] = useState(false)
-  const [inputValue, setInputValue] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (section_name) {
-      setInputValue(section_name);
-    }
-  }, [section_name])
-
-  async function saveSection(e: any) {
-    setLoading(true);
-    await onPressEnter(e);
-    setLoading(false);
-  }
-  return (
-    <div key={index} >
-      <Card
-        style={{
-          borderRadius: 4,
-          borderColor: "rgba(222, 234, 255, 1)",
-          padding: 5,
-          backgroundColor: isActive ? "rgba(238, 245, 255, 1)" : "white"
-        }}
-        onClick={onClick}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-      >
-        {<div>
-          <Typography style={{ fontSize: 12 }}  >Section {index}</Typography>
-          {!loading ?
-            <div>
-              {
-                isEditActive ?
-                  <Input
-                    onBlur={saveSection}
-                    onPressEnter={saveSection}
-                    style={{ fontSize: 15 }}
-                    onKeyUp={onKeyUp}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                  /> :
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 30 }} >
-                    <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
-                    {hover &&
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
-                        <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
-                        <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
-                      </div>}
-                  </div>
-              }
-            </div> : <KFLoader />
-          }
-        </div>
-        }
-      </Card>
-    </div>
-  )
-}
 
 export function EmptyPage({ children }: any) {
   return (
@@ -641,3 +487,63 @@ export function EmptyPage({ children }: any) {
   )
 }
 
+
+export function calculateDelta(current: Question[], prev: Question[], templateId: string) {
+  const delta = []
+  let prevQuestionIndex: number[] = []
+  for (let i = 0; i < current.length; i++) {
+    let currentQ = current[i];
+    const index = prev.findIndex((q) => q.Question_ID == currentQ.Question_ID);
+
+    // if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options) {
+    //   currentQ = { ...currentQ, "Table::Dropdown_options": currentQ.Dropdown_options }
+    // }
+
+    if (index >= 0) {
+      const prevState = prev[index];
+      prevQuestionIndex.push(index);
+      let changed = false;
+
+      if (prevState.Question == currentQ.Question && prevState.Response_Type == currentQ.Response_Type) {
+        if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options) {
+          if (prevState.Dropdown_options?.length == currentQ.Dropdown_options?.length) {
+            for (let j = 0; j < prevState.Dropdown_options?.length; j++) {
+              if (prevState.Dropdown_options[j].Name != currentQ.Dropdown_options[j].Name) {
+                changed = true;
+                break;
+              }
+            }
+          } else {
+            changed = true;
+          }
+        }
+      } else {
+        changed = true;
+      }
+      if (changed) {
+        delta.push({
+          ...currentQ,
+          // "Table::Dropdown_options": currentQ.Dropdown_options,
+          Dropdown_options: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options) : null,
+          Template_ID: templateId
+        })
+      }
+    } else {
+      delta.push({
+        ...currentQ,
+        _id: undefined,
+        Question_ID: undefined,
+        _is_created: true,
+        Dropdown_options: currentQ.Response_Type == "single_select" ? JSON.stringify(currentQ.Dropdown_options) : null,
+        Template_ID: templateId
+      })
+    }
+  }
+
+  const deletedDelta = prev.filter((_, index) => !prevQuestionIndex.includes(index)).map(({ _id }) => ({ _id }))
+
+  return {
+    delta,
+    deletedDelta
+  };
+}

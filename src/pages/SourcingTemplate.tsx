@@ -1,10 +1,10 @@
 import { Button, Modal, Typography, theme } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { QuestionCard } from '../components/QuestionCard';
+import { SectionCard } from '../components/SectionCard';
 import { getUniqueString, parseJSON } from '../helpers';
 import { borderColor, buttonDarkBlue, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { useAlert } from '../hooks/useAlert';
-import { Section } from './TemplateQuestionnaire';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 export type EventSection = {
@@ -411,7 +411,7 @@ export function SourcingTemplate() {
               {
                 sections.map((section, index) =>
                   <div key={index} style={{ marginTop: 10 }} >
-                    <Section
+                    <SectionCard
                       index={index + 1}
                       section_name={section.Section_Name}
                       rest={section}
