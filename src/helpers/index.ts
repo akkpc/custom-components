@@ -80,12 +80,18 @@ function getDateObj(dateString: string) {
     }
     return;
 }
+function scrollIntoView(ref: any) {
+    if(ref.current) {
+        ref.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+}
 
 export {
     calculateSplitValue,
     getColorCode, getKey, getUniqueString,
     parseJSON,
     convertStringToDate,
-    getDateObj
+    getDateObj,
+    scrollIntoView
 };
 

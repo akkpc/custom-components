@@ -10,7 +10,7 @@ interface SectionProps {
   isActive: boolean,
   onPressEnter: (e: any) => Promise<void>,
   onEdit: () => void,
-  onDelete: () => void,
+  onDelete: () => Promise<void>,
   onClick: () => void,
   onKeyUp: (e: any) => void
 }
@@ -67,7 +67,11 @@ export function SectionCard(props: SectionProps) {
                     {hover &&
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
                         <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
-                        <img onClick={onDelete} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
+                        <img onClick={async () => {
+                          setLoading(true);
+                          await onDelete();
+                          setLoading(false);
+                        }} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
                       </div>}
                   </div>
               }

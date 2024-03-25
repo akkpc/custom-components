@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { QuestionCard } from '../components/QuestionCard';
 import { SectionCard } from '../components/SectionCard';
-import { getUniqueString, parseJSON } from '../helpers';
+import { getUniqueString, parseJSON, scrollIntoView } from '../helpers';
 import { borderColor, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { useAlert } from '../hooks/useAlert';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
@@ -40,9 +40,12 @@ export function TemplateQuestionnaire() {
   const [templateId, setTemplateId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
   const { alertContext, showInvalidInputError, showSuccessInput } = useAlert();
-  const prevQuestionState = useRef(questions);
   const [openSectionDiscard, setOpenSectionDiscard] = useState(false);
   const [newSectionLoading, setNewSectionLoading] = useState(false)
+
+  const prevQuestionState = useRef(questions);
+  const addQuestionRef = useRef<any>(null);
+  const addSectionRef = useRef<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -71,6 +74,7 @@ export function TemplateQuestionnaire() {
         const newQuestions = await getQuestionsBySection(activeSection);
         prevQuestionState.current = JSON.parse(JSON.stringify(newQuestions));
         setQuestions(newQuestions);
+        scrollIntoView(addSectionRef);
       }
     })()
   }, [activeSection])
@@ -81,6 +85,7 @@ export function TemplateQuestionnaire() {
         await KFSDK.app.setVariable({
           isUnsavedQuestion: true
         })
+        scrollIntoView(addQuestionRef);
       })()
     }
   }, [questions])
@@ -274,7 +279,7 @@ export function TemplateQuestionnaire() {
         <div style={{
           display: "flex",
           flexDirection: "row",
-          height: "94vh",
+          height: "100vh",
         }} >
           <div
             // className='scrollable-container'
@@ -283,7 +288,8 @@ export function TemplateQuestionnaire() {
               width: "30%",
               borderRight: `1px solid ${borderColor}`,
               backgroundColor: primaryBackground,
-              padding: 15
+              padding: 15,
+              overflowX: "hidden"
             }} >
             <div>
               <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Sections</Typography>
@@ -320,48 +326,79 @@ export function TemplateQuestionnaire() {
                 )
               }
               {
-                <KFButton
-                  buttonType='primary'
-                  onClick={async () => {
-                    showValidationMessages(async () => {
-                      await createSection(`Section ${sections.length + 1}`);
-                    });
-                  }}
-                  style={{
-                    marginTop: 10
-                  }}
-                  loading={newSectionLoading}
-                >Add Section
-                </KFButton>
+                <div ref={addSectionRef} >
+                  <KFButton
+                    buttonType='primary'
+                    onClick={async () => {
+                      showValidationMessages(async () => {
+                        await createSection(`Section ${sections.length + 1}`);
+                      });
+                    }}
+                    style={{
+                      marginTop: 10
+                    }}
+                    loading={newSectionLoading}
+                  >Add Section
+                  </KFButton>
+                </div>
               }
             </div>
           </div>
           <div
-            // className='scrollable-container'
             style={{
-              height: questions.length == 0 ? "100%" : "auto",
-              overflow: "scroll",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
               width: "70%",
               backgroundColor: questionnaireBackground,
-              padding: questions.length == 0 ? "0px" : 15
-            }}>
-            {questions.length > 0 && <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>}
-            {
-              questions.length ? questions.map((question, index) => {
-                return (
-                  <div key={index} style={{ marginTop: 10 }} >
-                    <QuestionCard
-                      index={index}
-                      question={question}
-                      setQuestions={setQuestions}
-                    />
-                  </div>
-                )
-              }) :
-                <EmptyPage>
+              overflow: "hidden"
+            }}
+          >
+            <div
+              // className='scrollable-container'
+              style={{
+                height: questions.length == 0 ? "93%" : "auto",
+                overflow: "scroll",
+                padding: questions.length == 0 ? "0px" : 15,
+                overflowX: "hidden"
+              }}>
+              {questions.length > 0 && <Typography style={{ color: "rgba(97, 101, 108, 1)", fontSize: 18 }} >Commodity enquiries questionnaires</Typography>}
+              {
+                questions.length ? questions.map((question, index) => {
+                  return (
+                    <div key={index} style={{ marginTop: 10 }} >
+                      <QuestionCard
+                        index={index}
+                        question={question}
+                        setQuestions={setQuestions}
+                      />
+                    </div>
+                  )
+                }) :
+                  <EmptyPage>
+                    <KFButton
+                      buttonType='primary'
+                      onClick={async () => {
+                        setQuestions((prevQuestions: any[]) => {
+                          return [...prevQuestions, {
+                            Question_ID: getUniqueString(),
+                            Response_Type: "short_text",
+                            Weightage: 0,
+                            Question: "",
+                            Section_ID: activeSection
+                          }]
+                        })
+                      }}
+                    >Add Questionnaire</KFButton>
+                  </EmptyPage>
+              }
+              {
+                questions.length > 0 &&
+                <div ref={addQuestionRef} >
                   <KFButton
                     buttonType='primary'
                     onClick={async () => {
+                      // await createQuestion("", "");
                       setQuestions((prevQuestions: any[]) => {
                         return [...prevQuestions, {
                           Question_ID: getUniqueString(),
@@ -373,74 +410,45 @@ export function TemplateQuestionnaire() {
                       })
                     }}
                     style={{
-                      // color: "rgba(0, 60, 156, 1)",
-                      // backgroundColor: "rgba(238, 245, 255, 1)",
-                      // borderColor: "rgba(0, 60, 156, 1)",
-                      // marginTop: 10
+                      marginTop: 10
                     }}
                   >Add Questionnaire</KFButton>
-                </EmptyPage>
-            }
-            {
-              questions.length > 0 &&
-              <KFButton
-                buttonType='primary'
-                onClick={async () => {
-                  // await createQuestion("", "");
-                  setQuestions((prevQuestions: any[]) => {
-                    return [...prevQuestions, {
-                      Question_ID: getUniqueString(),
-                      Response_Type: "short_text",
-                      Weightage: 0,
-                      Question: "",
-                      Section_ID: activeSection
-                    }]
-                  })
-                }}
-                style={{
-                  // color: "rgba(0, 60, 156, 1)",
-                  // backgroundColor: "rgba(238, 245, 255, 1)",
-                  // borderColor: "rgba(0, 60, 156, 1)",
-                  marginTop: 10
-                }}
-              >Add Questionnaire</KFButton>
-            }
+                </div>
+              }
+            </div>
+            <div style={{
+              backgroundColor: "white",
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              bottom: 0,
+              width: "100%",
+              height: "7%"
+            }} >
+              <div style={{ padding: 20 }} >
+                <KFButton
+                  buttonType='secondary'
+                  onClick={() => {
+                    showValidationMessages(() => { });
+                  }}
+                  style={{
+                    marginRight: 3,
+                    // backgroundColor: primaryBackground 
+                  }}
+                >
+                  Discard
+                </KFButton>
+                <KFButton
+                  buttonType='primary'
+                  // style={{ backgroundColor: buttonDarkBlue, color: "white" }}
+                  onClick={onSave}
+                >
+                  Save
+                </KFButton>
+              </div>
+            </div>
           </div>
         </div> : <div>Loading....</div>}
-      <div style={{
-        backgroundColor: "white",
-        width: "100%",
-        height: appBarHeight,
-        display: "flex",
-        justifyContent: "flex-end",
-        alignItems: "center",
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0
-      }} >
-        <div style={{ padding: 20 }} >
-          <KFButton
-            buttonType='secondary'
-            onClick={() => {
-              showValidationMessages(() => { });
-            }}
-            style={{
-               marginRight: 3,
-                // backgroundColor: primaryBackground 
-              }}
-          >
-            Discard
-          </KFButton>
-          <KFButton
-            buttonType='primary'
-            // style={{ backgroundColor: buttonDarkBlue, color: "white" }}
-            onClick={onSave}
-          >
-            Save
-          </KFButton>
-        </div>
-      </div>
       <Modal
         title="Discard Changes"
         open={openDiscardAlert}
