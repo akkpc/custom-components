@@ -7,9 +7,6 @@ import { borderColor, lightGrey } from '../helpers/colors';
 import { EventSection, Question } from './SourcingTemplate';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
-const text = `
-Design Parameters & Constraints
-`;
 const questionnaireDataform = "Sourcing_Supplier_Response_Questio_A01"
 const sectionDataform = "Sourcing_Supplier_Response_Section_A00"
 
@@ -337,9 +334,6 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
         }}
         >
             <div style={{ marginTop: 5 }} >
-                <Typography style={{ fontSize: 15, color: lightGrey, fontWeight: "400", margin: 20 }} >
-                    {text}
-                </Typography>
                 {
                     contentLoaded ? questions.map((question, index) => (
                         <div key={question._id} >
