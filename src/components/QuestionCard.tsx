@@ -1,4 +1,3 @@
-import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Input, Row, Select, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { getUniqueString } from '../helpers';
@@ -35,6 +34,8 @@ const types = [
     }
 ]
 
+const inputBoxWidth = 300;
+
 export function QuestionCard(props: Props) {
     const { index, question: questionProps, setQuestions } = props;
     const [question, setQuestion] = useState<Question>({} as any);
@@ -44,6 +45,7 @@ export function QuestionCard(props: Props) {
 
     useEffect(() => {
         if (questionProps) {
+            console.log("called 3")
             if (questionProps.Question_ID) {
                 setQuestion({ ...questionProps });
             }
@@ -55,12 +57,14 @@ export function QuestionCard(props: Props) {
 
     useEffect(() => {
         if (options.length > 0) {
+            console.log("called 2")
             setQuestion((q) => ({ ...q, Dropdown_options: options }))
         }
     }, [options])
 
     useEffect(() => {
         if (question) {
+            console.log("called 1")
             setQuestions((prevQuestions) => {
                 const index = prevQuestions.findIndex((q) => q.Question_ID == question.Question_ID);
                 if (index >= 0) {
@@ -120,7 +124,7 @@ export function QuestionCard(props: Props) {
                                 <img
                                     onClick={() => copyQuestion(index)}
                                     style={{ cursor: "pointer", marginRight: 5 }}
-                                    src={process.env.PUBLIC_URL + '/svgs/copy_icon.svg'}
+                                    src={process.env.PUBLIC_URL + '/svgs/duplicate_icon.svg'}
                                 />
                                 <img onClick={() => {
                                     setQuestions((prevQuestions: Question[]) => {
@@ -140,7 +144,7 @@ export function QuestionCard(props: Props) {
                         onChange={(value) => setQuestion((q) => ({ ...q, Response_Type: value }))}
                         onSearch={() => { }}
                         options={types}
-                        style={{ width: 300 }}
+                        style={{ width: inputBoxWidth }}
                         defaultValue={"short_text"}
                         value={question.Response_Type}
                     />
@@ -152,18 +156,23 @@ export function QuestionCard(props: Props) {
                             {
                                 question?.Dropdown_options && question?.Dropdown_options.map((record, index) => {
                                     return <div key={index} style={{ marginTop: 3, marginBottom: 5 }} >
-                                        <Option createNewOption={createNewOption} setActiveId={setActiveOption} activeId={activeOption} record={record} setOptions={setOptions} />
+                                        <Option
+                                            createNewOption={createNewOption}
+                                            setActiveId={setActiveOption}
+                                            activeId={activeOption}
+                                            record={record}
+                                            setOptions={setOptions}
+                                        />
                                     </div>
                                 })
                             }
                         </div>
                         <div style={{ marginTop: 2 }} >
                             <Button
-                                icon={<PlusOutlined style={{ fontWeight: "500" }} />}
-                                style={{ color: "#003c9c", fontWeight: "500" }}
+                                style={{ color: "#003c9c", fontWeight: "500", padding: 0 }}
                                 onClick={createNewOption}
                                 type="link"
-                            >Add Option</Button>
+                            >+ Add option</Button>
                         </div>
                     </div>
                 }
@@ -183,15 +192,20 @@ export function Option({ record, setOptions, activeId, setActiveId, createNewOpt
         }
     }, [record.Name])
 
-    useEffect(() => {
+    function saveOptions() {
         if (value) {
             setOptions((options: OptionProps[]) => {
                 let index = options.findIndex(({ _id: id }) => id == record._id)
                 options[index].Name = value;
                 return [...options]
             })
+            setActiveId(() => "")
+        } else {
+            setOptions((options: OptionProps[]) => {
+                return options.filter(({ _id: id }) => id != record._id)
+            })
         }
-    }, [value])
+    }
     return (
         <div key={record._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} >
             <div>
@@ -199,25 +213,58 @@ export function Option({ record, setOptions, activeId, setActiveId, createNewOpt
                     activeId == record._id ?
                         <Input
                             placeholder='Enter option content'
-                            style={{ borderRadius: 2, width: 250 }}
+                            style={{ borderRadius: 2, width: inputBoxWidth }}
                             onChange={(event) => setValue(event.target.value)}
-                            onPressEnter={createNewOption}
-                        ></Input> :
-                        <Typography
-                            onClick={() => {
-                                setActiveId(record._id)
+                            onPressEnter={saveOptions}
+                            onBlur={saveOptions}
+                            value={value}
+                            autoFocus
+                        ></Input>
+                        :
+
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            width: inputBoxWidth,
+                            border: "1px solid #F0F3F7",
+                            borderRadius: 4,
+                            height: 36
+                        }} >
+                            <div style={{
+                                width: "85%",
+                                paddingLeft: 10,
+                                cursor: "pointer",
+                                height: "100%",
+                                display: "flex",
+                                alignItems: "center"
                             }}
-                            style={{ margin: 2, cursor: "pointer" }} >
-                            {value}
-                        </Typography>
+                                onClick={() => {
+                                    setActiveId(record._id)
+                                }}
+                            >
+                                <Typography style={{ whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }} >
+                                    {value}
+                                </Typography>
+                            </div>
+                            <div style={{
+                                width: "15%",
+                                borderLeft: "1px solid #F0F3F7",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                height: "100%"
+                            }} >
+                                <img
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() => {
+                                        setOptions((options: OptionProps[]) => {
+                                            return [...options.filter(({ _id }) => _id != record._id)]
+                                        })
+                                    }} src={process.env.PUBLIC_URL + "/svgs/discard_icon.svg"} ></img>
+                            </div>
+                        </div>
                 }
-            </div>
-            <div>
-                <img onClick={() => {
-                    setOptions((options: OptionProps[]) => {
-                        return [...options.filter(({ _id }) => _id != record._id)]
-                    })
-                }} src={process.env.PUBLIC_URL + "/svgs/close.svg"} ></img>
             </div>
         </div>
     )
