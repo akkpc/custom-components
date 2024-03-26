@@ -111,8 +111,8 @@ const AccordionTableWeightage: React.FC = () => {
         (async () => {
             await KFSDK.initialize();
 
-            // const sourcing_event_id = await KFSDK.app.page.popup.getAllParameters();
-            const sourcing_event_id = "Pk8xAuqYRrdT";
+            const sourcing_event_id = await KFSDK.app.page.popup.getAllParameters();
+            // const sourcing_event_id = "Pk8xAuqYRrdT";
             await buildRowDetails(sourcing_event_id);
             buildColumns();
             setContentLoaded(true);
