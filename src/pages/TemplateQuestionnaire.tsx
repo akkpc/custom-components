@@ -50,13 +50,12 @@ export function TemplateQuestionnaire() {
   useEffect(() => {
     (async () => {
       await KFSDK.initialize();
-      // let allParams = await KFSDK.app.page.popup.getAllParameters();
-      let sid = "Pk8qlYcGIz7o"
-      console.log("Id : ", sid)
-      setTemplateId(sid)
-      // if (allParams.template_id) {
-      //   setTemplateId(allParams.template_id)
-      // }
+      let allParams = await KFSDK.app.page.popup.getAllParameters();
+      // let sid = "Pk8qlYcGIz7o"
+      // setTemplateId(sid)
+      if (allParams.template_id) {
+        setTemplateId(allParams.template_id)
+      }
     })()
   }, [])
 

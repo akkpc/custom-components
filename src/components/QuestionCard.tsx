@@ -54,7 +54,6 @@ export function QuestionCard(props: Props) {
 
     useEffect(() => {
         if (questionProps) {
-            console.log("called 3")
             if (questionProps.Question_ID) {
                 setQuestion({ ...questionProps });
             }
@@ -66,14 +65,12 @@ export function QuestionCard(props: Props) {
 
     useEffect(() => {
         if (options.length > 0) {
-            console.log("called 2")
             setQuestion((q) => ({ ...q, Dropdown_options: options }))
         }
     }, [options])
 
     useEffect(() => {
         if (question) {
-            console.log("called 1")
             setQuestions((prevQuestions) => {
                 const index = prevQuestions.findIndex((q) => q.Question_ID == question.Question_ID);
                 if (index >= 0) {
