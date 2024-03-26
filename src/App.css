@@ -124,7 +124,7 @@ th.ant-table-cell {
   border-right: 0.8px solid #DF4440 !important;
 }
 .error-class > td {
-  border-top: 0.8px solid red !important;
+  border-top: 0.8px solid #DF4440 !important;
   border-bottom: 0.8px solid #DF4440 !important;
   background-color: #FDF3F2;
 }

@@ -162,7 +162,12 @@ const AccordionTableWeightage: React.FC = () => {
         }
         return res;
     }
-
+    function getLeftPadding(key: string) {
+        if (key == "question") return 12
+        if (key == "line_item_info") return 36
+        if (key == "line_item") return 40
+        return 0;
+    }
 
     function buildColumns() {
         const columns: any = [{
@@ -171,17 +176,26 @@ const AccordionTableWeightage: React.FC = () => {
             key: 'parameters',
             width: "80%",
             render: (text: string, record: any, index: any) => (
-                <div style={{ display: "flex", color: tableFontColor, justifyContent: "space-between", alignItems: "center" }} >
-                    <div>
+                <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingLeft: getLeftPadding(record.type)
+                }} >
+                    <div style={{ display: "flex", color: tableFontColor, width: "100%" }}  >
                         {record.type == "question" &&
-                            <Typography style={{ fontWeight: "bold", marginRight: 6, width: "5%" }} >Q{index + 1}: </Typography>
+                            <Typography style={{ fontWeight: "bold", marginRight: 6, width: "4%", display: "flex", justifyContent: "flex-end" }} >Q{index + 1}: </Typography>
                         }
                         <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
                             {record.type != "question" && `${index + 1}. `} {text}
                         </Typography>
                     </div>
                     <div>
-                        {record.error && <img style={{ marginRight: 2 }} src={process.env.PUBLIC_URL + "/svgs/error.svg"} alt="image" />}
+                        {record.error &&
+                            <Tooltip color='#DF4440' title="Click Split button to auto split" >
+                                <img style={{ marginRight: 2 }} src={process.env.PUBLIC_URL + "/svgs/error.svg"} alt="image" />
+                            </Tooltip>
+                        }
                     </div>
                 </div>
             ),
@@ -493,7 +507,6 @@ const AccordionTableWeightage: React.FC = () => {
                             setWeightageError(false)
                             let weightages = validateWeightage(data, {}, "root")
                             let invalidIds = Object.keys(weightages).filter((w: any) => (weightages[w] != 100))
-                            console.log("weightages" , weightages, invalidIds)
                             let delta = calculateDelta(data, prevData.current, []);
                             if (invalidIds.length == 0) {
                                 setWeightageLoading(true)
