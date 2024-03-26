@@ -54,7 +54,7 @@ export function QuestionCard(props: Props) {
 
     useEffect(() => {
         if (questionProps) {
-            if (questionProps.Question_ID) {
+            if (questionProps._id) {
                 setQuestion({ ...questionProps });
             }
             if (questionProps.Response_Type == "single_select" && questionProps.Dropdown_options) {
@@ -72,7 +72,7 @@ export function QuestionCard(props: Props) {
     useEffect(() => {
         if (question) {
             setQuestions((prevQuestions) => {
-                const index = prevQuestions.findIndex((q) => q.Question_ID == question.Question_ID);
+                const index = prevQuestions.findIndex((q) => q._id == question._id);
                 if (index >= 0) {
                     prevQuestions[index] = question;
                 }
@@ -110,7 +110,7 @@ export function QuestionCard(props: Props) {
         <div key={index} >
             <Card
                 onMouseEnter={() => {
-                    setMouseEnteredKey(() => question.Question_ID)
+                    setMouseEnteredKey(() => question._id)
                 }}
                 onMouseLeave={() => setMouseEnteredKey("")}
                 key={index}
@@ -148,7 +148,7 @@ export function QuestionCard(props: Props) {
                         </div>
                     </Col>
                     <Col span={2} >
-                        {mouseEnteredKey == question.Question_ID &&
+                        {mouseEnteredKey == question._id &&
                             <div style={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }} >
                                 <img
                                     onClick={() => copyQuestion(index)}
@@ -157,7 +157,7 @@ export function QuestionCard(props: Props) {
                                 />
                                 <img onClick={() => {
                                     setQuestions((prevQuestions: Question[]) => {
-                                        return prevQuestions.filter((currQuestion) => currQuestion.Question_ID != question.Question_ID)
+                                        return prevQuestions.filter((currQuestion) => currQuestion._id != question._id)
                                     });
                                 }} style={{ cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/trash.svg'} />
                             </div>}
@@ -183,13 +183,14 @@ export function QuestionCard(props: Props) {
                             alignItems: "center",
                             justifyContent: "center"
                         }} >
+                            {/* {JSON.stringify(getResponseType()?.iconName)} */}
                             <img src={process.env.PUBLIC_URL + `/svgs/${getResponseType()?.iconName}`} ></img>
                         </div>
                         <Select
                             placeholder="Select Field Type"
                             optionFilterProp="children"
                             onChange={(value) => setQuestion((q) => ({ ...q, Response_Type: value }))}
-                            onSearch={() => { }}
+                            // onSearch={() => { }}
                             options={types}
                             style={{
                                 width: inputBoxWidth - 40,

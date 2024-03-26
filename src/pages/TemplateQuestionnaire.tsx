@@ -6,6 +6,7 @@ import { SectionCard } from '../components/SectionCard';
 import { getUniqueString, parseJSON, scrollIntoView } from '../helpers';
 import { borderColor, primaryBackground, questionnaireBackground } from '../helpers/colors';
 import { useAlert } from '../hooks/useAlert';
+import { KFLoader } from '../components/KFLoader';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 export type Section = {
@@ -31,17 +32,35 @@ export type Question = {
   Section_ID: string;
 };
 
+const dataforms = {
+  template: {
+    section: "Sourcing_Template_Sections_A00",
+    question: "Sourcing_Template_Questions_A00"
+  },
+  editTemplate: {
+    section: "Sourcing_Sections_A00",
+    question: "Sourcing_Questions_A00"
+  }
+}
+
 const appBarHeight = 50;
 export function TemplateQuestionnaire() {
   const [sections, setSections] = useState<Section[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [editActiveIndex, setEditActiveIndex] = useState<string>();
-  const [activeSection, setActiveSection] = useState<string>();
+  const [activeSection, setActiveSection] = useState<{
+    _id: string,
+    Section_ID: string
+  }>();
   const [templateId, setTemplateId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
   const { alertContext, showInvalidInputError, showSuccessInput } = useAlert();
   const [openSectionDiscard, setOpenSectionDiscard] = useState(false);
   const [newSectionLoading, setNewSectionLoading] = useState(false)
+  const [dataform, setDataform] = useState<typeof dataforms.template>();
+  const [sourcingEventId, setSourcingEventId] = useState();
+  const [eventStage, setEventStage] = useState();
+  const [contentLoaded, setContentLoaded] = useState(false);
 
   const prevQuestionState = useRef(questions);
   const addQuestionRef = useRef<any>(null);
@@ -53,24 +72,36 @@ export function TemplateQuestionnaire() {
       let allParams = await KFSDK.app.page.popup.getAllParameters();
       // let sid = "Pk8qlYcGIz7o"
       // setTemplateId(sid)
+      // let allParams: any = {
+      //   template_id: "Pk8qlYcGIz7o"
+      // }
+      // let allParams: any = {
+      //   Sourcing_Event_ID: "Pk8w4SWdScSU",
+      //   eventStage: "RFP"
+      // }
+      setContentLoaded(false);
       if (allParams.template_id) {
         setTemplateId(allParams.template_id)
+        setDataform(dataforms.template)
+      }
+      if (allParams.Sourcing_Event_ID) {
+        setDataform(dataforms.editTemplate);
+        setSourcingEventId(allParams.Sourcing_Event_ID);
+        setEventStage(allParams.eventStage)
       }
     })()
   }, [])
 
   useEffect(() => {
     (async () => {
-      if (templateId) {
-        await getSectionsByTemplate();
-      }
+      await refetchSections();
     })()
-  }, [templateId])
+  }, [templateId, sourcingEventId])
 
   useEffect(() => {
     (async () => {
       if (activeSection) {
-        const newQuestions = await getQuestionsBySection(activeSection);
+        const newQuestions = await getQuestionsBySection(activeSection.Section_ID);
         prevQuestionState.current = JSON.parse(JSON.stringify(newQuestions));
         setQuestions(newQuestions);
         scrollIntoView(addSectionRef);
@@ -85,28 +116,42 @@ export function TemplateQuestionnaire() {
           isUnsavedQuestion: true
         })
         scrollIntoView(addQuestionRef);
+        setContentLoaded(true);
       })()
     }
   }, [questions])
 
-  async function getSectionsByTemplate() {
-    const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
+  async function refetchSections() {
+    if (templateId) {
+      await getSections([
+        {
+          "LHSField": "Template_ID",
+          "Operator": "EQUAL_TO",
+          "RHSType": "Value",
+          "RHSValue": templateId,
+          "RHSField": null,
+          "LHSAttribute": null,
+          "RHSAttribute": null
+        }
+      ]);
+    }
+    if (sourcingEventId) {
+      await getSections([
+        ...getSourcingFilter()
+      ]);
+    }
+  }
+
+  async function getSections(filter: Record<string, any>[]) {
+    const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.section}/allitems/list?&page_number=1&page_size=10000`,
       {
         method: "POST",
         body: JSON.stringify({
           Filter: {
             "AND": [
               {
-                "OR": [
-                  {
-                    "LHSField": "Template_ID",
-                    "Operator": "EQUAL_TO",
-                    "RHSType": "Value",
-                    "RHSValue": templateId,
-                    "RHSField": null,
-                    "LHSAttribute": null,
-                    "RHSAttribute": null
-                  }
+                "AND": [
+                  ...filter
                 ]
               }
             ]
@@ -116,21 +161,26 @@ export function TemplateQuestionnaire() {
     const sections: Section[] = sectionResponse.Data;
     setSections(sections)
     if (sections.length > 0) {
-      setActiveSection(sections[0].Section_ID)
+      setActiveSection({
+        _id: sections[0]._id,
+        Section_ID: sections[0].Section_ID
+      })
     } else {
       await createSection(`Section 1`);
     }
   }
 
+
   async function getQuestionsBySection(sectionId: string) {
-    const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/allitems/list?&page_number=1&page_size=10000`,
+    let additionalFilter = getSourcingFilter();
+    const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.question}/allitems/list?&page_number=1&page_size=10000`,
       {
         method: "POST",
         body: JSON.stringify({
           Filter: {
             "AND": [
               {
-                "OR": [
+                "AND": [
                   {
                     "LHSField": "Section_ID",
                     "Operator": "EQUAL_TO",
@@ -139,7 +189,8 @@ export function TemplateQuestionnaire() {
                     "RHSField": null,
                     "LHSAttribute": null,
                     "RHSAttribute": null
-                  }
+                  },
+                  ...additionalFilter
                 ]
               }
             ]
@@ -158,18 +209,23 @@ export function TemplateQuestionnaire() {
 
   async function createSection(sectionName: string) {
     setNewSectionLoading(true);
-    const newSection = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/batch`,
+    const newSection = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.section}/batch`,
       {
         method: "POST",
         body: JSON.stringify([{
           Section_Name: sectionName,
           Section_Sequence: sections.length + 1,
           Template_ID: templateId,
-          _is_created: true
+          _is_created: true,
+          ...getSourcingNewItemProps()
         }])
       }).catch((err: any) => console.log("cannot fetch", err))
-    await getSectionsByTemplate();
-    setActiveSection(newSection[0]._id)
+    await refetchSections();
+    // setActiveSection(newSection[0]._id)
+    setActiveSection({
+      _id: newSection[0]._id,
+      Section_ID: newSection[0].Section_ID
+    })
     setEditActiveIndex(newSection[0]._id)
     setNewSectionLoading(false);
   }
@@ -196,7 +252,7 @@ export function TemplateQuestionnaire() {
   }
 
   async function saveQuestionChanges(data: any[]) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch`,
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.question}/batch`,
       {
         method: "POST",
         body: JSON.stringify(data)
@@ -205,7 +261,7 @@ export function TemplateQuestionnaire() {
   }
 
   async function updateSection(sectionId: string, sectionName: Question) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/${sectionId}`,
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.section}/${sectionId}`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -213,24 +269,24 @@ export function TemplateQuestionnaire() {
           _id: sectionId
         })
       }).catch((err: any) => console.log("cannot fetch", err))
-    await getSectionsByTemplate();
+    await refetchSections();
   }
 
-  async function deleteSection(sectionId: string) {
-    const sectionQuestions = await getQuestionsBySection(sectionId);
+  async function deleteSection(section: { _id: string, Section_ID: string }) {
+    const sectionQuestions = await getQuestionsBySection(section.Section_ID);
     await deleteQuestions(sectionQuestions.map((q) => ({ _id: q._id }))).catch((err) => console.log("error", err))
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Sections_A00/batch/delete`,
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.section}/batch/delete`,
       {
         method: "POST",
         body: JSON.stringify([{
-          _id: sectionId
+          _id: section._id
         }])
       }).catch((err: any) => console.log("cannot fetch", err))
-    await getSectionsByTemplate();
+    await refetchSections();
   }
 
   async function deleteQuestions(data: any[]) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Template_Questions_A00/batch/delete`,
+    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.question}/batch/delete`,
       {
         method: "POST",
         body: JSON.stringify(data)
@@ -262,7 +318,7 @@ export function TemplateQuestionnaire() {
       setOpenDiscardAlert(true);
     } else {
       if (questions.length == 0) {
-        if (!section || activeSection != section.Section_ID) {
+        if (!section || activeSection?._id != section._id) {
           setOpenSectionDiscard(true);
         }
       } else {
@@ -271,10 +327,46 @@ export function TemplateQuestionnaire() {
     }
   }
 
+  function getSourcingFilter() {
+    if (sourcingEventId && eventStage) {
+      return [
+        {
+          "LHSField": "Sourcing_Event_ID",
+          "Operator": "EQUAL_TO",
+          "RHSType": "Value",
+          "RHSValue": sourcingEventId,
+          "RHSField": null,
+          "LHSAttribute": null,
+          "RHSAttribute": null
+        },
+        {
+          "LHSField": "Event_Stage",
+          "Operator": "EQUAL_TO",
+          "RHSType": "Value",
+          "RHSValue": eventStage,
+          "RHSField": null,
+          "LHSAttribute": null,
+          "RHSAttribute": null
+        },
+      ]
+    }
+    return []
+  }
+
+  function getSourcingNewItemProps() {
+    if (sourcingEventId && eventStage) {
+      return {
+        Event_Stage: eventStage,
+        Sourcing_Event_ID: sourcingEventId,
+      }
+    }
+    return {}
+  }
+
   return (
     <div>
       {alertContext}
-      {templateId ?
+      {contentLoaded ?
         <div style={{
           display: "flex",
           flexDirection: "row",
@@ -299,21 +391,27 @@ export function TemplateQuestionnaire() {
                       index={index + 1}
                       section_name={section.Section_Name}
                       rest={section}
-                      isEditActive={section.Section_ID == editActiveIndex}
-                      isActive={activeSection == section.Section_ID}
+                      isEditActive={section._id == editActiveIndex}
+                      isActive={activeSection?._id == section._id}
                       onClick={() => {
                         showValidationMessages(() => {
-                          setActiveSection(section._id)
+                          setActiveSection({
+                            _id: section._id,
+                            Section_ID: section.Section_ID
+                          })
                         }, section);
                       }}
                       onPressEnter={async (e) => {
                         let sectionName = e.currentTarget.value;
-                        await updateSection(section.Section_ID, sectionName);
-                        setActiveSection(section.Section_ID)
+                        await updateSection(section._id, sectionName);
+                        setActiveSection({
+                          _id: section._id,
+                          Section_ID: section.Section_ID
+                        })
                         setEditActiveIndex("")
                       }}
-                      onEdit={() => setEditActiveIndex(section.Section_ID)}
-                      onDelete={async () => await deleteSection(section.Section_ID)}
+                      onEdit={() => setEditActiveIndex(section._id)}
+                      onDelete={async () => await deleteSection(section)}
                       onKeyUp={(e) => {
                         e.preventDefault()
                         if (e.key == "Escape") {
@@ -381,11 +479,13 @@ export function TemplateQuestionnaire() {
                       onClick={async () => {
                         setQuestions((prevQuestions: any[]) => {
                           return [...prevQuestions, {
+                            _id: getUniqueString(),
                             Question_ID: getUniqueString(),
                             Response_Type: "short_text",
                             Weightage: 0,
                             Question: "",
-                            Section_ID: activeSection
+                            Section_ID: activeSection?.Section_ID,
+                            ...getSourcingNewItemProps()
                           }]
                         })
                       }}
@@ -401,11 +501,13 @@ export function TemplateQuestionnaire() {
                       // await createQuestion("", "");
                       setQuestions((prevQuestions: any[]) => {
                         return [...prevQuestions, {
+                          _id: getUniqueString(),
                           Question_ID: getUniqueString(),
                           Response_Type: "short_text",
                           Weightage: 0,
                           Question: "",
-                          Section_ID: activeSection
+                          Section_ID: activeSection?.Section_ID,
+                          ...getSourcingNewItemProps()
                         }]
                       })
                     }}
@@ -446,7 +548,9 @@ export function TemplateQuestionnaire() {
               </div>
             </div>
           </div>
-        </div> : <div>Loading....</div>}
+        </div> : 
+        <KFLoader/>
+        }
       <Modal
         title="Discard Changes"
         open={openDiscardAlert}
@@ -506,7 +610,7 @@ export function calculateDelta(current: Question[], prev: Question[], templateId
   let prevQuestionIndex: number[] = []
   for (let i = 0; i < current.length; i++) {
     let currentQ = current[i];
-    const index = prev.findIndex((q) => q.Question_ID == currentQ.Question_ID);
+    const index = prev.findIndex((q) => q._id == currentQ._id);
 
     // if (currentQ.Response_Type == "single_select" && currentQ.Dropdown_options) {
     //   currentQ = { ...currentQ, "Table::Dropdown_options": currentQ.Dropdown_options }
