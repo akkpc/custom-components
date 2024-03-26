@@ -238,12 +238,12 @@ export function TemplateQuestionnaire() {
       }).catch((err: any) => console.log("cannot fetch", err))
   }
 
-  async function onSave() {
-    const invalidIds = validateInput(questions);
+  async function onSave(changedQuestions: Question[]) {
+    const invalidIds = validateInput(changedQuestions);
     if (invalidIds.length > 0) {
       showInvalidInputError("Please fill all the empty fields");
     } else {
-      const { deletedDelta, delta } = calculateDelta(questions, prevQuestionState.current, templateId);
+      const { deletedDelta, delta } = calculateDelta(changedQuestions, prevQuestionState.current, templateId);
       console.log("delta", delta, deletedDelta)
       if (delta.length > 0) {
         await saveQuestionChanges(delta);
@@ -252,7 +252,7 @@ export function TemplateQuestionnaire() {
         await deleteQuestions(deletedDelta);
       }
       // setActiveSection((val) => val);
-      prevQuestionState.current = questions;
+      prevQuestionState.current = changedQuestions;
       showSuccessInput("Question saved successfully");
     }
   }
@@ -351,13 +351,14 @@ export function TemplateQuestionnaire() {
               justifyContent: "space-between",
               width: "70%",
               backgroundColor: questionnaireBackground,
-              overflow: "hidden"
+              overflow: "hidden",
+              height: "100%"
             }}
           >
             <div
               // className='scrollable-container'
               style={{
-                height: questions.length == 0 ? "93%" : "auto",
+                height: "93%",
                 overflow: "scroll",
                 padding: questions.length == 0 ? "0px" : 15,
                 overflowX: "hidden"
@@ -421,9 +422,7 @@ export function TemplateQuestionnaire() {
               display: "flex",
               justifyContent: "flex-end",
               alignItems: "center",
-              bottom: 0,
-              width: "100%",
-              height: "7%"
+              width: "100%"
             }} >
               <div style={{ padding: 20 }} >
                 <KFButton
@@ -441,7 +440,7 @@ export function TemplateQuestionnaire() {
                 <KFButton
                   buttonType='primary'
                   // style={{ backgroundColor: buttonDarkBlue, color: "white" }}
-                  onClick={onSave}
+                  onClick={async () => await onSave(questions)}
                 >
                   Save
                 </KFButton>

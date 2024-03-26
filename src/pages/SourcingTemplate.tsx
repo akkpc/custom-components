@@ -71,7 +71,6 @@ const appBarHeight = 50;
 
 export function SourcingTemplate() {
   const [sections, setSections] = useState<EventSection[]>([])
-  const [templates, setTemplates] = useState<Template[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [editActiveIndex, setEditActiveIndex] = useState<{
     _id: string,
@@ -81,7 +80,6 @@ export function SourcingTemplate() {
     _id: string,
     Section_ID: string
   }>();
-  const [activeTemplate, setActiveTemplate] = useState<string>();
   const [sourcingEventId, setSourcingEventId] = useState("");
   const [openDiscardAlert, setOpenDiscardAlert] = useState(false);
   const [eventStage, setEventStage] = useState("");
