@@ -102,6 +102,7 @@ const AccordionTableWeightage: React.FC = () => {
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
     const [showWeightageError, setWeightageError] = useState(false)
+    const [weightageLoading,setWeightageLoading] = useState(false);
     const [expandedRows, setExpandedRows] = useState<string[]>([])
     const prevData = useRef<any>([]);
 
@@ -482,6 +483,7 @@ const AccordionTableWeightage: React.FC = () => {
                             let isValid = Object.values(weightages).every((w: any) => (w == 100))
                             let delta = calculateDelta(data, prevData.current, []);
                             if (isValid) {
+                                setWeightageLoading(true)
                                 setWeightageError(false)
                                 if (delta["section"] && delta["section"].length > 0) {
                                     await updateWeightage(delta["section"], sourcingSection);
@@ -512,10 +514,12 @@ const AccordionTableWeightage: React.FC = () => {
                                 await updateProcessWeightages(processPayload);
                                 prevData.current = data;
                                 showMessage(KFSDK, "Weightage has been saved successfully!")
+                                setWeightageLoading(false)
                             } else {
                                 setWeightageError(() => true)
                             }
                         }}
+                        loading={weightageLoading}
                     >Save</KFButton>
                 </div>
             </div>
