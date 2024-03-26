@@ -2,11 +2,11 @@ import { Button, InputNumber, Table, Tooltip, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 import { KFButton } from '../components/KFButton';
+import { KFLoader } from '../components/KFLoader';
 import { calculateSplitValue, getKey } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
 import { Applicable_commercial_info, Commercial_Details, Line_Items, Questionnaire, dataforms, leafNodes, lineItemTableKey, processes, rootNodes } from '../helpers/constants';
 import { showMessage } from '../hooks/KFFunctions';
-import { KFLoader } from '../components/KFLoader';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
@@ -30,6 +30,7 @@ interface DataType {
     children?: DataType[];
     childUrl?: string;
     showCheckBox?: boolean;
+    error?: boolean;
 }
 
 type SourcingEventSection = {
@@ -102,7 +103,7 @@ const AccordionTableWeightage: React.FC = () => {
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
     const [showWeightageError, setWeightageError] = useState(false)
-    const [weightageLoading,setWeightageLoading] = useState(false);
+    const [weightageLoading, setWeightageLoading] = useState(false);
     const [expandedRows, setExpandedRows] = useState<string[]>([])
     const prevData = useRef<any>([]);
 
@@ -110,7 +111,8 @@ const AccordionTableWeightage: React.FC = () => {
         (async () => {
             await KFSDK.initialize();
 
-            const sourcing_event_id = await KFSDK.app.page.popup.getAllParameters();
+            // const sourcing_event_id = await KFSDK.app.page.popup.getAllParameters();
+            const sourcing_event_id = "Pk8xAuqYRrdT";
             await buildRowDetails(sourcing_event_id);
             buildColumns();
             setContentLoaded(true);
@@ -169,16 +171,21 @@ const AccordionTableWeightage: React.FC = () => {
             key: 'parameters',
             width: "80%",
             render: (text: string, record: any, index: any) => (
-                <div style={{ display: "flex", color: tableFontColor }} >
-                    {record.type == "question" &&
-                        <Typography style={{ fontWeight: "bold", marginRight: 6, width: "5%" }} >Q{index + 1}: </Typography>
-                    }
-                    <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
-                        {record.type != "question" && `${index + 1}. `} {text}
-                    </Typography>
+                <div style={{ display: "flex", color: tableFontColor, justifyContent: "space-between", alignItems: "center" }} >
+                    <div>
+                        {record.type == "question" &&
+                            <Typography style={{ fontWeight: "bold", marginRight: 6, width: "5%" }} >Q{index + 1}: </Typography>
+                        }
+                        <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
+                            {record.type != "question" && `${index + 1}. `} {text}
+                        </Typography>
+                    </div>
+                    <div>
+                        {record.error && <img style={{ marginRight: 2 }} src={process.env.PUBLIC_URL + "/svgs/error.svg"} alt="image" />}
+                    </div>
                 </div>
             ),
-            className: "table-header"
+            className: "table-header table-parameter"
         }];
         columns.push({
             title: () => (
@@ -215,13 +222,14 @@ const AccordionTableWeightage: React.FC = () => {
             key: "weightage",
             render: (text: string, record: any) => (
                 <RowRender
+
                     key={record.key}
                     record={record}
                     setData={setData}
                     data={data}
                 />
             ),
-            className: "table-header"
+            className: "table-header table-weightage"
         })
         setColumns(columns)
     }
@@ -400,13 +408,13 @@ const AccordionTableWeightage: React.FC = () => {
     function customExpandIcon(props: any) {
         if (rootNodes.includes(props.record.type)) {
             if (props.expanded) {
-                return (<a style={{ color: 'black', position: "relative", float: "left", marginRight: 15 }} onClick={e => {
+                return (<a style={{ color: 'black', position: "relative", float: "left", marginRight: 15, marginLeft: 15 }} onClick={e => {
                     props.onExpand(props.record, e);
                 }}>
                     <img src={process.env.PUBLIC_URL + "/svgs/expand.svg"} ></img>
                 </a>)
             } else {
-                return (<a style={{ color: 'black', position: "relative", float: "left", marginRight: 15 }} onClick={e => {
+                return (<a style={{ color: 'black', position: "relative", float: "left", marginRight: 15, marginLeft: 15 }} onClick={e => {
                     props.onExpand(props.record, e);
                 }}>
                     <img src={process.env.PUBLIC_URL + "/svgs/minimize.svg"} ></img>
@@ -420,7 +428,7 @@ const AccordionTableWeightage: React.FC = () => {
             {contentLoaded && data ?
                 <Table
                     columns={columns}
-                    rowSelection={{ ...rowSelection }}
+                    // rowSelection={{ ...rowSelection }}
                     dataSource={data}
                     // bordered
                     pagination={false}
@@ -436,6 +444,9 @@ const AccordionTableWeightage: React.FC = () => {
                         expandIcon: customExpandIcon
                     }}
                     rowClassName={(record) => {
+                        if (record?.error) {
+                            return "error-class"
+                        }
                         if (expandedRows.includes(record.key)) {
                             return "newclass"
                         }
@@ -479,12 +490,13 @@ const AccordionTableWeightage: React.FC = () => {
                     <KFButton
                         buttonType="primary"
                         onClick={async () => {
+                            setWeightageError(false)
                             let weightages = validateWeightage(data, {}, "root")
-                            let isValid = Object.values(weightages).every((w: any) => (w == 100))
+                            let invalidIds = Object.keys(weightages).filter((w: any) => (weightages[w] != 100))
+                            console.log("weightages" , weightages, invalidIds)
                             let delta = calculateDelta(data, prevData.current, []);
-                            if (isValid) {
+                            if (invalidIds.length == 0) {
                                 setWeightageLoading(true)
-                                setWeightageError(false)
                                 if (delta["section"] && delta["section"].length > 0) {
                                     await updateWeightage(delta["section"], sourcingSection);
                                 }
@@ -518,6 +530,10 @@ const AccordionTableWeightage: React.FC = () => {
                             } else {
                                 setWeightageError(() => true)
                             }
+                            setData((newData) => {
+                                let d = getErrorData(newData, invalidIds)
+                                return JSON.parse(JSON.stringify(d));
+                            })
                         }}
                         loading={weightageLoading}
                     >Save</KFButton>
@@ -657,9 +673,10 @@ function RowRender({ record, setData }: any) {
             {
                 <div style={{ padding: 3, width: "100%", display: "flex", alignItems: "center", height: "90%", marginLeft: 10 }} >
                     <InputNumber
+                        status={record.error && 'error'}
                         style={{
                             width: 120,
-                            background: "transparent"
+                            background: "white"
                         }}
                         value={value}
                         min={0}
@@ -702,6 +719,22 @@ function splitWeightageToAllChildren(rootData: Record<string, any>) {
         }
         if (data[i].children) {
             data[i].children = splitWeightageToAllChildren(data[i]);
+        }
+    }
+    return data;
+}
+
+function getErrorData(prevData: any[], keys: string[]) {
+    let data = prevData;
+    for (let i = 0; i < data.length; i++) {
+        let index = keys.indexOf(data[i].key);
+        if (index >= 0) {
+            data[i].error = true;
+        } else {
+            data[i].error = false;
+        }
+        if (data[i].children) {
+            data[i].children = getErrorData(data[i].children, keys)
         }
     }
     return data;

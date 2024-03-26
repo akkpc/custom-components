@@ -113,10 +113,21 @@ th.ant-table-cell {
 
 .newclass {
   background: #f1f3f7;
-  border-bottom: solid 1px red !important;
+  border-bottom: solid 1px #DF4440 !important;
   font-weight: 600;
 }
 
+.error-class > td.table-parameter {
+  border-left: 4px solid #DF4440 !important;
+}
+.error-class > td.table-weightage {
+  border-right: 0.8px solid #DF4440 !important;
+}
+.error-class > td {
+  border-top: 0.8px solid red !important;
+  border-bottom: 0.8px solid #DF4440 !important;
+  background-color: #FDF3F2;
+}
 .scrollable-container::-webkit-scrollbar {
   width: 0.5em;
 }
