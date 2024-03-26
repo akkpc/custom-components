@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
+import { KFLoader } from '../components/KFLoader';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const {
@@ -677,7 +678,9 @@ const Evaluation_Table: React.FC = () => {
                     pagination={false}
                     className="custom-table"
                     scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 172 }}
-                /> : "Loading..."}
+                /> : 
+                <KFLoader/>
+                }
             </div>
             <div
                 style={{

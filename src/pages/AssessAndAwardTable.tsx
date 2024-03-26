@@ -5,6 +5,7 @@ import { KFButton } from '../components/KFButton';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { showMessage } from '../hooks/KFFunctions';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
+import { KFLoader } from '../components/KFLoader';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const {
@@ -100,7 +101,7 @@ const AssessAndAwardTable: React.FC = () => {
     const [selectedLineItems, setSelectedLineItems] = useState<any[]>([]);
     const [respondedSuppliers, setRespondedSuppliers] = useState<SourcingSupplierResponses[]>([]);
     const [enableAwarding, setEnableAwarding] = useState(false);
-    const [freezeAwarding,setFreezeAwarding] = useState(false)
+    const [freezeAwarding, setFreezeAwarding] = useState(false)
 
     const rowSelection: TableRowSelection<DataType> = {
         onChange: (selectedRowKeys, selectedRows) => {
@@ -168,7 +169,7 @@ const AssessAndAwardTable: React.FC = () => {
                 }
 
                 console.log("overAllScore: ", overAllScore)
-                if(sourcingDetails.Freeze_Award) { 
+                if (sourcingDetails.Freeze_Award) {
                     setFreezeAwarding(true);
                 }
                 setRespondedSuppliers(respondedSuppliers);
@@ -612,15 +613,15 @@ const AssessAndAwardTable: React.FC = () => {
     return (
 
         <div style={{ height: window.innerHeight - 10 }} >
-            <div style={{ 
-                display: "flex", 
-                alignItems:"center" , 
+            <div style={{
+                display: "flex",
+                alignItems: "center",
                 justifyContent: "flex-end",
                 padding: 10
-                }} >
+            }} >
                 <KFButton
                     onClick={async () => {
-                        if(freezeAwarding) {
+                        if (freezeAwarding) {
                             showMessage(KFSDK, "Awarding has been freezed")
                         } else {
                             await updateAwarding()
@@ -638,7 +639,9 @@ const AssessAndAwardTable: React.FC = () => {
                 pagination={false}
                 className="custom-table"
                 scroll={{ x: window.innerWidth - 100 }}
-            /> : "Loading..."}
+            /> :
+                <KFLoader />
+            }
         </div>
     );
 };

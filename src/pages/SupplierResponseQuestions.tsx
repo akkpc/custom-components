@@ -5,6 +5,7 @@ import { KFButton } from '../components/KFButton';
 import { parseJSON } from '../helpers';
 import { borderColor, lightGrey } from '../helpers/colors';
 import { EventSection, Question } from './SourcingTemplate';
+import { KFLoader } from '../components/KFLoader';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 const questionnaireDataform = "Sourcing_Supplier_Response_Questio_A01"
@@ -345,7 +346,7 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
                         </div>
                     )) :
                         <div style={{ margin: 20 }} >
-                            Loading...
+                            <KFLoader/>
                         </div>
                 }
             </div>

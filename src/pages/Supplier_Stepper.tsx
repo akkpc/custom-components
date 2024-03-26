@@ -2,6 +2,7 @@ import { Typography } from "antd";
 import React, { useEffect, useState } from 'react';
 import { convertStringToDate, getDateObj } from "../helpers";
 import { stepperEdgeColor, stepperEdgeCompletedColor } from "../helpers/colors";
+import { KFLoader } from "../components/KFLoader";
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const description = 'This is a description.';
@@ -162,7 +163,7 @@ const Supplier_Stepper: React.FC = () => {
           )
         }
       </div>
-    </div> : <div>Loading...</div>
+    </div> : <KFLoader/>
   )
 }
 

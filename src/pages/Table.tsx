@@ -2,6 +2,7 @@ import { Checkbox, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { getColorCode } from '../helpers';
+import { KFLoader } from '../components/KFLoader';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 interface SupplierSection {
@@ -390,7 +391,9 @@ const AccordionTable: React.FC = () => {
                 pagination={false}
                 className="custom-table"
             // rowClassName="highlight-top-border highlight-bottom-border"
-            /> : "Loading..."}
+            /> :
+                <KFLoader />
+            }
         </div>
     );
 };

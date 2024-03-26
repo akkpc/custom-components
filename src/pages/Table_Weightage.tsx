@@ -6,6 +6,7 @@ import { calculateSplitValue, getKey } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
 import { Applicable_commercial_info, Commercial_Details, Line_Items, Questionnaire, dataforms, leafNodes, lineItemTableKey, processes, rootNodes } from '../helpers/constants';
 import { showMessage } from '../hooks/KFFunctions';
+import { KFLoader } from '../components/KFLoader';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const { Text } = Typography;
@@ -442,7 +443,9 @@ const AccordionTableWeightage: React.FC = () => {
                     }
                     rootClassName='root'
                     rowKey={(record) => record.key}
-                /> : "Loading..."}
+                /> :
+                <KFLoader />
+            }
             <div style={{ height: 100 }} ></div>
             <div
                 style={{
