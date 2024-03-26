@@ -61,6 +61,7 @@ export function TemplateQuestionnaire() {
   const [sourcingEventId, setSourcingEventId] = useState();
   const [eventStage, setEventStage] = useState();
   const [contentLoaded, setContentLoaded] = useState(false);
+  const [saveLoading,setSaveLoading] = useState(false);
 
   const prevQuestionState = useRef(questions);
   const addQuestionRef = useRef<any>(null);
@@ -539,9 +540,14 @@ export function TemplateQuestionnaire() {
                   Discard
                 </KFButton>
                 <KFButton
+                  loading={saveLoading}
                   buttonType='primary'
                   // style={{ backgroundColor: buttonDarkBlue, color: "white" }}
-                  onClick={async () => await onSave(questions)}
+                  onClick={async () => {
+                    setSaveLoading(true)
+                    await onSave(questions)
+                    setSaveLoading(false)
+                  }}
                 >
                   Save
                 </KFButton>
