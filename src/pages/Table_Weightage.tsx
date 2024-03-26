@@ -185,19 +185,15 @@ const AccordionTableWeightage: React.FC = () => {
                     <Button
                         onClick={() => {
                             setData((data: any) => {
-                                let { value, lastValue } = calculateSplitValue(data.length);
-                                data = data.map((d: any, index: any) => {
-                                    if (index - 1 == data.length) {
-                                        return ({
-                                            ...d,
-                                            Weightage: lastValue
-                                        })
-                                    }
-                                    return ({
-                                        ...d,
-                                        Weightage: value
-                                    })
-                                })
+                                let { lastValue, value } = calculateSplitValue(data.length)
+                                if (data[0]) {
+                                    data[0].Weightage = value;
+                                    data[0].children = splitWeightageToAllChildren(data[0])
+                                }
+                                if (data[1]) {
+                                    data[1].Weightage = lastValue;
+                                    data[1].children = splitWeightageToAllChildren(data[1])
+                                }
                                 return [...data]
                             })
                         }}
@@ -220,6 +216,7 @@ const AccordionTableWeightage: React.FC = () => {
                     key={record.key}
                     record={record}
                     setData={setData}
+                    data={data}
                 />
             ),
             className: "table-header"
@@ -399,7 +396,6 @@ const AccordionTableWeightage: React.FC = () => {
     }
 
     function customExpandIcon(props: any) {
-        console.log("props", props)
         if (rootNodes.includes(props.record.type)) {
             if (props.expanded) {
                 return (<a style={{ color: 'black', position: "relative", float: "left", marginRight: 15 }} onClick={e => {
@@ -620,78 +616,28 @@ function RowRender({ record, setData }: any) {
         switch (type) {
             case "questionnaire":
                 setData((data: any) => {
-                    let sections = data[0].children;
-                    let sectionLength = sections.length;
-                    let { lastValue, value } = calculateSplitValue(sectionLength)
-
-                    sections = sections.map((section: any, index: number) => {
-                        if (index == sections.length - 1) {
-                            section.Weightage = lastValue;
-                        } else {
-                            section.Weightage = value;
-                        }
-                        return section;
-                    })
-                    data[0].children = sections;
+                    data[0].children = splitWeightageToAllChildren(data[0]);
                     return [...data]
                 })
                 break;
             case "section":
                 setData((data: any) => {
                     let index = data[0].children.findIndex((question: any) => question.key == key);
-                    let questions = data[0].children[index].children
-                    let { value, lastValue } = calculateSplitValue(questions.length);
-                    questions = questions.map((question: any, index: number) => {
-                        if ((index == questions.length - 1)) {
-                            question.Weightage = lastValue;
-                        } else {
-                            question.Weightage = value;
-                        }
-                        return question
-                    })
-                    data[0].children[index].children = questions;
+                    data[0].children[index].children = splitWeightageToAllChildren(data[0].children[index]);
                     return [...data]
                 })
                 break;
             case "commercial_details":
                 setData((data: any) => {
-                    let lineItems = data[1].children;
-                    let lineItemLength = lineItems.length;
-                    let { lastValue, value } = calculateSplitValue(lineItemLength)
-
-                    lineItems = lineItems.map((lineItem: any, index: number) => {
-                        if ((index == lineItemLength - 1)) {
-                            lineItem.Weightage = lastValue;
-                        } else {
-                            lineItem.Weightage = value;
-                        }
-                        return lineItem;
-                    })
-                    data[1].children = lineItems;
+                    data[1].children = splitWeightageToAllChildren(data[1]);
                     return [...data]
                 })
                 break;
             case "line_items":
                 setData((data: any) => {
                     let lineItemIndex = data[1].children.findIndex((lineItem: any) => lineItem.key == key);
-                    if (lineItemIndex >= 0) {
-                        let lineItems = data[1].children[lineItemIndex];
-                        let lineLength = lineItems.children.length
-                        if (lineLength > 0) {
-                            let { lastValue, value } = calculateSplitValue(lineLength)
-                            lineItems.children = lineItems.children.map((lineItem: any, index: number) => {
-                                if ((index == lineLength - 1)) {
-                                    lineItem.Weightage = lastValue;
-                                } else {
-                                    lineItem.Weightage = value;
-                                }
-                                return lineItem;
-                            })
-                            data[1].children[lineItemIndex] = lineItems;
-                        }
-                        return [...data]
-                    }
-                    return []
+                    data[1].children[lineItemIndex].children = splitWeightageToAllChildren(data[1].children[lineItemIndex]);
+                    return [...data]
                 })
                 break;
         }
@@ -737,4 +683,21 @@ function RowRender({ record, setData }: any) {
             }
         </div>)
 }
+
+function splitWeightageToAllChildren(rootData: Record<string, any>) {
+    let data = rootData.children;
+    let { lastValue, value } = calculateSplitValue(data.length)
+    for (let i = 0; i < data.length; i++) {
+        if (i == data.length - 1) {
+            data[i].Weightage = lastValue;
+        } else {
+            data[i].Weightage = value;
+        }
+        if (data[i].children) {
+            data[i].children = splitWeightageToAllChildren(data[i]);
+        }
+    }
+    return data;
+}
+
 export { AccordionTableWeightage };
