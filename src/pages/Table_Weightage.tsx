@@ -191,10 +191,10 @@ const AccordionTableWeightage: React.FC = () => {
                         </Typography>
                     </div>
                     <div>
-                        {record.error &&
-                            <Tooltip color='#DF4440' title="Click Split button to auto split" >
-                                <img style={{ marginRight: 2 }} src={process.env.PUBLIC_URL + "/svgs/error.svg"} alt="image" />
-                            </Tooltip>
+                        {record?.error && <img style={{ marginRight: 2 }} src={process.env.PUBLIC_URL + "/svgs/error.svg"} alt="image" />
+                            // <Tooltip color='#DF4440' title="Click Split button to auto split" >
+
+                            // </Tooltip>
                         }
                     </div>
                 </div>
