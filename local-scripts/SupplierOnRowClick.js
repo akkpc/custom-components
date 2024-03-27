@@ -17,8 +17,13 @@ const {
     RFI_End_Date,
     RFP_End_Date,
     RFQ_End_Date,
-    _created_by
+    _created_by,
+    Event_Name,
+    Event_Short_Description,
+    _current_context
 } = SourcingDetails;
+
+console.log("SourcingDetails" , SourcingDetails)
 
 const payload = {
     currentStage: Current_Stage,
@@ -29,8 +34,14 @@ const payload = {
     event_owner_email: _created_by.Email,
     event_start_date: convertStringToDate(SourcingDetails[`${Current_Stage}_Start_Date`]),
     event_end_date: convertStringToDate(SourcingDetails[`${Current_Stage}_End_Date`]),
-    sourcing_event_number: Event_Number
+    sourcing_event_number: Event_Number,
+    Event_Name,
+    Event_Short_Description,
+    sourcingEventId: eventId,
+    sourcingEventActivityId:_current_context[0]._context_activity_instance_id
 }
+
+console.log("payload" , payload, SourcingDetails)
 
 kf.app.openPage("Copy_of_Sourcing_Supplier_Dashboar_A02", payload)
 
