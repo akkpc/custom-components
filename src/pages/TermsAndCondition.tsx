@@ -27,11 +27,17 @@ export function CheckboxComponent() {
     const [supplierTaskId, setSupplierTaskID] = useState("")
     const [currentConsentStatus, setCurrentConsentStatus] = useState<StatusType>()
     const [loading, setLoading] = useState(false)
-
+    const [eventEnded, setEventEnded] = useState(false);
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            const { supplierTaskId: stid } = await KFSDK.app.page.getAllParameters();
+            const { supplierTaskId: stid, end_date } = await KFSDK.app.page.getAllParameters();
+            let date = getDate(end_date);
+            if (date) {
+                if (date?.getTime() <= new Date().getTime()) {
+                    setEventEnded(true);
+                }
+            }
             setSupplierTaskID(stid);
         })()
     }, [])
@@ -399,6 +405,10 @@ export function CheckboxComponent() {
         return;
     }
 
+    // async function checkEventDeadlineStatus() {
+    //     const SourcingDetails = await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
+    // }
+
     return (
         <div style={{
             display: "flex",
@@ -407,85 +417,109 @@ export function CheckboxComponent() {
             // backgroundColor: "red",
             height: "100vh"
         }} >
-            {currentConsentStatus && <div style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "space-around",
-                height: "100%"
-            }} >
-                {(currentConsentStatus == StatusType.Not_Responded) ? <div
-                    style={{
+            {
+                eventEnded ?
+                    <div style={{
                         display: "flex",
-                    }}
-                >
-                    <Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} />
-                    <Typography style={{ marginLeft: 8, fontSize: 15 }} >
-                        Read and Accept
-                        <a
-                            target='__blank'
-                            href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
-                        >&nbsp;Terms & Conditions</a>
-                    </Typography>
-                </div> :
-                    (currentConsentStatus == StatusType.Accepted) ? <Typography style={{ marginLeft: 8, fontSize: 15 }} >
-                        Read Accepted
-                        <a
-                            target='__blank'
-                            href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
-                        >&nbsp;Terms & Conditions</a>
-                    </Typography> : <></>
-                }
-                <div>
-                    {currentConsentStatus == StatusType.Accepted ? <KFButton
-                        buttonType='primary'
-                        // style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
-                        // className=""
-                        loading={loading}
-                        onClick={async () => {
-                            setLoading(true);
-                            await createOrContinueSupplierResponses();
-                        }}
-                    >Continue</KFButton>
-                        :
-                        currentConsentStatus == StatusType.Declined ?
-                            <div>
-                                <Typography>Declined</Typography>
-                            </div> :
-                            <div>
-                                <KFButton
-                                    buttonType='primary'
-                                    style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
-                                    className=""
-                                    onClick={async () => {
-                                        KFSDK.client.showConfirm({
-                                            title,
-                                            content
-                                        }).then(async (action: any) => {
-                                            if (action === "OK") {
-                                                await updateConsent(false)
-                                            }
-                                            else {
-                                            }
-                                        })
-                                    }}
-                                >Reject Invite</KFButton>
-                                <KFButton
-                                    loading={loading}
-                                    buttonType="primary"
-                                    disabled={!checked}
-                                    style={{ backgroundColor: "green", color: "white", fontWeight: "600" }}
-                                    className=""
-                                    onClick={async () => {
-                                        setLoading(true);
-                                        await updateConsent(true)
-                                        await createOrContinueSupplierResponses();
-                                    }}
-                                >Accept Invite</KFButton>
-                            </div>
-                    }
-                </div>
-            </div>}
+                        alignItems: "center",
+                        flexDirection: "column",
+                        justifyContent: "space-between"
+                    }} >
+                        <Typography.Text>
+                            Event ended, <a
+                                style={{ fontWeight: "bold" }}
+                                type='link'
+                                // buttonType='secondary'
+                                onClick={() => {
+                                    KFSDK.app.openPage("Sourcing_Buyer_My_Tasks_A00")
+                                }}
+                            >
+                                Go back
+                            </a>
+                        </Typography.Text>
+                    </div>
+
+                    :
+                    currentConsentStatus && <div style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "space-around",
+                        height: "100%"
+                    }} >
+                        {(currentConsentStatus == StatusType.Not_Responded) ? <div
+                            style={{
+                                display: "flex",
+                            }}
+                        >
+                            <Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} />
+                            <Typography style={{ marginLeft: 8, fontSize: 15 }} >
+                                Read and Accept
+                                <a
+                                    target='__blank'
+                                    href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
+                                >&nbsp;Terms & Conditions</a>
+                            </Typography>
+                        </div> :
+                            (currentConsentStatus == StatusType.Accepted) ? <Typography style={{ marginLeft: 8, fontSize: 15 }} >
+                                Read Accepted
+                                <a
+                                    target='__blank'
+                                    href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
+                                >&nbsp;Terms & Conditions</a>
+                            </Typography> : <></>
+                        }
+                        <div>
+                            {currentConsentStatus == StatusType.Accepted ? <KFButton
+                                buttonType='primary'
+                                // style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
+                                // className=""
+                                loading={loading}
+                                onClick={async () => {
+                                    setLoading(true);
+                                    await createOrContinueSupplierResponses();
+                                }}
+                            >Continue</KFButton>
+                                :
+                                currentConsentStatus == StatusType.Declined ?
+                                    <div>
+                                        <Typography>Declined</Typography>
+                                    </div> :
+                                    <div>
+                                        <KFButton
+                                            buttonType='primary'
+                                            style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
+                                            className=""
+                                            onClick={async () => {
+                                                KFSDK.client.showConfirm({
+                                                    title,
+                                                    content
+                                                }).then(async (action: any) => {
+                                                    if (action === "OK") {
+                                                        await updateConsent(false)
+                                                    }
+                                                    else {
+                                                    }
+                                                })
+                                            }}
+                                        >Reject Invite</KFButton>
+                                        <KFButton
+                                            loading={loading}
+                                            buttonType="primary"
+                                            disabled={!checked}
+                                            style={{ backgroundColor: "green", color: "white", fontWeight: "600" }}
+                                            className=""
+                                            onClick={async () => {
+                                                setLoading(true);
+                                                await updateConsent(true)
+                                                await createOrContinueSupplierResponses();
+                                            }}
+                                        >Accept Invite</KFButton>
+                                    </div>
+                            }
+                        </div>
+                    </div>
+            }
         </div>
     )
 }
