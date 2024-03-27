@@ -41,7 +41,12 @@ export default function CustomTab() {
     useEffect(() => {
         (async () => {
             if (currentTab) {
-                await hideAll();
+                const { allComponents } = await KFSDK.app.page.getAllParameters();
+                if(allComponents) {
+                    let components = JSON.parse(allComponents);
+                    await hideAll(components);
+                }
+                
                 const index = tabs.findIndex((t) => t.key == currentTab)
                 if (index >= 0) {
                     const cTab = await KFSDK.app.page.getComponent(tabs[index].componentId);
@@ -51,9 +56,9 @@ export default function CustomTab() {
         })()
     }, [currentTab])
 
-    async function hideAll() {
-        for await (const tab of tabs) {
-            const cTab = await KFSDK.app.page.getComponent(tab.componentId);
+    async function hideAll(allComponents: string[]) {
+        for await (const tab of allComponents) {
+            const cTab = await KFSDK.app.page.getComponent(tab);
             cTab.hide();
         }
     }

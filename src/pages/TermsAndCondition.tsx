@@ -31,7 +31,7 @@ export function CheckboxComponent() {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            const { supplierTaskId: stid, end_date } = await KFSDK.app.page.getAllParameters();
+            const { supplierTaskId: stid, end_date, allow_multiple_bid } = await KFSDK.app.page.getAllParameters();
             let date = getDate(end_date);
             if (date) {
                 if (date?.getTime() <= new Date().getTime()) {
@@ -158,13 +158,16 @@ export function CheckboxComponent() {
 
         const sourcing_event_number = await KFSDK.app.page.getParameter('sourcing_event_number');
         await KFSDK.app.setVariable("sourcing_custom_tab_key", "questionnaires")
+
+        const allComponents = ["Container_VRSTDYbWW" , "Container_ZUfUF-TIt"]
         KFSDK.app.openPage("Sourcing_Supplier_Response_Page_A00", {
             ...payload,
             user_type: "supplier",
             sourcing_event_id: sourcingEventId,
             availableTabs: JSON.stringify(availableTabs),
             initialTab,
-            sourcing_event_number
+            sourcing_event_number,
+            allComponents: JSON.stringify(allComponents)
         });
         setLoading(false);
     }
