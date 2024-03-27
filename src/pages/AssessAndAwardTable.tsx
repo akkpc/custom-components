@@ -452,38 +452,37 @@ const AssessAndAwardTable: React.FC = () => {
                     selectedSupplier={selectedSupplier}
                     setSelectedSupplier={setSelectedSupplier}
                 />,
-                children: [],
+                children: [
+                    {
+                        title: "Response",
+                        dataIndex: getResponseKey(_id),
+                        key: getResponseKey(_id),
+                        render: (text: string, record: any) => ({
+                            children: <p style={{ marginLeft: 8 }} >{text}</p>
+                        }),
+                        // width: 300,
+                        width: "auto",
+                        hidden: !showResponse
+                    },
+                    {
+                        title: "Rating",
+                        dataIndex: _id,
+                        key: _id,
+                        render: (text: string, record: any) => ({
+                            children: <RowRender
+                                record={record}
+                                isViewOnly={isViewOnly || !record.editScore}
+                                text={text}
+                                supplierId={_id}
+                            // data={data}
+                            />
+                        }),
+                        // width: 130,
+                        width: "auto",
+                        hidden: !showRating
+                    }
+                ],
                 width: "auto"
-            }
-            if (showResponse) {
-                column.children.push({
-                    title: "Response",
-                    dataIndex: getResponseKey(_id),
-                    key: getResponseKey(_id),
-                    render: (text: string, record: any) => ({
-                        children: <p style={{ marginLeft: 8 }} >{text}</p>
-                    }),
-                    // width: 300,
-                    width: "auto"
-                })
-            }
-            if (showRating) {
-                column.children.push({
-                    title: "Rating",
-                    dataIndex: _id,
-                    key: _id,
-                    render: (text: string, record: any) => ({
-                        children: <RowRender
-                            record={record}
-                            isViewOnly={isViewOnly || !record.editScore}
-                            text={text}
-                            supplierId={_id}
-                        // data={data}
-                        />
-                    }),
-                    // width: 130,
-                    width: "auto"
-                })
             }
             columns.push(column)
         })
