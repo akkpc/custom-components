@@ -2,10 +2,10 @@ import { Checkbox, Table } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
+import { KFLoader } from '../components/KFLoader';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { showMessage } from '../hooks/KFFunctions';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
-import { KFLoader } from '../components/KFLoader';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const {
@@ -101,7 +101,9 @@ const AssessAndAwardTable: React.FC = () => {
     const [selectedLineItems, setSelectedLineItems] = useState<any[]>([]);
     const [respondedSuppliers, setRespondedSuppliers] = useState<SourcingSupplierResponses[]>([]);
     const [enableAwarding, setEnableAwarding] = useState(false);
-    const [freezeAwarding, setFreezeAwarding] = useState(false)
+    const [freezeAwarding, setFreezeAwarding] = useState(false);
+    const [showResponse, setShowResponse] = useState(true);
+    const [showRating, setShowRating] = useState(true);
 
     const rowSelection: TableRowSelection<DataType> = {
         onChange: (selectedRowKeys, selectedRows) => {
@@ -135,7 +137,6 @@ const AssessAndAwardTable: React.FC = () => {
         if (sourcingEventId) {
             (async () => {
                 const sourcingDetails: SourcingMaster = await getSourcingDetails(sourcingEventId)
-                // const responses: SourcingSupplierResponses[] = (await getSourcingSupplierResponses(sourcingEventId)).Data;
 
                 let respondedSuppliers = suppliers.map((response, index) => {
                     let supplierIndex = sourcingDetails["Table::Add_Existing_Suppliers"].findIndex((s) => s.Supplier_Name_1._id == response.Supplier_ID)
@@ -193,6 +194,12 @@ const AssessAndAwardTable: React.FC = () => {
             setEnableAwarding(false);
         }
     }, [selectedSupplier, selectedLineItems])
+
+    useEffect(() => {
+        if (showResponse != undefined && showRating != undefined) {
+            buildColumns(respondedSuppliers, selectedSupplier);
+        }
+    }, [showResponse, showRating])
 
     async function updateAwarding() {
         let response = respondedSuppliers.find((s) => s.Supplier_ID == selectedSupplier)
@@ -433,10 +440,10 @@ const AssessAndAwardTable: React.FC = () => {
             dataIndex: 'parameters',
             key: 'parameters',
             fixed: "left",
-            width: 500
+            width: "40%"
         }];
         suppliers.forEach(({ Supplier_ID: _id, Supplier_Name }, index) => {
-            columns.push({
+            const column: any = {
                 key: _id,
                 title: <CustomTitle
                     key={index}
@@ -445,32 +452,40 @@ const AssessAndAwardTable: React.FC = () => {
                     selectedSupplier={selectedSupplier}
                     setSelectedSupplier={setSelectedSupplier}
                 />,
-                children: [
-                    {
-                        title: "Response",
-                        dataIndex: getResponseKey(_id),
-                        key: getResponseKey(_id),
-                        render: (text: string, record: any) => ({
-                            children: <p style={{ marginLeft: 8 }} >{text}</p>
-                        }),
-                        width: 300,
-                    },
-                    {
-                        title: "Rating",
-                        dataIndex: _id,
-                        key: _id,
-                        render: (text: string, record: any) => ({
-                            children: <RowRender
-                                record={record}
-                                isViewOnly={isViewOnly || !record.editScore}
-                                text={text}
-                                supplierId={_id}
-                            // data={data}
-                            />
-                        }),
-                        width: 130,
-                    }],
-            })
+                children: [],
+                width: "auto"
+            }
+            if (showResponse) {
+                column.children.push({
+                    title: "Response",
+                    dataIndex: getResponseKey(_id),
+                    key: getResponseKey(_id),
+                    render: (text: string, record: any) => ({
+                        children: <p style={{ marginLeft: 8 }} >{text}</p>
+                    }),
+                    // width: 300,
+                    width: "auto"
+                })
+            }
+            if (showRating) {
+                column.children.push({
+                    title: "Rating",
+                    dataIndex: _id,
+                    key: _id,
+                    render: (text: string, record: any) => ({
+                        children: <RowRender
+                            record={record}
+                            isViewOnly={isViewOnly || !record.editScore}
+                            text={text}
+                            supplierId={_id}
+                        // data={data}
+                        />
+                    }),
+                    // width: 130,
+                    width: "auto"
+                })
+            }
+            columns.push(column)
         })
         setColumns(columns)
     }
@@ -611,38 +626,50 @@ const AssessAndAwardTable: React.FC = () => {
         return `${id}_response`
     }
     return (
+        contentLoaded ?
+            <div>
+                <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    padding: 10
+                }} >
+                    <div>
+                        <Checkbox
+                            checked={showResponse}
+                            onChange={(e) => setShowResponse(e.target.checked)}
+                        >Show Response</Checkbox>
+                        <Checkbox
+                            checked={showRating}
+                            onChange={(e) => setShowRating(e.target.checked)}
+                        >Show Rating</Checkbox>
+                    </div>
+                    <div>
+                        <KFButton
+                            onClick={async () => {
+                                if (freezeAwarding) {
+                                    showMessage(KFSDK, "Awarding has been freezed")
+                                } else {
+                                    await updateAwarding()
+                                }
+                            }} buttonType='primary'
+                            disabled={!enableAwarding || freezeAwarding}
+                        >Award</KFButton>
+                    </div>
+                </div>
 
-        <div style={{ height: window.innerHeight - 10 }} >
-            <div style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                padding: 10
-            }} >
-                <KFButton
-                    onClick={async () => {
-                        if (freezeAwarding) {
-                            showMessage(KFSDK, "Awarding has been freezed")
-                        } else {
-                            await updateAwarding()
-                        }
-                    }} buttonType='primary'
-                    disabled={!enableAwarding || freezeAwarding}
-                >Award</KFButton>
-            </div>
-            {contentLoaded ? <Table
-                style={{ marginBottom: 20, height: "100%" }}
-                columns={columns}
-                rowSelection={{ ...rowSelection }}
-                dataSource={data}
-                bordered
-                pagination={false}
-                className="custom-table"
-                scroll={{ x: window.innerWidth - 100 }}
-            /> :
-                <KFLoader />
-            }
-        </div>
+                <Table
+                    style={{ marginBottom: 20 }}
+                    columns={columns}
+                    rowSelection={{ ...rowSelection }}
+                    dataSource={data}
+                    bordered
+                    pagination={false}
+                    className="custom-table"
+                    scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 200 }}
+                />
+            </div> :
+            <KFLoader />
     );
 };
 
