@@ -48,16 +48,17 @@ if (_status == "Draft") {
   }
 
   if (Event_Type.includes("RFP")) {
-    stepperObj.rfp_configuration = convertStringToDate(RFP_Start_Date)
+    // stepperObj.rfp_configuration = convertStringToDate(RFP_Start_Date)
     stepperObj.awaiting_rfp_response = convertStringToDate(RFP_End_Date)
     stepperObj.rfp_technical_evaluation = ""
 
     if (Current_Stage == "RFP") {
-      if (Event_Type.includes("RFI")) {
-        event_status = "rfp_configuration";
-      } else {
-        event_status = "awaiting_rfp_response";
-      }
+      // if (Event_Type.includes("RFI")) {
+      //   event_status = "rfp_configuration";
+      // } else {
+      //   event_status = "awaiting_rfp_response";
+      // }
+      event_status = "awaiting_rfp_response";
       if (getDate(RFP_End_Date) < new Date().getTime()) {
         event_status = "rfp_technical_evaluation";
       }
@@ -69,26 +70,27 @@ if (_status == "Draft") {
     stepperObj.awaiting_rfq_response = convertStringToDate(RFQ_End_Date)
     stepperObj.rfq_commercial_evaluation = ""
     if (Current_Stage == "RFQ") {
-      if (Event_Type.includes("RFP")) {
-        event_status = "rfq_configuration";
-      } else {
-        event_status = "awaiting_rfq_response";
-      }
+      // if (Event_Type.includes("RFP")) {
+      //   event_status = "rfq_configuration";
+      // } else {
+      //   event_status = "awaiting_rfq_response";
+      // }
+      event_status = "awaiting_rfq_response";
       if (getDate(RFQ_End_Date) < new Date().getTime()) {
         event_status = "rfq_commercial_evaluation";
       }
     }
   }
 
-  if (Current_Stage == "RFQ") {
-    event_status = "rfq_configuration";
-    if (getDate(RFQ_Start_Date) < new Date().getTime()) {
-      event_status = "awaiting_rfq_response";
-    }
-    if (getDate(RFQ_End_Date) < new Date().getTime()) {
-      event_status = "rfq_commercial_evaluation";
-    }
-  }
+  // if (Current_Stage == "RFQ") {
+  //   event_status = "rfq_configuration";
+  //   if (getDate(RFQ_Start_Date) < new Date().getTime()) {
+  //     event_status = "awaiting_rfq_response";
+  //   }
+  //   if (getDate(RFQ_End_Date) < new Date().getTime()) {
+  //     event_status = "rfq_commercial_evaluation";
+  //   }
+  // }
 
   let availableTabs = [
     {
