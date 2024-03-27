@@ -38,7 +38,8 @@ const payload = {
     Event_Name,
     Event_Short_Description,
     sourcingEventId: eventId,
-    sourcingEventActivityId:_current_context[0]._context_activity_instance_id
+    sourcingEventActivityId:_current_context[0]._context_activity_instance_id,
+    end_date: SourcingDetails[`${Current_Stage}_End_Date`]
 }
 
 console.log("payload" , payload, SourcingDetails)
