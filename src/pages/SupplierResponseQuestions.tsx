@@ -1,5 +1,6 @@
 import { Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, theme } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
+import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { KFLoader } from '../components/KFLoader';
@@ -47,7 +48,7 @@ interface SupplierResponseQuestionProps {
     updateProgressValue: () => Promise<void>;
     setSections: React.Dispatch<React.SetStateAction<SourcingSupplierSection[]>>;
     sourcingSectionId: string;
-    disabled?:boolean;
+    disabled?: boolean;
 }
 
 interface SourcingSupplierSection extends EventSection {
@@ -427,11 +428,17 @@ export function ResponseField({ type, options, value, setValue, onBlur, disabled
         if (type == "single_select") {
             setValue(event)
         } else if (type == "date_time") {
+            // console.log("DatePicker", event, dateString, typeof dateString)
             setValue(dateString)
         }
         else {
             setValue(event.target.value);
         }
+    }
+
+    function formattedDate(dateTime: string) {
+        let format = "YYYY-MM-DD HH:mm:ss"
+        return dayjs(dateTime, format);
     }
 
     switch (type) {
@@ -472,13 +479,14 @@ export function ResponseField({ type, options, value, setValue, onBlur, disabled
         case "date_time":
             return (
                 <DatePicker
+                    format="YYYY-MM-DD HH:mm:ss"
                     disabled={disabled}
                     placeholder='Enter your answer here'
                     onChange={onChange}
                     showTime
                     style={{ height: 40, width: 300 }}
                     onBlur={onBlur}
-                    value={value}
+                    value={value ? formattedDate(value) : value}
                 />
             )
         default:
