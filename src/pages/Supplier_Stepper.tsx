@@ -124,6 +124,8 @@ const Supplier_Stepper: React.FC = () => {
       currentStage = "AwardCommunicaiton";
     }
 
+    KFSDK.app.setVariable("supplier_stage" , stepsMetaData.find((s) => s.key == currentStage)?.title )
+
     let columns = stepsMetaData.filter(({ key }) => stepperObj.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stepperObj[stage.key] }))
     if (availableStages.includes(currentStage)) {
       for (let i = 0; i < columns.length; i++) {
