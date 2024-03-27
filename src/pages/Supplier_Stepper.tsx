@@ -37,16 +37,16 @@ const stepsMetaData: Steps[] = [
     title: "RFP Response",
     imageName: "stepper_pending_icon.svg",
   },
-  {
-    key: "RFP_Supplier_Clarification",
-    title: "Supplier Clarification",
-    imageName: "stepper_clarification_icon.svg",
-  },
-  {
-    key: "RFQ",
-    title: "Supplier Clarification",
-    imageName: "stepper_pending_icon.svg",
-  },
+  // {
+  //   key: "RFP_Supplier_Clarification",
+  //   title: "Supplier Clarification",
+  //   imageName: "stepper_clarification_icon.svg",
+  // },
+  // {
+  //   key: "RFQ",
+  //   title: "Supplier Clarification",
+  //   imageName: "stepper_pending_icon.svg",
+  // },
   {
     key: "AwardCommunicaiton",
     title: "Award Communication",
