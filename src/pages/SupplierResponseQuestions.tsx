@@ -2,10 +2,10 @@ import { Col, Collapse, DatePicker, Input, Progress, Row, Select, Typography, th
 import TextArea from 'antd/es/input/TextArea';
 import React, { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
+import { KFLoader } from '../components/KFLoader';
 import { parseJSON } from '../helpers';
 import { borderColor, lightGrey } from '../helpers/colors';
 import { EventSection, Question } from './SourcingTemplate';
-import { KFLoader } from '../components/KFLoader';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 const questionnaireDataform = "Sourcing_Supplier_Response_Questio_A01"
@@ -17,6 +17,7 @@ interface Props {
         Name: string;
         _id: string;
     }[];
+    disabled?: boolean;
 }
 
 interface NewProps {
@@ -32,7 +33,8 @@ interface QuestionProps {
     event_stage: string,
     progressValue: number,
     setSections: React.Dispatch<React.SetStateAction<SourcingSupplierSection[]>>,
-    supplierId: string
+    supplierId: string,
+    disabled?: boolean;
 }
 
 interface HeaderProps {
@@ -45,6 +47,7 @@ interface SupplierResponseQuestionProps {
     updateProgressValue: () => Promise<void>;
     setSections: React.Dispatch<React.SetStateAction<SourcingSupplierSection[]>>;
     sourcingSectionId: string;
+    disabled?:boolean;
 }
 
 interface SourcingSupplierSection extends EventSection {
@@ -78,7 +81,7 @@ const SupplierResponseQuestions: React.FC = () => {
     const [sections, setSections] = useState<SourcingSupplierSection[]>([])
     const [eventTypes, setEventTypes] = useState<string[]>([])
     const [supplierId, setSupplierId] = useState("");
-    const [showSubmitButton,setShowSubmitButton] = useState(true)
+    const [isResponseSubmitted, setIsResponseSubmitted] = useState(false)
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
@@ -101,8 +104,8 @@ const SupplierResponseQuestions: React.FC = () => {
                 setSections(sections);
                 setEventTypes(eventTypes);
                 setSupplierId(supplier_id)
-                if(Response_Status == "Active"){ 
-                    setShowSubmitButton(false);
+                if (Response_Status == "Active") {
+                    setIsResponseSubmitted(true);
                 }
             }
         })()
@@ -180,6 +183,7 @@ const SupplierResponseQuestions: React.FC = () => {
                                 sourcingSectionId={section._id}
                                 setSections={setSections}
                                 supplierId={supplierId}
+                                disabled={isResponseSubmitted}
                             />,
                         style: panelStyle,
                     }))}
@@ -188,50 +192,50 @@ const SupplierResponseQuestions: React.FC = () => {
                 <div style={{ height: 60 }} ></div>
             </div>
             {
-            currentStage != "RFQ" && 
-            showSubmitButton &&
-            <div
-                style={{
-                    position: "fixed",
-                    width: "100%",
-                    height: 60,
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    backgroundColor: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "flex-end",
-                    borderTop: `1px solid ${borderColor}`
-                }}
-            >
-                <div style={{ display: "flex", paddingRight: 10, gap: 10 }} >
-                    <KFButton
-                        buttonType='secondary'
-                    >Close</KFButton>
-                    {(currentStage != "RFI" || !eventTypes.includes("RFQ")) ?
+                currentStage != "RFQ" &&
+                !isResponseSubmitted &&
+                <div
+                    style={{
+                        position: "fixed",
+                        width: "100%",
+                        height: 60,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        backgroundColor: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        borderTop: `1px solid ${borderColor}`
+                    }}
+                >
+                    <div style={{ display: "flex", paddingRight: 10, gap: 10 }} >
                         <KFButton
-                            onClick={async () => {
-                                await KFSDK.app.setVariable("sourcing_custom_tab_key", "lines")
-                                const comp1 = await KFSDK.app.page.getComponent("CustomComponents_-Py6oMIbsl")
-                                comp1.refresh()
-                            }}
-                            buttonType='primary' >
-                            Save & next
-                        </KFButton>
-                        :
-                        <KFButton
-                            buttonType='primary' >
-                            Submit
-                        </KFButton>
-                    }
-                </div>
-            </div>}
+                            buttonType='secondary'
+                        >Close</KFButton>
+                        {(currentStage != "RFI" || !eventTypes.includes("RFQ")) ?
+                            <KFButton
+                                onClick={async () => {
+                                    await KFSDK.app.setVariable("sourcing_custom_tab_key", "lines")
+                                    const comp1 = await KFSDK.app.page.getComponent("CustomComponents_-Py6oMIbsl")
+                                    comp1.refresh()
+                                }}
+                                buttonType='primary' >
+                                Save & next
+                            </KFButton>
+                            :
+                            <KFButton
+                                buttonType='primary' >
+                                Submit
+                            </KFButton>
+                        }
+                    </div>
+                </div>}
         </div>
     );
 };
 
-function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_stage, progressValue, setSections, supplierId }: QuestionProps) {
+function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_stage, progressValue, setSections, supplierId, disabled }: QuestionProps) {
     const [questions, setQuestions] = useState<(Question & SupplierResponseQuestionProps)[]>([]);
     const [contentLoaded, setContentLoaded] = useState(false);
     useEffect(() => {
@@ -306,7 +310,7 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
         const questions = await getQuestionsBySection();
         const answered = questions.filter((q) => q.Text_Response).length;
         const total = questions.length;
-        return Number((answered/total  * 100).toFixed(2))
+        return Number((answered / total * 100).toFixed(2))
     }
 
     async function updateProgressValue() {
@@ -339,14 +343,14 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
                     contentLoaded ? questions.map((question, index) => (
                         <div key={question._id} >
                             <div style={{ margin: 20 }} >
-                                <Inputs {...question} updateProgressValue={updateProgressValue} sourcingSectionId={sourcingSectionId} />
+                                <Inputs {...question} updateProgressValue={updateProgressValue} sourcingSectionId={sourcingSectionId} disabled={disabled} />
                             </div>
                             {questions.length - 1 > index &&
                                 <div style={{ borderBottom: "1px solid #D8DCE5", marginTop: 50 }} ></div>}
                         </div>
                     )) :
                         <div style={{ margin: 20 }} >
-                            <KFLoader/>
+                            <KFLoader />
                         </div>
                 }
             </div>
@@ -354,11 +358,11 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
     )
 }
 
-function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response, updateProgressValue, sourcingSectionId }: Question & SupplierResponseQuestionProps) {
+function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response, updateProgressValue, sourcingSectionId, disabled }: Question & SupplierResponseQuestionProps) {
     const [value, setValue] = useState<any>()
 
     useEffect(() => {
-        console.log("Dropdown_options" , Dropdown_options)
+        console.log("Dropdown_options", Dropdown_options)
         if (Text_Response) {
             setValue(Text_Response);
         }
@@ -409,6 +413,7 @@ function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response,
                         value={value}
                         setValue={setValue}
                         onBlur={onBlur}
+                        disabled={disabled}
                     />
                 </Col>
             </Row>
@@ -416,7 +421,7 @@ function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response,
     )
 }
 
-export function ResponseField({ type, options, value, setValue, onBlur }: Props & NewProps) {
+export function ResponseField({ type, options, value, setValue, onBlur, disabled }: Props & NewProps) {
 
     function onChange(event: any, dateString?: any) {
         if (type == "single_select") {
@@ -433,6 +438,7 @@ export function ResponseField({ type, options, value, setValue, onBlur }: Props 
         case "short_text":
             return (
                 <Input
+                    disabled={disabled}
                     placeholder='Enter your answer here'
                     style={{ height: 40 }}
                     onChange={onChange}
@@ -443,6 +449,7 @@ export function ResponseField({ type, options, value, setValue, onBlur }: Props 
         case "long_text":
             return (
                 <TextArea
+                    disabled={disabled}
                     placeholder='Enter your answer here'
                     style={{ minHeight: 106 }}
                     onChange={onChange}
@@ -453,7 +460,8 @@ export function ResponseField({ type, options, value, setValue, onBlur }: Props 
         case "single_select":
             return (
                 <Select
-                    options={options?.map(({Name}) => ({label: Name, value: Name}))}
+                    disabled={disabled}
+                    options={options?.map(({ Name }) => ({ label: Name, value: Name }))}
                     onChange={onChange}
                     placeholder='Choose your answer here'
                     style={{ height: 40, width: 300 }}
@@ -464,6 +472,7 @@ export function ResponseField({ type, options, value, setValue, onBlur }: Props 
         case "date_time":
             return (
                 <DatePicker
+                    disabled={disabled}
                     placeholder='Enter your answer here'
                     onChange={onChange}
                     showTime
