@@ -326,19 +326,19 @@ export function CheckboxComponent() {
             }
         }
 
-        const template = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Templates_A01/allitems/list`,
+        const template = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Templates_A01/allitems/list?page_number=1&page_size=1000000`,
             {
                 method: "POST",
                 body: JSON.stringify(component_filter),
             }).then((res: any) => res.Data[0]).catch((err: any) => console.log("Error in fetching template"));
 
-        const sections = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list`,
+        const sections = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?page_number=1&page_size=1000000`,
             {
                 method: "POST",
                 body: JSON.stringify(component_filter),
             }).then((res: any) => res.Data).catch((err: any) => console.log("Cannot get sections"));
 
-        const questions = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list`,
+        const questions = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?page_number=1&page_size=1000000`,
             {
                 method: "POST",
                 body: JSON.stringify(component_filter),

@@ -104,7 +104,7 @@ const AccordionTableWeightage: React.FC = () => {
     const [data, setData] = useState<any[]>([])
     const [showWeightageError, setWeightageError] = useState(false)
     const [weightageLoading, setWeightageLoading] = useState(false);
-    const [expandedRows, setExpandedRows] = useState<string[]>([])
+    const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const prevData = useRef<any>([]);
 
     useEffect(() => {
@@ -248,7 +248,7 @@ const AccordionTableWeightage: React.FC = () => {
         setColumns(columns)
     }
 
-    async function getSectiondetailsBySourcingEvent(sourcing_event_id: string) {
+    async function getSectiondetailsBySourcingEvent(sourcing_event_id: string, currentStage: string) {
         const queries = `page_number=1&page_size=1000000&_application_id=Sourcing_App_A00`
 
         const payload =
@@ -266,6 +266,16 @@ const AccordionTableWeightage: React.FC = () => {
                                 "RHSParam": "",
                                 "LHSAttribute": null,
                                 "RHSAttribute": null
+                            },
+                            {
+                                "LHSField": "Event_Stage",
+                                "Operator": "EQUAL_TO",
+                                "RHSType": "Value",
+                                "RHSValue": currentStage,
+                                "RHSField": null,
+                                "RHSParam": "",
+                                "LHSAttribute": null,
+                                "RHSAttribute": null
                             }
                         ]
                     }
@@ -278,7 +288,7 @@ const AccordionTableWeightage: React.FC = () => {
             body: JSON.stringify(payload)
         })).Data
 
-        const questions: SourcingEventQuestion[] = await getQuestionDetails(sourcing_event_id);
+        const questions: SourcingEventQuestion[] = await getQuestionDetails(sourcing_event_id, currentStage);
 
         let technicalData: Data[] = sections.map((section) => ({
             key: section._id,
@@ -300,7 +310,7 @@ const AccordionTableWeightage: React.FC = () => {
         return technicalData
     }
 
-    async function getQuestionDetails(sourcing_event_id: string) {
+    async function getQuestionDetails(sourcing_event_id: string, currentStage: string) {
         const queries = `page_number=1&page_size=1000000&_application_id=Sourcing_App_A00`
 
         const payload =
@@ -314,6 +324,16 @@ const AccordionTableWeightage: React.FC = () => {
                                 "Operator": "EQUAL_TO",
                                 "RHSType": "Value",
                                 "RHSValue": sourcing_event_id,
+                                "RHSField": null,
+                                "RHSParam": "",
+                                "LHSAttribute": null,
+                                "RHSAttribute": null
+                            },
+                            {
+                                "LHSField": "Event_Stage",
+                                "Operator": "EQUAL_TO",
+                                "RHSType": "Value",
+                                "RHSValue": currentStage,
                                 "RHSField": null,
                                 "RHSParam": "",
                                 "LHSAttribute": null,
@@ -334,9 +354,9 @@ const AccordionTableWeightage: React.FC = () => {
     }
 
     async function buildRowDetails(sourcing_event_id: string) {
-        const technicalData = await getSectiondetailsBySourcingEvent(sourcing_event_id);
         const sourcingDetails: any =
             (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/Sourcing_Master_A00/${sourcing_event_id}`))
+        const technicalData = await getSectiondetailsBySourcingEvent(sourcing_event_id,sourcingDetails.Current_Stage);
 
         const lineItems: LineItem[] = sourcingDetails[lineItemTableKey]
         const applicableCommercialInfo = sourcingDetails[Applicable_commercial_info]
