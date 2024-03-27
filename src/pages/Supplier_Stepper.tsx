@@ -1,8 +1,8 @@
 import { Typography } from "antd";
 import React, { useEffect, useState } from 'react';
+import { KFLoader } from "../components/KFLoader";
 import { convertStringToDate, getDateObj } from "../helpers";
 import { stepperEdgeColor, stepperEdgeCompletedColor } from "../helpers/colors";
-import { KFLoader } from "../components/KFLoader";
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const description = 'This is a description.';
@@ -42,11 +42,11 @@ const stepsMetaData: Steps[] = [
   //   title: "Supplier Clarification",
   //   imageName: "stepper_clarification_icon.svg",
   // },
-  // {
-  //   key: "RFQ",
-  //   title: "Supplier Clarification",
-  //   imageName: "stepper_pending_icon.svg",
-  // },
+  {
+    key: "RFQ",
+    title: "RFQ Response",
+    imageName: "stepper_pending_icon.svg",
+  },
   {
     key: "AwardCommunicaiton",
     title: "Award Communication",
@@ -95,7 +95,7 @@ const Supplier_Stepper: React.FC = () => {
 
     if (Event_Type.includes("RFP")) {
       stepperObj.RFP = convertStringToDate(RFP_End_Date)
-      stepperObj.RFP_Supplier_Clarification = convertStringToDate(RFP_End_Date)
+      // stepperObj.RFP_Supplier_Clarification = convertStringToDate(RFP_End_Date)
     }
 
     if (Event_Type.includes("RFQ")) {
@@ -110,16 +110,18 @@ const Supplier_Stepper: React.FC = () => {
     const time: any = getDateObj(SourcingDetails[`${Current_Stage}_End_Date`])?.getTime();
     if (time) {
       if (time < new Date().getTime()) {
-        if (Current_Stage == "RFP") {
-          currentStage = "RFP_Supplier_Clarification";
-        } else {
-          currentStage = "AwardCommunicaiton";
-        }
+        // if (Current_Stage == "RFP") {
+        //   currentStage = "RFP_Supplier_Clarification";
+        // } else {
+        //   currentStage = "AwardCommunicaiton";
+        // }
+        currentStage = "AwardCommunicaiton";
       }
     }
 
     if(taskDetails.Response_Status == "Responded") {
-      currentStage = "RFP_Supplier_Clarification";
+      // currentStage = "RFP_Supplier_Clarification";
+      currentStage = "AwardCommunicaiton";
     }
 
     let columns = stepsMetaData.filter(({ key }) => stepperObj.hasOwnProperty(key)).map((stage) => ({ ...stage, description: stepperObj[stage.key] }))
