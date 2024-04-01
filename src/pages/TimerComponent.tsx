@@ -106,9 +106,9 @@ export function TimerComponent() {
     }} >
         {
           Object.keys(timeData).map((key: string, index) => (
-            // <div key={index} style={{ gap: 10 }} >
+            <div key={index}>
               <Box number={timeData[key].toString()} text={`${label[key]}${timeData[key] > 1 ? "s" :""}` } />
-            // </div>
+            </div>
           ))
         }
       </div>

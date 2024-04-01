@@ -29,14 +29,9 @@ export function ProgressChart() {
             color: "#F09541"
         },
         {
-            key: "Accepted",
-            label: "Accepted",
-            color: "#EFD780"
-        },
-        {
-            key: "Rejected",
-            label: "Rejected",
-            color: "red"
+            key: "Responded",
+            label: "Responded",
+            color: "#7EBC7C"
         },
         {
             key: "Not_Responded",
@@ -44,10 +39,10 @@ export function ProgressChart() {
             color: "#FAFAFA"
         },
         {
-            key: "Responded",
-            label: "Responded",
-            color: "#7EBC7C"
-        },
+            key: "Rejected",
+            label: "Rejected",
+            color: "red"
+        }
     ]
 
     useEffect(() => {
@@ -56,10 +51,9 @@ export function ProgressChart() {
             const { id: sourcingEventId } = await KFSDK.app.page.getAllParameters();
             const { Data } = await getSourcingTasks(sourcingEventId);
             let total = Data.length;
-            let accepted = Data.filter((res: any) => res.Consent_Status == "Accepted").length
             let declined = Data.filter((res: any) => res.Consent_Status == "Declined").length
-            let not_responded = (total - (accepted + declined))
             let responded = Data.filter((res: any) => res.Response_Status == "Responded").length
+            let not_responded = Data.filter((res: any) => res.Response_Status == "Not Responded").length
             value[0] = {
                 ...value[0],
                 value: total,
@@ -67,23 +61,18 @@ export function ProgressChart() {
             };
             value[1] = {
                 ...value[1],
-                value: accepted,
-                percentage: (accepted / total) * 100
+                value: responded,
+                percentage: (responded / total) * 100
             };
             value[2] = {
                 ...value[2],
-                value: declined,
-                percentage: (declined / total) * 100
-            };
-            value[3] = {
-                ...value[3],
                 value: not_responded,
                 percentage: (not_responded / total) * 100
             };
-            value[4] = {
-                ...value[4],
-                value: responded,
-                percentage: (responded / total) * 100
+            value[3] = {
+                ...value[3],
+                value: declined,
+                percentage: (declined / total) * 100
             };
 
             value.sort((v1, v2) => {
@@ -92,7 +81,7 @@ export function ProgressChart() {
                 }
                 return 0;
             });
-            console.log("tasks", value)
+            console.log("tasks", value, Data)
             setChartData(value);
         })()
     }, [])
@@ -121,17 +110,16 @@ export function ProgressChart() {
     }
 
     return (
-        <div>
+        <div style={{ padding: 5 }} >
             <div style={{
                 display: "flex",
-                width: "99%",
-                height: 30,
-                border: "1px solid #D2DDEC",
+                width: "100%",
+                height: 41,
+                border: "2px solid #D2DDEC",
                 borderRadius: 25,
-                padding: 1,
+                // padding: 1,
                 alignItems: "center",
                 justifyContent: "flex-start",
-                left: 0
             }} >
                 {
                     chartData.map((v, index) => {
@@ -141,24 +129,23 @@ export function ProgressChart() {
                                 title={`${v.value} ${v.label}`}
                                 placement="bottom"
                                 color={v.color}
-                                overlayInnerStyle={{color: "black"}}
+                                overlayInnerStyle={{ color: "black" }}
                             >
-                                <div key={index} style={{
-                                    backgroundColor: v.color,
-                                    borderRadius: 20,
-                                    height: 28,
-                                    width: `${(v.percentage || 0) == 0 ? 0 : v?.percentage && v?.percentage - (10.2 + (index * 3))}%`,
-                                    position: "absolute",
-                                    left: 3,
-                                    right: 3,
-                                    borderRight: "2px solid white",
-                                    borderTop: "2px solid white",
-                                    borderBottom: "2px solid white",
-                                    maxWidth: "100%",
-                                }}
-                                >
-
-                                </div>
+                                {(v.percentage && v.percentage > 0) ?
+                                    <div key={index} style={{
+                                        backgroundColor: v.color,
+                                        borderRadius: 20,
+                                        height: 35,
+                                        width: index == 0 ? "96%" : `${(v.percentage || 0) == 0 ? 0 : v?.percentage && v?.percentage - (10.2 + (index * 3))}%`,
+                                        position: "fixed",
+                                        left: 10,
+                                        borderRight: "2px solid white",
+                                        borderTop: "2px solid white",
+                                        borderBottom: "2px solid white",
+                                        maxWidth: "100%",
+                                    }}
+                                    >
+                                    </div> : ""}
                             </Tooltip>
                         )
                     })
