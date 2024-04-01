@@ -634,6 +634,7 @@ const AssessAndAwardTable: React.FC = () => {
                     padding: 10
                 }} >
                     <div>
+
                         <Checkbox
                             checked={showResponse}
                             onChange={(e) => setShowResponse(e.target.checked)}
@@ -643,7 +644,16 @@ const AssessAndAwardTable: React.FC = () => {
                             onChange={(e) => setShowRating(e.target.checked)}
                         >Show Rating</Checkbox>
                     </div>
-                    <div>
+                    <div style={{
+                        display:"flex",
+                        alignItems:"center"
+                    }} >
+                        <KFButton
+                            style={{marginRight: 10}}
+                            onClick={async () => {
+                               KFSDK.app.page.openPopup("Popup_wmSGkBozN");
+                            }} buttonType='secondary'
+                        >Awarded Items</KFButton>
                         <KFButton
                             onClick={async () => {
                                 if (freezeAwarding) {

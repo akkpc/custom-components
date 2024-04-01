@@ -203,10 +203,10 @@ th.ant-table-cell {
   background-color: #d8dce5 !important;
   color: black !important;
 }
-.kf-button-primary:hover {
+/* .kf-button-primary:hover {
   background-color: #003c9c !important;
   color: white !important;
-}
+} */
 
 
 .kf-button-error {
