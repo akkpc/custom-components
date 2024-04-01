@@ -144,7 +144,6 @@ export function QuestionCard(props: Props) {
                                     }
                                 }}
                             />
-                            <Typography style={{textAlign:"right", fontSize: 12, fontWeight: 400, color:"#AFB7C7", marginTop: 5}} >{maxCharLength - question?.Question?.length || 0} Characters remaining</Typography>
                         </div>
                     </Col>
                     <Col span={2} >
