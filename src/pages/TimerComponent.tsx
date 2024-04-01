@@ -15,6 +15,7 @@ export function TimerComponent() {
     minutes: 0,
     seconds: 0
   })
+  const [size, setSize] = useState<"small" | "big">("small")
   // const [eventDueFinished,setEventDueFinished] = useState(false);
 
   function isValidDate(dateString: string) {
@@ -38,7 +39,7 @@ export function TimerComponent() {
     date.setHours(hours, minutes);
 
     return date;
-}
+  }
 
   function convertStringToDate(dateString: string | Date): Date {
     if (typeof dateString == "string") {
@@ -57,10 +58,14 @@ export function TimerComponent() {
       await KFSDK.initialize();
       let allParams = await KFSDK.app.page.getAllParameters();
       const date = allParams.timer_date;
-      
+
+      if (allParams.timerSize == "big") {
+        setSize("big");
+      }
+
       if (date) {
         const parsedDate = parseDateStringWithTimezone(date);
-        console.log("parsedDate",parsedDate,parsedDate.getTime())
+        console.log("parsedDate", parsedDate, parsedDate.getTime())
         if (!isNaN(parsedDate.getTime())) {
           const timer = setInterval(() => {
             const now = new Date()
@@ -98,16 +103,16 @@ export function TimerComponent() {
 
   return (
     <div>
-      <div style={{ 
+      <div style={{
         display: "flex",
         // backgroundColor:"red",
         width: "90%",
-        justifyContent:"space-between"
-    }} >
+        justifyContent: "space-between"
+      }} >
         {
           Object.keys(timeData).map((key: string, index) => (
             <div key={index}>
-              <Box number={timeData[key].toString()} text={`${label[key]}${timeData[key] > 1 ? "s" :""}` } />
+              <Box size={size} number={timeData[key].toString()} text={`${label[key]}${timeData[key] > 1 ? "s" : ""}`} />
             </div>
           ))
         }
@@ -116,22 +121,22 @@ export function TimerComponent() {
   )
 }
 
-function Box({ number, text }: any) {
+function Box({ number, text, size }: any) {
   return (
     <div style={{
-      // border: "1px solid #DEEAFF",
-      width: 65,
-      height: 65,
+      border: size == "small" ? "1px solid #DEEAFF" : "",
+      width: size == "small" ? 40 : 65,
+      height: size == "small" ? 40 : 65,
       padding: 1,
       backgroundColor: "#eef5ff",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "column",
-      borderRadius: 10
+      borderRadius: size == "small" ? 5 : 10
     }} >
-      <Typography style={{ fontSize: 28, fontWeight: 600 }} >{number}</Typography>
-      <Typography style={{ fontSize: 11, color:"#080E19" }} >{text}</Typography>
+      <Typography style={{ fontSize: size == "small" ? 16 : 28, fontWeight: 600 }} >{number}</Typography>
+      <Typography style={{ fontSize: size == "small" ? 9 : 11, color: "#080E19" }} >{text}</Typography>
     </div>
   )
 }
