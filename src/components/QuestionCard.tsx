@@ -120,7 +120,7 @@ export function QuestionCard(props: Props) {
                 <Row align={"middle"} >
                     {/* <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} > */}
                     <Col span={22} >
-                        <div style={{ width: "80%" }} >
+                        <div style={{ width: "95%" }} >
                             <Input
                                 style={{ height: 35, padding: 0, borderRadius: 4 }}
                                 prefix={
@@ -136,12 +136,11 @@ export function QuestionCard(props: Props) {
                                             borderBottomLeftRadius: 4
                                         }}
                                     >{index + 1}.
-                                    </div>}
+                                    </div>
+                                }
                                 value={question.Question}
                                 onChange={(e) => {
-                                    if (e.target.value.length <= maxCharLength) {
-                                        setQuestion((q) => ({ ...q, Question: e.target.value }))
-                                    }
+                                    setQuestion((q) => ({ ...q, Question: e.target.value }))
                                 }}
                             />
                         </div>
