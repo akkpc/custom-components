@@ -1,13 +1,12 @@
 import { Typography } from 'antd'
-import moment from 'moment'
 import { useEffect, useState } from 'react'
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 const label: Record<string, string> = {
   days: "Day",
-  hours: "Hours",
-  minutes: "Mins",
-  seconds: "Sec"
+  hours: "Hour",
+  minutes: "Minute",
+  seconds: "Second"
 }
 export function TimerComponent() {
   const [timeData, setTimeData] = useState<Record<string, number>>({
@@ -98,17 +97,18 @@ export function TimerComponent() {
   }, [])
 
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "start"
+    <div>
+      <div style={{ 
+        display: "flex",
+        // backgroundColor:"red",
+        width: "90%",
+        justifyContent:"space-between"
     }} >
-      <div style={{ display: "flex", gap: 10 }} >
         {
           Object.keys(timeData).map((key: string, index) => (
-            <div key={index} style={{ gap: 10 }} >
-              <Box number={timeData[key].toString()} text={label[key]} />
-            </div>
+            // <div key={index} style={{ gap: 10 }} >
+              <Box number={timeData[key].toString()} text={`${label[key]}${timeData[key] > 1 ? "s" :""}` } />
+            // </div>
           ))
         }
       </div>
@@ -119,19 +119,19 @@ export function TimerComponent() {
 function Box({ number, text }: any) {
   return (
     <div style={{
-      border: "1px solid #DEEAFF",
-      width: 40,
-      height: 40,
+      // border: "1px solid #DEEAFF",
+      width: 65,
+      height: 65,
       padding: 1,
-      backgroundColor: "#F4F9FF",
+      backgroundColor: "#eef5ff",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "column",
-      borderRadius: 5
+      borderRadius: 10
     }} >
-      <Typography style={{ fontSize: 16, fontWeight: 600 }} >{number}</Typography>
-      <Typography style={{ fontSize: 10 }} >{text}</Typography>
+      <Typography style={{ fontSize: 28, fontWeight: 600 }} >{number}</Typography>
+      <Typography style={{ fontSize: 11, color:"#080E19" }} >{text}</Typography>
     </div>
   )
 }
