@@ -652,7 +652,7 @@ const AssessAndAwardTable: React.FC = () => {
                                     await updateAwarding()
                                 }
                             }} buttonType='primary'
-                            disabled={!enableAwarding || freezeAwarding}
+                            disabled={!enableAwarding}
                         >Award</KFButton>
                     </div>
                 </div>
