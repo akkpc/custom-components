@@ -524,7 +524,8 @@ export function TemplateQuestionnaire() {
               display: "flex",
               justifyContent: "flex-end",
               alignItems: "center",
-              width: "100%"
+              width: "100%",
+              borderTop: "1px solid #DEEAFF"
             }} >
               <div style={{ padding: 20 }} >
                 <KFButton
@@ -533,7 +534,7 @@ export function TemplateQuestionnaire() {
                     showValidationMessages(() => { });
                   }}
                   style={{
-                    marginRight: 3,
+                    marginRight: 10,
                     // backgroundColor: primaryBackground 
                   }}
                 >
