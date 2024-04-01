@@ -28,6 +28,7 @@ export function CheckboxComponent() {
     const [currentConsentStatus, setCurrentConsentStatus] = useState<StatusType>()
     const [loading, setLoading] = useState(false)
     const [eventEnded, setEventEnded] = useState(false);
+    const [responesStatus, setResponseStatus] = useState();
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
@@ -46,6 +47,11 @@ export function CheckboxComponent() {
         (async () => {
             if (supplierTaskId) {
                 const my_task: any = await getDetail(supplierTaskId);
+                const SourcingDetails = await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${my_task.Event_ID}`);
+                const response = await getPrevSupplierResponses(my_task,SourcingDetails);
+                if(response.length > 0) {
+                    setResponseStatus(response[0].Response_Status)
+                }
                 setCurrentConsentStatus(my_task.Consent_Status);
             }
         })()
@@ -159,7 +165,7 @@ export function CheckboxComponent() {
         const sourcing_event_number = await KFSDK.app.page.getParameter('sourcing_event_number');
         await KFSDK.app.setVariable("sourcing_custom_tab_key", "questionnaires")
 
-        const allComponents = ["Container_VRSTDYbWW" , "Container_ZUfUF-TIt"]
+        const allComponents = ["Container_VRSTDYbWW", "Container_ZUfUF-TIt"]
         KFSDK.app.openPage("Sourcing_Supplier_Response_Page_A00", {
             ...payload,
             user_type: "supplier",
@@ -473,7 +479,13 @@ export function CheckboxComponent() {
                             </Typography> : <></>
                         }
                         <div>
-                            {currentConsentStatus == StatusType.Accepted ? <KFButton
+                            {currentConsentStatus == StatusType.Accepted ? 
+                            responesStatus == "Active" ? 
+                            <Typography>
+                                Already responded
+                            </Typography>
+                             :
+                            <KFButton
                                 buttonType='primary'
                                 // style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
                                 // className=""
