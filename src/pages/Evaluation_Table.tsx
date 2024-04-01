@@ -700,10 +700,11 @@ const Evaluation_Table: React.FC = () => {
                 <KFButton
                     buttonType='primary' style={{ marginRight: 10 }}
                     onClick={async () => {
+                        let { prevQuery } = await KFSDK.app.page.getAllParameters();
                         await evaluateCompletionStatus()
-                        // KFSDK.app.openPage("Sourcing_Buyer_Dashboard_A01")
+                        KFSDK.app.openPage("Sourcing_Buyer_Dashboard_A01", JSON.parse(prevQuery))
                     }}
-                >Save</KFButton>
+                >Save & Close</KFButton>
             </div>
         </div>
     );
