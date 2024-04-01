@@ -110,13 +110,15 @@ function TabButton({ name, onClick, tabKey: key, isActive, setCurrentTab }: Butt
                 fontSize: 13,
                 backgroundColor: (isActive) ? "#F1F5FA" : "transparent",
                 boxShadow: "none",
-                textShadow: "none"
+                textShadow: "none",
+                borderColor: "#292D37"
             }}
             onClick={() => {
                 onClick();
                 setCurrentTab(key);
             }}
             key={key}
+            className="hide-hover"
         >
             {name}
         </Button>

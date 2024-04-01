@@ -212,3 +212,7 @@ th.ant-table-cell {
 .kf-button-error {
   background-color: red;
 }
+
+.hide-hover:hover {
+  color: black !important;
+}
