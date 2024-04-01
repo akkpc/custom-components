@@ -252,6 +252,7 @@ const AssessAndAwardTable: React.FC = () => {
                 method: "POST",
                 body: JSON.stringify(payload)
             }));
+            showMessage(KFSDK, "Item awarded successfully")
         }
     }
 
@@ -659,7 +660,9 @@ const AssessAndAwardTable: React.FC = () => {
                                 if (freezeAwarding) {
                                     showMessage(KFSDK, "Awarding has been freezed")
                                 } else {
-                                    await updateAwarding()
+                                    await updateAwarding();
+                                    setSelectedLineItems([])
+                                    setSelectedSupplier("")
                                 }
                             }} buttonType='primary'
                             disabled={!enableAwarding}
