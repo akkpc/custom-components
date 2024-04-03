@@ -123,6 +123,7 @@ const AssessAndAwardTable: React.FC = () => {
             className: record.showCheckBox ? "" : "hide-row"
         }),
         hideSelectAll: true,
+        selectedRowKeys: selectedLineItems.map(({ key }) => key)
     };
 
     useEffect(() => {
@@ -256,7 +257,7 @@ const AssessAndAwardTable: React.FC = () => {
                 method: "POST",
                 body: JSON.stringify(payload)
             }));
-            // showMessage(KFSDK, "Item awarded successfully")
+            showMessage(KFSDK, "Item awarded successfully")
         }
     }
 
@@ -686,8 +687,8 @@ const AssessAndAwardTable: React.FC = () => {
                                     showMessage(KFSDK, "Awarding has been freezed")
                                 } else {
                                     await updateAwarding();
-                                    // setSelectedLineItems([])
-                                    // setSelectedSupplier("")
+                                    setSelectedLineItems([])
+                                    setSelectedSupplier("")
                                 }
                             }} buttonType='primary'
                             disabled={!enableAwarding}
@@ -761,7 +762,9 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
 function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier }: { _id: string, title: string | undefined, selectedSupplier: string, setSelectedSupplier: React.Dispatch<React.SetStateAction<string>> }) {
     return (
         <div key={_id} style={{ display: "flex" }} >
-            <Checkbox disabled={selectedSupplier ? selectedSupplier != _id : false}
+            <Checkbox
+                checked={selectedSupplier == _id}
+                disabled={selectedSupplier ? selectedSupplier != _id : false}
                 onChange={(event) => {
                     if (event.target.checked) {
                         setSelectedSupplier(() => _id)
