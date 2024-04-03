@@ -67,6 +67,7 @@ interface SupplierSection {
     Score_2: number;
     Score_3: number;
     Weighted_Score: number;
+    Agg_Weighted_Score: number;
 };
 interface SupplierQuestion {
     _id: string;
@@ -284,7 +285,8 @@ const AssessAndAwardTable: React.FC = () => {
                 technicalItems[sectionKey[section.Section_ID]] = {
                     ...technicalItems[sectionKey[section.Section_ID]],
                     [`${Supplier_ID}_instance_id`]: section._id,
-                    [`${Supplier_ID}`]: section.Weighted_Score,
+                    [`${Supplier_ID}`]: section.Agg_Weighted_Score,
+                    // [`${Supplier_ID}`]: section.Weighted_Score,
                 }
             } else {
                 technicalItems.push(
@@ -295,7 +297,8 @@ const AssessAndAwardTable: React.FC = () => {
                         children: [],
                         path: [0, technicalItems.length],
                         [`${Supplier_ID}_instance_id`]: section._id,
-                        [`${Supplier_ID}`]: section.Weighted_Score
+                        [`${Supplier_ID}`]: section.Agg_Weighted_Score,
+                        // [`${Supplier_ID}`]: section.Weighted_Score
                     }
                 )
                 sectionKey[section.Section_ID] = technicalItems.length - 1;
@@ -330,7 +333,8 @@ const AssessAndAwardTable: React.FC = () => {
                 }
             }
             questionnaires[`${Supplier_ID}_instance_id`] = supplierResponse?._id
-            questionnaires[Supplier_ID] = supplierResponse?.Questionnaire_Weighted_Score;
+            questionnaires[Supplier_ID] = supplierResponse?.Agg_Weighted_Questionnaire_Score;
+            // questionnaires[Supplier_ID] = supplierResponse?.Questionnaire_Weighted_Score;
         }
 
         questionnaires.children = technicalItems;
@@ -359,7 +363,8 @@ const AssessAndAwardTable: React.FC = () => {
             const {
                 Line_Item_instance_id: id,
                 _id,
-                Commercial_Weighted_Score
+                // Commercial_Weighted_Score,
+                Agg_Weighted_Commercial_Score
             } = response;
             const {
                 Supplier_ID,
@@ -425,8 +430,10 @@ const AssessAndAwardTable: React.FC = () => {
                 }
             }
 
-            lineItems[Supplier_ID] = rest.Line_Item_Weighted_Score;
-            commercials[Supplier_ID] = Commercial_Weighted_Score;
+            // lineItems[Supplier_ID] = rest.Line_Item_Weighted_Score;
+            // commercials[Supplier_ID] = Commercial_Weighted_Score;
+            lineItems[Supplier_ID] = rest.Agg_weighted_line_item_score;
+            commercials[Supplier_ID] = Agg_Weighted_Commercial_Score;
 
             lineItems[`${Supplier_ID}_instance_id`] = id;
             commercials[`${Supplier_ID}_instance_id`] = _id;
