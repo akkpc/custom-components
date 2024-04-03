@@ -3,6 +3,7 @@ import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { KFLoader } from '../components/KFLoader';
+import { getColorCode } from '../helpers';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { showMessage } from '../hooks/KFFunctions';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
@@ -705,7 +706,7 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
         <div style={{
             height: "100%", width: "100%", display: "flex", alignItems: "center",
             // backgroundColor: "#fafafa"
-            backgroundColor: "transparent"
+            backgroundColor: getColorCode(scoreValue)
         }} >
             {
                 <div style={{ textAlign: "left", paddingLeft: 15 }} >
