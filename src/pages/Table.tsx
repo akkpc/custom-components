@@ -212,7 +212,7 @@ const AccordionTable: React.FC = () => {
             }
         }
 
-        const lineItems: SourcingData[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/AcS4izpPbKF37/Price_Details_A00/view/Pricing_Details_Evaluator_Page_A00/preview?${queries}`, {
+        const lineItems: SourcingData[] = (await KFSDK.api(`/form/2/AcS4izpPbKF37/Price_Details_A00/view/Pricing_Details_Evaluator_Page_A00/preview?${queries}`, {
             method: "POST",
             body: JSON.stringify(payload)
         })).Data
@@ -245,7 +245,7 @@ const AccordionTable: React.FC = () => {
             }
         }
 
-        const questionsWithSection: SupplierData[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/AcS4izpPbKF37/Supplier_Sourcing_event_Questions_A00/view/Supplier_Questions_A00/preview?${queries}`, {
+        const questionsWithSection: SupplierData[] = (await KFSDK.api(`/form/2/AcS4izpPbKF37/Supplier_Sourcing_event_Questions_A00/view/Supplier_Questions_A00/preview?${queries}`, {
             method: "POST",
             body: JSON.stringify(payload)
         })).Data
