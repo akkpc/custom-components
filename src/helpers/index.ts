@@ -1,38 +1,26 @@
 
-function getColorCode(number: number) {
-    if (number >= 0 && number <= 33) {
-        const startColor = [255, 90, 90];
-        // const endColor = [253, 213, 207];
-        // const step = 1 / 4;
-        // const rgb = startColor.map((channel, index) =>
-        //     Math.round(channel - step * number * (startColor[index] - endColor[index]))
-        // );
-        startColor[1] = startColor[1] + (number * 2.5);
-        startColor[2] = startColor[2] + (number * 2.5)
-        return `rgb(${startColor.join(', ')})`;
-    } else if (number >= 34 && number <= 67) {
-        const startColor = [255, 255, 210];
-        // const endColor = [251, 245, 44];
-        // const step = 1 / 2;
-        // const rgb = startColor.map((channel, index) =>
-        //     Math.round(channel - step * (number - 4) * (startColor[index] - endColor[index]))
-        // );
-        startColor[2] = startColor[2] - (number * 2);
-        return `rgb(${startColor.join(', ')})`;
-    } else if (number >= 68) {
-        const startColor = [210, 255, 205]
-        // const endColor = [120, 255, 60]
-        // const step = 1 / 2;
-        // const rgb = startColor.map((channel, index) =>
-        //     Math.round(channel - step * (number - 8) * (startColor[index] - endColor[index]))
-        // );
-        startColor[0] = startColor[0] - (number * 2.5);
-        startColor[2] = startColor[2] - (number * 2.5);
-        return `rgb(${startColor.join(', ')})`;
-    } else {
-        return "white"
+
+function generateColorCode(value: number) {
+    let color = "";
+    if (value >= 1 && value <= 33) {
+        color = lerpColor([236, 143, 140, 1], [249, 218, 217, 1], (value - 1) / 33);
+    } else if (value >= 34 && value <= 66) {
+        color = lerpColor([253, 240, 204, 1], [252, 231, 171, 1], (value - 34) / 33);
+    } else if (value >= 67 && value <= 100) {
+        color = lerpColor([217, 238, 216, 1], [141, 204, 139, 1], (value - 67) / 33);
     }
+
+    return color;
 }
+
+function lerpColor(color1: number[], color2: number[], t: number) {
+    let r = Math.round(color1[0] * (1 - t) + color2[0] * t);
+    let g = Math.round(color1[1] * (1 - t) + color2[1] * t);
+    let b = Math.round(color1[2] * (1 - t) + color2[2] * t);
+    let a = 1;
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
 
 function calculateSplitValue(value: number) {
     let sValue = Math.round((100 / value + Number.EPSILON) * 10) / 10;
@@ -92,11 +80,7 @@ function scrollIntoView(ref: any) {
 }
 
 export {
-    calculateSplitValue,
-    getColorCode, getKey, getUniqueString,
-    parseJSON,
-    convertStringToDate,
-    getDateObj,
-    scrollIntoView
+    calculateSplitValue, convertStringToDate, generateColorCode as getColorCode, getDateObj, getKey, getUniqueString,
+    parseJSON, scrollIntoView
 };
 
