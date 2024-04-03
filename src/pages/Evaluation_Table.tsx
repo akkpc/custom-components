@@ -244,34 +244,35 @@ const Evaluation_Table: React.FC = () => {
                 }))
                 break;
             case "line_item":
-            case "line_items":
-            case "line_item_info":
-                let linePayload: any = {}
-                linePayload[key] = scoreValue;
-                if (type == "line_item") {
-                    linePayload = {
+                (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
+                    method: "PUT",
+                    body: JSON.stringify({
                         [`Table::Line_Items`]: [
                             {
-                                _id: key,
+                                _id: rest[`${supplierId}_key`],
                                 [`Score_${evaluatorSequence}`]: scoreValue
                             }
                         ]
-                    }
-                }
+                    })
+                }))
+                break;
+            case "line_items":
+            case "line_item_info":
                 (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
                     method: "PUT",
-                    body: JSON.stringify(linePayload)
+                    body: JSON.stringify({
+                        [key]: scoreValue
+                    })
                 }))
                 break;
             case "section":
             case "question":
                 let dataform = type == "section" ? supplierResponseSection : supplierResponseQuestion;
-                let payload: any = {}
-                payload[`Score_${evaluatorSequence}`] = scoreValue;
-
                 (await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform}/${dataInstanceId}`, {
                     method: "POST",
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        [`Score_${evaluatorSequence}`]: scoreValue
+                    })
                 }))
                 break;
         }
@@ -423,6 +424,7 @@ const Evaluation_Table: React.FC = () => {
                     if (key in commercialInfoKeys && lineItems.children) {
                         lineItems.children[commercialInfoKeys[key]] = {
                             ...lineItems.children[commercialInfoKeys[key]],
+                            [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item[`Score_${evaluatorSequence}`],
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
@@ -430,11 +432,12 @@ const Evaluation_Table: React.FC = () => {
                     } else {
                         commercialInfoKeys[key] = lineItems.children ? lineItems.children?.length : 0;
                         lineItems.children?.push({
-                            key: item._id,
+                            key,
                             type: "line_item",
                             parameters: item.Item?.Item,
                             editScore: true,
                             path: [1, commercials.children?.length, lineItems.children?.length],
+                            [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item[`Score_${evaluatorSequence}`],
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,

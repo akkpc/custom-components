@@ -518,7 +518,8 @@ const AccordionTableWeightage: React.FC = () => {
                     <KFButton
                         buttonType="secondary"
                         onClick={async () => {
-                            setData(prevData.current);
+                            // setData(prevData.current);
+                            KFSDK.app.page.popup.close();
                         }}
                     >Close</KFButton>
                     <KFButton
