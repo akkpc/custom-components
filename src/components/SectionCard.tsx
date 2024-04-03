@@ -50,7 +50,7 @@ export function SectionCard(props: SectionProps) {
         {<div>
           <Typography style={{ fontSize: 12 }}  >Section {index}</Typography>
           {!loading ?
-            <div>
+            <div style={{ marginTop: 10 }} >
               {
                 isEditActive ?
                   <Input
@@ -62,8 +62,11 @@ export function SectionCard(props: SectionProps) {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                   /> :
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 30 }} >
-                    <Typography style={{ fontSize: 15 }} >{section_name}</Typography>
+                  <div style={{ display: "flex", alignItems: "center", marginTop: 5 }} >
+                    <Typography.Paragraph
+                      style={{ fontSize: 15, width: "80%",marginBottom: 5 }}
+                      ellipsis={{ tooltip: section_name, rows: 2 }}
+                    >{section_name}</Typography.Paragraph>
                     {hover &&
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} >
                         <img onClick={onEdit} style={{ marginRight: 5, cursor: "pointer" }} src={process.env.PUBLIC_URL + '/svgs/edit.svg'} />
