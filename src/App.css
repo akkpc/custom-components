@@ -216,3 +216,14 @@ th.ant-table-cell {
 .hide-hover:hover {
   color: black !important;
 }
+
+.newclass-assess {
+  font-weight: 600;
+}
+
+.sticky-header-row{
+  position: sticky;
+  background: white;
+  top: 0;
+  z-index: 1000;
+}

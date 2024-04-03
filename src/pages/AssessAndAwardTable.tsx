@@ -1,9 +1,10 @@
-import { Checkbox, Table } from 'antd';
+import { Checkbox, Table, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { KFLoader } from '../components/KFLoader';
 import { getColorCode } from '../helpers';
+import { tableFontColor } from '../helpers/colors';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { showMessage } from '../hooks/KFFunctions';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
@@ -106,6 +107,7 @@ const AssessAndAwardTable: React.FC = () => {
     const [freezeAwarding, setFreezeAwarding] = useState(false);
     const [showResponse, setShowResponse] = useState(true);
     const [showRating, setShowRating] = useState(true);
+    const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
     const rowSelection: TableRowSelection<DataType> = {
         onChange: (selectedRowKeys, selectedRows) => {
@@ -449,7 +451,22 @@ const AssessAndAwardTable: React.FC = () => {
             dataIndex: 'parameters',
             key: 'parameters',
             fixed: "left",
-            width: "40%"
+            width: "40%",
+            className: "table-header table-parameter",
+            render: (text: string, record: any, index: any) => (
+                <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingLeft: getLeftPadding(record.type)
+                }} >
+                    <div style={{ display: "flex", color: tableFontColor, width: "100%" }}  >
+                        <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
+                            {record.type != "question" && `${index + 1}. `} {text}
+                        </Typography>
+                    </div>
+                </div>
+            )
         }];
         suppliers.forEach(({ Supplier_ID: _id, Supplier_Name }, index) => {
             const column: any = {
@@ -654,13 +671,13 @@ const AssessAndAwardTable: React.FC = () => {
                         >Show Rating</Checkbox>
                     </div>
                     <div style={{
-                        display:"flex",
-                        alignItems:"center"
+                        display: "flex",
+                        alignItems: "center"
                     }} >
                         <KFButton
-                            style={{marginRight: 10}}
+                            style={{ marginRight: 10 }}
                             onClick={async () => {
-                               KFSDK.app.page.openPopup("Popup_wmSGkBozN");
+                                KFSDK.app.page.openPopup("Popup_wmSGkBozN");
                             }} buttonType='secondary'
                         >Awarded Items</KFButton>
                         <KFButton
@@ -685,8 +702,33 @@ const AssessAndAwardTable: React.FC = () => {
                     dataSource={data}
                     bordered
                     pagination={false}
-                    className="custom-table"
+                    className="custom-table-weightage sticky-table"
                     scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 200 }}
+                    rowClassName={(record: any) => {
+                        let classNames = ""
+                        if (record.type == "root") {
+                            classNames = classNames + "sticky-header-row "
+                        }
+                        if (expandedRows.includes(record.key)) {
+                            classNames = classNames + "newclass-assess"
+                        } else {
+                            classNames = classNames + "row-class"
+                        }
+                        return classNames;
+                    }
+                    }
+                    expandable={{
+                        onExpand(expanded, record) {
+                            if (expanded) {
+                                setExpandedRows((rows: string[]) => [...rows, record.key]);
+                            } else {
+                                setExpandedRows((rows) => [...rows.filter((r) => r != record.key)])
+                            }
+                        },
+                        expandIcon: customExpandIcon
+                    }}
+                    rootClassName='root'
+                    rowKey={(record) => record.key}
                 />
             </div> :
             <KFLoader />
@@ -730,5 +772,40 @@ function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier }: { _i
             <p>{title}</p>
         </div>)
 }
+
+function customExpandIcon(props: any) {
+    if (rootNodes.includes(props.record.type)) {
+        if (props.expanded) {
+            return (
+                <div style={{ marginLeft: props.record.type == "line_items" ? 50 : 0 }} >
+                    <a style={{ color: 'black', position: "relative", float: "left", marginRight: 15, marginLeft: 15 }} onClick={e => {
+                        props.onExpand(props.record, e);
+                    }}>
+                        <img src={process.env.PUBLIC_URL + "/svgs/expand.svg"} ></img>
+                    </a>
+                </div>
+            )
+        } else {
+            return (
+                <div style={{ marginLeft: props.record.type == "line_items" ? 50 : 0 }} >
+                    <a style={{ color: 'black', position: "relative", float: "left", marginRight: 15, marginLeft: 15 }} onClick={e => {
+                        props.onExpand(props.record, e);
+                    }}>
+                        <img src={process.env.PUBLIC_URL + "/svgs/minimize.svg"} ></img>
+                    </a>
+                </div>
+            )
+        }
+    }
+}
+
+
+function getLeftPadding(key: string) {
+    if (key == "question") return 35
+    if (key == "line_item_info") return 36
+    if (key == "line_item") return 60
+    return 0;
+}
+
 
 export { AssessAndAwardTable };
