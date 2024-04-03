@@ -703,7 +703,7 @@ const AssessAndAwardTable: React.FC = () => {
                     dataSource={data}
                     bordered
                     pagination={false}
-                    className="custom-table-weightage sticky-table"
+                    className="custom-table-weightage"
                     scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 200 }}
                     rowClassName={(record: any) => {
                         let classNames = ""
@@ -760,7 +760,7 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
         </div>)
 }
 
-function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier }: { _id: string, title: string | undefined, selectedSupplier: string, setSelectedSupplier: React.Dispatch<React.SetStateAction<string>> }) {
+export function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier }: { _id: string, title: string | undefined, selectedSupplier: string, setSelectedSupplier: React.Dispatch<React.SetStateAction<string>> }) {
     return (
         <div key={_id} style={{ display: "flex" }} >
             <Checkbox
@@ -777,7 +777,7 @@ function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier }: { _i
         </div>)
 }
 
-function customExpandIcon(props: any) {
+export function customExpandIcon(props: any) {
     if (rootNodes.includes(props.record.type)) {
         if (props.expanded) {
             return (

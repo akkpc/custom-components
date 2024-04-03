@@ -1,10 +1,12 @@
-import { InputNumber, Table } from 'antd';
+import { InputNumber, Table, Typography } from 'antd';
 import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 import { KFButton } from '../components/KFButton';
+import { KFLoader } from '../components/KFLoader';
+import { tableFontColor } from '../helpers/colors';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { SourcingMaster, SourcingSupplierResponses } from '../types';
-import { KFLoader } from '../components/KFLoader';
+import { customExpandIcon } from './AssessAndAwardTable';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 const {
@@ -117,6 +119,7 @@ const Evaluation_Table: React.FC = () => {
     const [evaluatorSequence, setEvaluatorSequence] = useState(0);
     const [isViewOnly, setIsViewOnly] = useState(true);
     const [sourcingDetails, setSourcingDetails] = useState<SourcingMaster>();
+    const [expandedRows, setExpandedRows] = useState<string[]>([]);
     const prevData = useRef(data);
 
     useEffect(() => {
@@ -457,7 +460,21 @@ const Evaluation_Table: React.FC = () => {
             dataIndex: 'parameters',
             key: 'parameters',
             fixed: "left",
-            width: 500
+            width: 500,
+            render: (text: string, record: any, index: any) => (
+                <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingLeft: getLeftPadding(record.type)
+                }} >
+                    <div style={{ display: "flex", color: tableFontColor, width: "100%" }}  >
+                        <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
+                            {record.type != "question" && `${index + 1}. `} {text}
+                        </Typography>
+                    </div>
+                </div>
+            )
         }];
         suppliers.forEach(({ Supplier_ID: _id, Supplier_Name }) => {
             columns.push({
@@ -665,21 +682,46 @@ const Evaluation_Table: React.FC = () => {
     return (
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }} >
             <div style={{ height: 700 }} >
-                {contentLoaded ? <Table
-                    style={{
-                        marginBottom: 20,
-                        height: window.innerHeight - 70,
-                        // position: "fixed" 
-                    }}
-                    columns={columns}
-                    rowSelection={{ ...rowSelection }}
-                    dataSource={data}
-                    bordered
-                    pagination={false}
-                    className="custom-table"
-                    scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 172 }}
-                /> : 
-                <KFLoader/>
+                {contentLoaded ?
+                    <Table
+                        style={{
+                            marginBottom: 20,
+                        }}
+                        columns={columns}
+                        rowSelection={{ ...rowSelection }}
+                        dataSource={data}
+                        bordered
+                        pagination={false}
+                        className="custom-table-weightage"
+                        scroll={{ x: window.innerWidth - 100, y: window.innerHeight - 172 }}
+                        rowClassName={(record: any) => {
+                            let classNames = ""
+                            if (record.type == "root") {
+                                classNames = classNames + "sticky-header-row "
+                            }
+                            if (expandedRows.includes(record.key)) {
+                                classNames = classNames + "newclass-assess"
+                            } else {
+                                classNames = classNames + "row-class"
+                            }
+                            return classNames;
+                        }
+                        }
+                        expandable={{
+                            onExpand(expanded, record) {
+                                if (expanded) {
+                                    setExpandedRows((rows: string[]) => [...rows, record.key]);
+                                } else {
+                                    setExpandedRows((rows) => [...rows.filter((r) => r != record.key)])
+                                }
+                            },
+                            expandIcon: customExpandIcon,
+                            defaultExpandedRowKeys: [`Score_${evaluatorSequence}`]
+                        }}
+                        rootClassName='root'
+                        rowKey={(record) => record.key}
+                    /> :
+                    <KFLoader />
                 }
             </div>
             <div
@@ -710,7 +752,7 @@ const Evaluation_Table: React.FC = () => {
     );
 };
 
-function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, text, supplierId, updateValueFields }: any) {
+function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, text, supplierId, updateValueFields, index }: any) {
     const [scoreValue, setScoreValue] = useState(0);
 
     useEffect(() => {
@@ -724,7 +766,7 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
             height: "100%", width: "100%", display: "flex", alignItems: "center", backgroundColor: "#fafafa"
         }} >
             {isViewOnly ?
-                <div style={{ textAlign: "left", paddingLeft: 15 }} >
+                <div style={{ textAlign: "left", marginLeft: 28 }} >
                     {scoreValue}
                 </div> :
                 <InputNumber
@@ -750,11 +792,18 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
                         justifyContent: "center",
                         width: "100%",
                         height: "100%",
-                        borderRadius: 0,
-                        border: "0px"
+                        borderRadius: 2
                     }}
                 />
             }
         </div>)
 }
+
+function getLeftPadding(key: string) {
+    if (key == "question") return 35
+    if (key == "line_item_info") return 36
+    if (key == "line_item") return 60
+    return 0;
+}
+
 export { Evaluation_Table };
