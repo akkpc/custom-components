@@ -137,7 +137,7 @@ export function SourcingTemplate() {
   }, [questions])
 
   async function getSections() {
-    const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
+    const sectionResponse: any = await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?&page_number=1&page_size=10000`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -180,7 +180,7 @@ export function SourcingTemplate() {
   }
 
   async function getQuestionsBySection() {
-    const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?&page_number=1&page_size=10000`,
+    const questionResponse: any = await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?&page_number=1&page_size=10000`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -230,7 +230,7 @@ export function SourcingTemplate() {
   }
 
   async function createSection(sectionName: string) {
-    const newSection = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/batch`,
+    const newSection = await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/batch`,
       {
         method: "POST",
         body: JSON.stringify([{
@@ -333,7 +333,7 @@ export function SourcingTemplate() {
   }
 
   async function saveQuestionChanges(data: any[]) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/batch`,
+    await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/batch`,
       {
         method: "POST",
         body: JSON.stringify(data)
@@ -342,7 +342,7 @@ export function SourcingTemplate() {
   }
 
   async function updateSection(sectionId: string, sectionName: Question) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/${sectionId}`,
+    await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/${sectionId}`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -355,7 +355,7 @@ export function SourcingTemplate() {
 
   async function deleteSection(sectionId: string) {
     await deleteQuestions(questions.map((q) => ({ _id: q._id }))).catch((err) => console.log("error", err))
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/batch/delete`,
+    await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/batch/delete`,
       {
         method: "POST",
         body: JSON.stringify([{
@@ -366,7 +366,7 @@ export function SourcingTemplate() {
   }
 
   async function deleteQuestions(data: any[]) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/batch/delete`,
+    await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/batch/delete`,
       {
         method: "POST",
         body: JSON.stringify(data)

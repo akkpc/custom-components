@@ -283,7 +283,7 @@ const AccordionTableWeightage: React.FC = () => {
             }
         }
 
-        const sections: SourcingEventSection[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?${queries}`, {
+        const sections: SourcingEventSection[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?${queries}`, {
             method: "POST",
             body: JSON.stringify(payload)
         })).Data
@@ -345,7 +345,7 @@ const AccordionTableWeightage: React.FC = () => {
             }
         }
 
-        const questions: SourcingEventQuestion[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?${queries}`, {
+        const questions: SourcingEventQuestion[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?${queries}`, {
             method: "POST",
             body: JSON.stringify(payload)
         })).Data
@@ -355,7 +355,7 @@ const AccordionTableWeightage: React.FC = () => {
 
     async function buildRowDetails(sourcing_event_id: string) {
         const sourcingDetails: any =
-            (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/Sourcing_Master_A00/${sourcing_event_id}`))
+            (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/Sourcing_Master_A00/${sourcing_event_id}`))
         const technicalData = await getSectiondetailsBySourcingEvent(sourcing_event_id,sourcingDetails.Current_Stage);
 
         const lineItems: LineItem[] = sourcingDetails[lineItemTableKey]
@@ -423,7 +423,7 @@ const AccordionTableWeightage: React.FC = () => {
     }
 
     async function updateWeightage(sectionWeightage: any[], dataformName: string) {
-        const questions: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataformName}/batch`, {
+        const questions: any[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataformName}/batch`, {
             method: "POST",
             body: JSON.stringify(sectionWeightage)
         })).Data
@@ -432,7 +432,7 @@ const AccordionTableWeightage: React.FC = () => {
     }
 
     async function updateProcessWeightages(payload: Record<string, any>) {
-        const lineDetails: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcingEventId}`, {
+        const lineDetails: any[] = (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcingEventId}`, {
             method: "PUT",
             body: JSON.stringify(payload)
         }));

@@ -113,7 +113,7 @@ const SupplierResponseQuestions: React.FC = () => {
     }, [])
 
     async function getSectionsBySourcingId(sourcingEventId: string, event_stage: string, supplier_id: string) {
-        const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sectionDataform}/allitems/list?&page_number=1&page_size=10000`,
+        const sectionResponse: any = await KFSDK.api(`/form/2/${KFSDK.account._id}/${sectionDataform}/allitems/list?&page_number=1&page_size=10000`,
             {
                 method: "POST",
                 body: JSON.stringify({
@@ -249,7 +249,7 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
 
     async function getQuestionsBySection() {
 
-        const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${questionnaireDataform}/allitems/list?&page_number=1&page_size=10000`,
+        const questionResponse: any = await KFSDK.api(`/form/2/${KFSDK.account._id}/${questionnaireDataform}/allitems/list?&page_number=1&page_size=10000`,
             {
                 method: "POST",
                 body: JSON.stringify({
@@ -317,7 +317,7 @@ function Questionnaire({ sourcingSectionId, sectionId, sourcingEventId, event_st
     async function updateProgressValue() {
         const pValue = await getProgressValue();
         if (pValue != progressValue) {
-            await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sectionDataform}/${sourcingSectionId}`,
+            await KFSDK.api(`/form/2/${KFSDK.account._id}/${sectionDataform}/${sourcingSectionId}`,
                 {
                     method: "POST",
                     body: JSON.stringify({
@@ -370,7 +370,7 @@ function Inputs({ _id, Response_Type, Question, Dropdown_options, Text_Response,
     }, [Text_Response])
 
     async function updateQuestion(response: Record<string, any>) {
-        await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${questionnaireDataform}/${_id}`,
+        await KFSDK.api(`/form/2/${KFSDK.account._id}/${questionnaireDataform}/${_id}`,
             {
                 method: "POST",
                 body: JSON.stringify(response)

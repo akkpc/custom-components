@@ -227,7 +227,7 @@ const AssessAndAwardTable: React.FC = () => {
             })
         }
         )
-        const previousLines = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierAwardingForm}/allitems/list`, {
+        const previousLines = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierAwardingForm}/allitems/list`, {
             method: "POST",
             body: JSON.stringify({
                 Filter: {
@@ -253,7 +253,7 @@ const AssessAndAwardTable: React.FC = () => {
         if (previousLines.Data.length > 0) {
             showMessage(KFSDK, "Item already awarded to the selected supplier")
         } else {
-            (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierAwardingForm}/batch`, {
+            (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierAwardingForm}/batch`, {
                 method: "POST",
                 body: JSON.stringify(payload)
             }));
@@ -373,7 +373,7 @@ const AssessAndAwardTable: React.FC = () => {
             const {
                 Supplier_ID,
                 ...rest
-            } = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${id}`));
+            } = (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${id}`));
             let commercialSum = 0
 
             for (const info of applicableCommercialInfo) {
@@ -517,12 +517,12 @@ const AssessAndAwardTable: React.FC = () => {
     }
 
     const getSourcingDetails = async (sourcing_event_id: string) => {
-        const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcing_event_id}`));
+        const sourcingdetails = (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcing_event_id}`));
         return sourcingdetails;
     }
 
     const getSourcingSupplierResponses = async (sourcing_event_id: string) => {
-        const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`, {
+        const sourcingdetails = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`, {
             method: "POST",
             body: JSON.stringify({
                 Filter: {
@@ -598,7 +598,7 @@ const AssessAndAwardTable: React.FC = () => {
             }
         }
 
-        const sections: SupplierSection[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponseSection}/allitems/list?${queries}`, {
+        const sections: SupplierSection[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponseSection}/allitems/list?${queries}`, {
             method: "POST",
             body: JSON.stringify(payload)
         })).Data
@@ -640,7 +640,7 @@ const AssessAndAwardTable: React.FC = () => {
             }
         }
 
-        const questions: SupplierQuestion[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponseQuestion}/allitems/list?${queries}`, {
+        const questions: SupplierQuestion[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponseQuestion}/allitems/list?${queries}`, {
             method: "POST",
             body: JSON.stringify(payload)
         })).Data

@@ -87,7 +87,7 @@ export function ProgressChart() {
     }, [])
 
     const getSourcingTasks = async (sourcing_event_id: string) => {
-        const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/allitems/list`, {
+        const sourcingdetails = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/allitems/list`, {
             method: "POST",
             body: JSON.stringify({
                 Filter: {

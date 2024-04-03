@@ -49,7 +49,7 @@ function QuestionArea(props: { question: any, index: number, rest: any, KFSDK: a
     }, [q["Procurement_Team_response"]])
 
     async function postResponse(response: string, _id: string) {
-        await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Supplier_QnA_Clarification_A00/${_id}`,
+        await KFSDK.api(`/form/2/${KFSDK.account._id}/Supplier_QnA_Clarification_A00/${_id}`,
             {
                 method: "POST",
                 body: JSON.stringify({
@@ -59,7 +59,7 @@ function QuestionArea(props: { question: any, index: number, rest: any, KFSDK: a
             })
     }
     async function deleteResponse(_id: string) {
-        await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Supplier_QnA_Clarification_A00/batch/delete`,
+        await KFSDK.api(`/form/2/${KFSDK.account._id}/Supplier_QnA_Clarification_A00/batch/delete`,
             {
                 method: "POST",
                 body: JSON.stringify([{

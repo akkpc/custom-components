@@ -47,7 +47,7 @@ export function CheckboxComponent() {
         (async () => {
             if (supplierTaskId) {
                 const my_task: any = await getDetail(supplierTaskId);
-                const SourcingDetails = await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${my_task.Event_ID}`);
+                const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${my_task.Event_ID}`);
                 const response = await getPrevSupplierResponses(my_task,SourcingDetails);
                 if(response.length > 0) {
                     setResponseStatus(response[0].Response_Status)
@@ -58,7 +58,7 @@ export function CheckboxComponent() {
     }, [supplierTaskId])
 
     async function updateConsent(isAccepted: boolean) {
-        const consent: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`, {
+        const consent: any[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`, {
             method: "POST",
             body: JSON.stringify({
                 Consent_Status: isAccepted ? "Accepted" : "Declined"
@@ -68,14 +68,14 @@ export function CheckboxComponent() {
     }
 
     async function getDetail(supplierTaskId: string) {
-        const my_task: any[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`))
+        const my_task: any[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`))
         return my_task
     }
 
     async function createOrContinueSupplierResponses() {
-        const taskDetails = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`);
+        const taskDetails = await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`);
         const { Event_ID: eventId, Supplier_Email: supplier_email } = taskDetails;
-        const SourcingDetails = await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
+        const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
         const prevResponses = await getPrevSupplierResponses(taskDetails, SourcingDetails);
 
         const {
@@ -119,7 +119,7 @@ export function CheckboxComponent() {
             if (SourcingDetails["Table::RFQ_Configuration"]) {
                 const { _id, _activity_instance_id, ...rest } = await createLineItem(response, taskDetails, SourcingDetails);
                 const updatedResonse = await KFSDK.api(
-                    `${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/${response._id}`,
+                    `/form/2/${KFSDK.account._id}/${supplierResponses}/${response._id}`,
                     {
                         method: "POST",
                         body: JSON.stringify({
@@ -181,7 +181,7 @@ export function CheckboxComponent() {
     async function getPrevSupplierResponses(taskDetails: Record<string, any>, SourcingDetails: Record<string, any>) {
         const { _id, Current_Stage } = SourcingDetails;
         const { Supplier_ID } = taskDetails;
-        const response_list = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`,
+        const response_list = await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`,
             {
                 method: "POST",
                 body: JSON.stringify({
@@ -245,7 +245,7 @@ export function CheckboxComponent() {
             Response_Status: "Draft",
             _is_created: true
         }
-        const response = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/batch`,
+        const response = await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/batch`,
             {
                 method: "POST",
                 body: JSON.stringify([payload])
@@ -332,19 +332,19 @@ export function CheckboxComponent() {
             }
         }
 
-        const template = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Templates_A01/allitems/list?page_number=1&page_size=1000000`,
+        const template = await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Templates_A01/allitems/list?page_number=1&page_size=1000000`,
             {
                 method: "POST",
                 body: JSON.stringify(component_filter),
             }).then((res: any) => res.Data[0]).catch((err: any) => console.log("Error in fetching template"));
 
-        const sections = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?page_number=1&page_size=1000000`,
+        const sections = await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Sections_A00/allitems/list?page_number=1&page_size=1000000`,
             {
                 method: "POST",
                 body: JSON.stringify(component_filter),
             }).then((res: any) => res.Data).catch((err: any) => console.log("Cannot get sections"));
 
-        const questions = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?page_number=1&page_size=1000000`,
+        const questions = await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Questions_A00/allitems/list?page_number=1&page_size=1000000`,
             {
                 method: "POST",
                 body: JSON.stringify(component_filter),
@@ -384,17 +384,17 @@ export function CheckboxComponent() {
 
         console.log("sectionPayload : ", templatePayload, sectionPayload, questionPayload)
 
-        await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Supplier_Response_Templat_A00/batch`,
+        await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Supplier_Response_Templat_A00/batch`,
             { method: "POST", body: JSON.stringify(templatePayload) }).catch((err: any) => {
                 console.log("Could not update template", err)
             })
 
-        await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Supplier_Response_Section_A00/batch`,
+        await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Supplier_Response_Section_A00/batch`,
             { method: "POST", body: JSON.stringify(sectionPayload) }).catch((err: any) => {
                 console.log("Could not update template", err)
             })
 
-        await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Sourcing_Supplier_Response_Questio_A01/batch`,
+        await KFSDK.api(`/form/2/${KFSDK.account._id}/Sourcing_Supplier_Response_Questio_A01/batch`,
             { method: "POST", body: JSON.stringify(questionPayload) }).catch((err: any) => {
                 console.log("Could not update template", err)
             })
@@ -415,7 +415,7 @@ export function CheckboxComponent() {
     }
 
     // async function checkEventDeadlineStatus() {
-    //     const SourcingDetails = await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
+    //     const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
     // }
 
     return (
@@ -466,7 +466,7 @@ export function CheckboxComponent() {
                                 Read and Accept
                                 <a
                                     target='__blank'
-                                    href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
+                                    href={`/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
                                 >&nbsp;Terms & Conditions</a>
                             </Typography>
                         </div> :
@@ -474,7 +474,7 @@ export function CheckboxComponent() {
                                 Read Accepted
                                 <a
                                     target='__blank'
-                                    href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
+                                    href={`/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
                                 >&nbsp;Terms & Conditions</a>
                             </Typography> : <></>
                         }

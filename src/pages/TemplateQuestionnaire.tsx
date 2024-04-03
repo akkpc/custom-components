@@ -144,7 +144,7 @@ export function TemplateQuestionnaire() {
   }
 
   async function getSections(filter: Record<string, any>[]) {
-    const sectionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.section}/allitems/list?&page_number=1&page_size=10000`,
+    const sectionResponse: any = await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform?.section}/allitems/list?&page_number=1&page_size=10000`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -174,7 +174,7 @@ export function TemplateQuestionnaire() {
 
   async function getQuestionsBySection(sectionId: string) {
     let additionalFilter = getSourcingFilter();
-    const questionResponse: any = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.question}/allitems/list?&page_number=1&page_size=10000`,
+    const questionResponse: any = await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform?.question}/allitems/list?&page_number=1&page_size=10000`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -210,7 +210,7 @@ export function TemplateQuestionnaire() {
 
   async function createSection(sectionName: string) {
     setNewSectionLoading(true);
-    const newSection = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.section}/batch`,
+    const newSection = await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform?.section}/batch`,
       {
         method: "POST",
         body: JSON.stringify([{
@@ -253,7 +253,7 @@ export function TemplateQuestionnaire() {
   }
 
   async function saveQuestionChanges(data: any[]) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.question}/batch`,
+    await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform?.question}/batch`,
       {
         method: "POST",
         body: JSON.stringify(data)
@@ -262,7 +262,7 @@ export function TemplateQuestionnaire() {
   }
 
   async function updateSection(sectionId: string, sectionName: Question) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.section}/${sectionId}`,
+    await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform?.section}/${sectionId}`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -276,7 +276,7 @@ export function TemplateQuestionnaire() {
   async function deleteSection(section: { _id: string, Section_ID: string }) {
     const sectionQuestions = await getQuestionsBySection(section.Section_ID);
     await deleteQuestions(sectionQuestions.map((q) => ({ _id: q._id }))).catch((err) => console.log("error", err))
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.section}/batch/delete`,
+    await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform?.section}/batch/delete`,
       {
         method: "POST",
         body: JSON.stringify([{
@@ -287,7 +287,7 @@ export function TemplateQuestionnaire() {
   }
 
   async function deleteQuestions(data: any[]) {
-    await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform?.question}/batch/delete`,
+    await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform?.question}/batch/delete`,
       {
         method: "POST",
         body: JSON.stringify(data)

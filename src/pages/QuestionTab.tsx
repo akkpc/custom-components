@@ -143,7 +143,7 @@ export function QuestionTab() {
     }, [])
 
     async function getQuestions() {
-        const response = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/allitems/list?q=${searchText}&page_size=1000`, {
+        const response = await KFSDK.api(`/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/allitems/list?q=${searchText}&page_size=1000`, {
             method: "POST",
             body: JSON.stringify({
                 Filter: {
@@ -171,12 +171,12 @@ export function QuestionTab() {
     }
 
     async function postQuestions(data: any) {
-        // const createdResponse = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/draft_Us6vkpe22I75?_application_id=Kissflow_Procurement_Cloud_A01`, {
+        // const createdResponse = await KFSDK.api(`/form/2/Ac6j6Sn_e_zo/Supplier_QnA_Clarification_A00/draft_Us6vkpe22I75?_application_id=Kissflow_Procurement_Cloud_A01`, {
         //     method: "POST",
         //     body: JSON.stringify(data)
         // })
         console.log("first", KFSDK.account._id)
-        const create = await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/Supplier_QnA_Clarification_A00/batch`,
+        const create = await KFSDK.api(`/form/2/${KFSDK.account._id}/Supplier_QnA_Clarification_A00/batch`,
             {
                 method: "POST",
                 body: JSON.stringify([data])

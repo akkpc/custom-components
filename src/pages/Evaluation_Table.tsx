@@ -236,7 +236,7 @@ const Evaluation_Table: React.FC = () => {
             case "root":
             case "questionnaire":
             case "commercial_details":
-                (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/${dataInstanceId}`, {
+                (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/${dataInstanceId}`, {
                     method: "POST",
                     body: JSON.stringify({
                         [key]: scoreValue
@@ -258,7 +258,7 @@ const Evaluation_Table: React.FC = () => {
                         ]
                     }
                 }
-                (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
+                (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
                     method: "PUT",
                     body: JSON.stringify(linePayload)
                 }))
@@ -269,7 +269,7 @@ const Evaluation_Table: React.FC = () => {
                 let payload: any = {}
                 payload[`Score_${evaluatorSequence}`] = scoreValue;
 
-                (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${dataform}/${dataInstanceId}`, {
+                (await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform}/${dataInstanceId}`, {
                     method: "POST",
                     body: JSON.stringify(payload)
                 }))
@@ -383,7 +383,7 @@ const Evaluation_Table: React.FC = () => {
             const {
                 Supplier_ID,
                 ...rest
-            } = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${id}`));
+            } = (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${id}`));
             let commercialSum = 0
 
             for (const info of applicableCommercialInfo) {
@@ -513,12 +513,12 @@ const Evaluation_Table: React.FC = () => {
     }
 
     const getSourcingDetails = async (sourcing_event_id: string) => {
-        const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcing_event_id}`));
+        const sourcingdetails = (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMasterProcess}/${sourcing_event_id}`));
         return sourcingdetails;
     }
 
     // const getSourcingSupplierResponses = async (sourcing_event_id: string) => {
-    //     const sourcingdetails = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`, {
+    //     const sourcingdetails = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/allitems/list`, {
     //         method: "POST",
     //         body: JSON.stringify({
     //             Filter: {
@@ -594,7 +594,7 @@ const Evaluation_Table: React.FC = () => {
             }
         }
 
-        const sections: SupplierSection[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponseSection}/allitems/list?${queries}`, {
+        const sections: SupplierSection[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponseSection}/allitems/list?${queries}`, {
             method: "POST",
             body: JSON.stringify(payload)
         })).Data
@@ -636,7 +636,7 @@ const Evaluation_Table: React.FC = () => {
             }
         }
 
-        const questions: SupplierQuestion[] = (await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponseQuestion}/allitems/list?${queries}`, {
+        const questions: SupplierQuestion[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponseQuestion}/allitems/list?${queries}`, {
             method: "POST",
             body: JSON.stringify(payload)
         })).Data
@@ -653,7 +653,7 @@ const Evaluation_Table: React.FC = () => {
             const { Supplier_ID, _id } = selectedSuppliers[i]
             let status: any = calculate(data, Supplier_ID)
             let evalStatus = status ? "Completed" : "Not Completed";
-            await KFSDK.api(`${process.env.REACT_APP_API_URL}/form/2/${KFSDK.account._id}/${supplierResponses}/${_id}`, {
+            await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/${_id}`, {
                 method: "POST",
                 body: JSON.stringify({
                     Evaluation_Status: evalStatus
