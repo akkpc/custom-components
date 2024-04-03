@@ -214,14 +214,14 @@ const AssessAndAwardTable: React.FC = () => {
                 "LHSField": "Line_Item_ID",
                 "Operator": "EQUAL_TO",
                 "RHSType": "Value",
-                "RHSValue": lineItem["key"],
+                "RHSValue": lineItem[`${selectedSupplier}_key`],
                 "RHSField": null,
                 "RHSParam": "",
                 "LHSAttribute": null,
                 "RHSAttribute": null
             })
             return ({
-                Line_Item_ID: lineItem["key"],
+                Line_Item_ID: lineItem[`${selectedSupplier}_key`],
                 Response_ID: response?._id,
                 _is_created: true
             })
@@ -412,6 +412,7 @@ const AssessAndAwardTable: React.FC = () => {
                     if (key in commercialInfoKeys && lineItems.children) {
                         lineItems.children[commercialInfoKeys[key]] = {
                             ...lineItems.children[commercialInfoKeys[key]],
+                            [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item.Weighted_Score,
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
@@ -419,11 +420,12 @@ const AssessAndAwardTable: React.FC = () => {
                     } else {
                         commercialInfoKeys[key] = lineItems.children ? lineItems.children?.length : 0;
                         lineItems.children?.push({
-                            key: item._id,
+                            key,
                             type: "line_item",
                             parameters: item.Item?.Item,
                             editScore: true,
                             path: [1, commercials.children?.length, lineItems.children?.length],
+                            [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item.Weighted_Score,
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
