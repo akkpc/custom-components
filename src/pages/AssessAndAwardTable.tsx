@@ -726,7 +726,8 @@ const AssessAndAwardTable: React.FC = () => {
                                 setExpandedRows((rows) => [...rows.filter((r) => r != record.key)])
                             }
                         },
-                        expandIcon: customExpandIcon
+                        expandIcon: customExpandIcon,
+                        defaultExpandedRowKeys: ["Score", "Commercial_Score", "Line_Items_Score"]
                     }}
                     rootClassName='root'
                     rowKey={(record) => record.key}
