@@ -156,7 +156,7 @@ const AssessAndAwardTable: React.FC = () => {
                         ...response,
                         Supplier_Name: `Supplier ${index + 1}`
                     }
-                })
+                }).sort((r1, r2) => r1.Rank - r2.Rank)
 
                 const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage);
                 const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails);
@@ -471,7 +471,7 @@ const AssessAndAwardTable: React.FC = () => {
                 </div>
             )
         }];
-        suppliers.forEach(({ Supplier_ID: _id, Supplier_Name }, index) => {
+        suppliers.forEach(({ Supplier_ID: _id, Supplier_Name, Rank }, index) => {
             const column: any = {
                 key: _id,
                 title: <CustomTitle
@@ -480,6 +480,7 @@ const AssessAndAwardTable: React.FC = () => {
                     title={Supplier_Name}
                     selectedSupplier={selectedSupplier}
                     setSelectedSupplier={setSelectedSupplier}
+                    Rank={Rank}
                 />,
                 children: [
                     {
@@ -762,20 +763,23 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
         </div>)
 }
 
-export function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier }: { _id: string, title: string | undefined, selectedSupplier: string, setSelectedSupplier: React.Dispatch<React.SetStateAction<string>> }) {
+export function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier, Rank }: { _id: string, title: string | undefined, selectedSupplier: string, setSelectedSupplier: React.Dispatch<React.SetStateAction<string>>, Rank: number }) {
     return (
-        <div key={_id} style={{ display: "flex" }} >
-            <Checkbox
-                checked={selectedSupplier == _id}
-                disabled={selectedSupplier ? selectedSupplier != _id : false}
-                onChange={(event) => {
-                    if (event.target.checked) {
-                        setSelectedSupplier(() => _id)
-                    } else {
-                        setSelectedSupplier(() => "")
-                    }
-                }} style={{ marginRight: 5 }} ></Checkbox>
-            <p>{title}</p>
+        <div key={_id} >
+            <div style={{ display: "flex" }} >
+                <Checkbox
+                    checked={selectedSupplier == _id}
+                    disabled={selectedSupplier ? selectedSupplier != _id : false}
+                    onChange={(event) => {
+                        if (event.target.checked) {
+                            setSelectedSupplier(() => _id)
+                        } else {
+                            setSelectedSupplier(() => "")
+                        }
+                    }} style={{ marginRight: 5 }} ></Checkbox>
+                <p>{title}</p>
+            </div>
+            {Rank && <Typography style={{textAlign: "left"}} ># {Rank}</Typography>}
         </div>)
 }
 

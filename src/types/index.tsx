@@ -171,5 +171,6 @@ export interface SourcingSupplierResponses {
     Supplier_Name?: string;
     Agg_Weighted_Questionnaire_Score: number;
     Agg_Weighted_Commercial_Score: number;
+    Rank: number;
     _id: string;
 }
