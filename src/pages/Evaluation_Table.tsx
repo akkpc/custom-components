@@ -747,7 +747,7 @@ const Evaluation_Table: React.FC = () => {
                     onClick={async () => {
                         let { prevQuery } = await KFSDK.app.page.getAllParameters();
                         await evaluateCompletionStatus()
-                        KFSDK.app.openPage("Sourcing_Buyer_Dashboard_A01", JSON.parse(prevQuery))
+                        KFSDK.app.openPage("Sourcing_Buyer_Evaluation_A00", JSON.parse(prevQuery))
                     }}
                 >Save & Close</KFButton>
             </div>

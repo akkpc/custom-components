@@ -1,5 +1,7 @@
 const _id = kf.eventParameters._id
 
+const allComponents = ["Container_XQUsOfW1X", "Container_DMRyxcgut", "Container_rHVp1xWj8", "Container_HMbQnrRvH", "Container_3wWraW-Xd", "Container_rYxUj_KKv"]
+
 var SourcingDetails = await kf.api(`/process/2/${kf.account._id}/admin/Sourcing_Master_A00/${_id}`);
 console.log("SourcingDetails", SourcingDetails)
 const {
@@ -82,6 +84,43 @@ if (_status == "Draft") {
     }
   }
 
+  // if (Current_Stage == "RFQ") {
+  //   event_status = "rfq_configuration";
+  //   if (getDate(RFQ_Start_Date) < new Date().getTime()) {
+  //     event_status = "awaiting_rfq_response";
+  //   }
+  //   if (getDate(RFQ_End_Date) < new Date().getTime()) {
+  //     event_status = "rfq_commercial_evaluation";
+  //   }
+  // }
+
+  let availableTabs = [
+    {
+      key: "Summary",
+      componentId: "Container_DMRyxcgut",
+      name: "Summary",
+      hideComponents: []
+    },
+    {
+      key: "Event",
+      componentId: "Container_rHVp1xWj8",
+      name: "Event",
+      hideComponents: []
+    },
+    // {
+    //   key: "Supplier",
+    //   componentId: "Container_XQUsOfW1X",
+    //   name: "Supplier",
+    //   hideComponents: []
+    // },
+    {
+      key: "QnA",
+      componentId: "Container_HMbQnrRvH",
+      name: "QnA",
+      hideComponents: []
+    }
+  ]
+
   const payload = {
     id: _id,
     aid: _current_context[0]._context_activity_instance_id,
@@ -98,26 +137,51 @@ if (_status == "Draft") {
     eventNumber: Event_Number,
     sourcing_event_id: _id,
     stepper: JSON.stringify(stepperObj),
-    end_date: SourcingDetails[`${Current_Stage}_End_Date`]
+    end_date: SourcingDetails[`${Current_Stage}_End_Date`],
+    allComponents: JSON.stringify(allComponents)
   }
-
-  let pageId = "Sourcing_Buyer_Awaiting_Response_A01";
 
   if (_current_step.includes("Evaluation")) {
     let isEvaluator = _current_assigned_to.findIndex(({ _id }) => _id == kf.user._id);
+    console.log("_current_assigned_to", _current_assigned_to, kf.user._id, isEvaluator)
     if (isEvaluator >= 0) {
-      pageId = "Sourcing_Buyer_Evaluation_A00";
+      availableTabs.push(
+        {
+          key: "Evaluation",
+          componentId: "Container_3wWraW-Xd",
+          name: "Evalution",
+          hideComponents: []
+        },
+      )
     } else {
       payload.aid = _last_completed_step;
     }
   } else if (_current_step == "Assess & Award") {
-    pageId = "Sourcing_Buyer_Assess_Award_A00";
+    availableTabs.push(
+      {
+        key: "Responses",
+        componentId: "Container_XQUsOfW1X",
+        name: "Responses",
+        hideComponents: []
+      },
+    )
+    availableTabs.push(
+      {
+        key: "Awarded_Items",
+        componentId: "Container_rYxUj_KKv",
+        name: "Awarded Items",
+        hideComponents: []
+      }
+    )
   }
 
   console.log("stepperObj : ", payload)
   await kf.app.setVariable("sourcing_custom_tab_key", "Summary")
 
-  kf.app.openPage(pageId, payload)
+  kf.app.openPage("Sourcing_Buyer_Dashboard_A01", {
+    ...payload,
+    availableTabs: JSON.stringify(availableTabs),
+  })
 }
 
 function convertStringToDate(dateString) {
