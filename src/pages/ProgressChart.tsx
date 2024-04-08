@@ -1,5 +1,6 @@
-import { Col, Row, Tooltip } from "antd";
+import { Col, Row } from "antd";
 import { useEffect, useState } from "react";
+import { indexOfMax } from "../helpers";
 import { dataforms } from "../helpers/constants";
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
@@ -9,11 +10,13 @@ interface ChartData {
     color: string;
     value?: number;
     percentage?: number;
+    isMax?: boolean;
 }
 
 interface Props {
     color: string,
-    label: string
+    label: string,
+    value?: number,
 }
 
 const {
@@ -26,7 +29,7 @@ export function ProgressChart() {
         {
             key: "Invited",
             label: "Invited",
-            color: "#F09541"
+            color: "#EFD780"
         },
         {
             key: "Responded",
@@ -34,14 +37,9 @@ export function ProgressChart() {
             color: "#7EBC7C"
         },
         {
-            key: "Not_Responded",
-            label: "Not Responded",
-            color: "#FAFAFA"
-        },
-        {
             key: "Rejected",
             label: "Rejected",
-            color: "red"
+            color: "#EC8F8C"
         }
     ]
 
@@ -50,29 +48,35 @@ export function ProgressChart() {
             await KFSDK.initialize();
             const { id: sourcingEventId } = await KFSDK.app.page.getAllParameters();
             const { Data } = await getSourcingTasks(sourcingEventId);
+            console.log("Data", Data, sourcingEventId)
             let total = Data.length;
             let declined = Data.filter((res: any) => res.Consent_Status == "Declined").length
             let responded = Data.filter((res: any) => res.Response_Status == "Responded").length
-            let not_responded = Data.filter((res: any) => res.Response_Status == "Not Responded").length
+            let invited = Data.length;
+            // let declined = 5
+            // let responded = 2
+            // let invited = 10
+            let items = [invited, responded, declined]
+            let maxIndex = indexOfMax(items);
+            // value[0] = {
+            //     ...value[0],
+            //     value: total,
+            //     percentage: 100
+            // };
             value[0] = {
                 ...value[0],
-                value: total,
-                percentage: 100
+                value: invited,
+                percentage: (invited / items[maxIndex]) * 100
             };
             value[1] = {
                 ...value[1],
                 value: responded,
-                percentage: (responded / total) * 100
+                percentage: (responded / items[maxIndex]) * 100
             };
             value[2] = {
                 ...value[2],
-                value: not_responded,
-                percentage: (not_responded / total) * 100
-            };
-            value[3] = {
-                ...value[3],
                 value: declined,
-                percentage: (declined / total) * 100
+                percentage: (declined / items[maxIndex]) * 100
             };
 
             value.sort((v1, v2) => {
@@ -117,39 +121,53 @@ export function ProgressChart() {
                 height: 41,
                 border: "2px solid #D2DDEC",
                 borderRadius: 25,
-                // padding: 1,
                 alignItems: "center",
-                justifyContent: "flex-start",
+                justifyContent: "flex-start"
             }} >
-                {
-                    chartData.map((v, index) => {
-                        return (
-                            <Tooltip
-                                key={index}
-                                title={`${v.value} ${v.label}`}
-                                placement="bottom"
-                                color={v.color}
-                                overlayInnerStyle={{ color: "black" }}
+                {chartData.length > 0 &&
+                    <div
+                        style={{
+                            margin: 3,
+                            backgroundColor: chartData[0].color,
+                            display: "flex",
+                            width: "100%",
+                            borderRadius: 20,
+                            height: 35,
+                            alignItems: "center"
+                        }}
+                    >
+                        {chartData[1].value ? <div
+                            style={{
+                                backgroundColor: chartData[1].color,
+                                display: "flex",
+                                width: `${(chartData[1]?.percentage)}%`,
+                                borderRadius: 20,
+                                height: 35,
+                                borderRight: "2px solid white",
+                                borderTop: "2px solid white",
+                                borderBottom: "2px solid white",
+                                zIndex: 100
+                            }}
+                        >
+                        </div> : <></>}
+
+                        {chartData[2]?.value ?
+                            <div
+                                style={{
+                                    backgroundColor: chartData[2].color,
+                                    width: `calc(${(chartData[2]?.percentage)}% + 6px)`,
+                                    borderTopRightRadius: 20,
+                                    borderBottomRightRadius: 20,
+                                    height: 35,
+                                    marginLeft: -10,
+                                    borderRight: "2px solid white",
+                                    borderTop: "2px solid white",
+                                    borderBottom: "2px solid white",
+                                }}
                             >
-                                {(v.percentage && v.percentage > 0) ?
-                                    <div key={index} style={{
-                                        backgroundColor: v.color,
-                                        borderRadius: 20,
-                                        height: 35,
-                                        width: index == 0 ? "96%" : `${(v.percentage || 0) == 0 ? 0 : v?.percentage && v?.percentage - (10.2 + (index * 3))}%`,
-                                        position: "fixed",
-                                        left: 10,
-                                        borderRight: "2px solid white",
-                                        borderTop: "2px solid white",
-                                        borderBottom: "2px solid white",
-                                        maxWidth: "100%",
-                                    }}
-                                    >
-                                    </div> : ""}
-                            </Tooltip>
-                        )
-                    })
-                }
+                            </div> : <></>
+                        }
+                    </div>}
             </div>
             <div
                 style={{
@@ -159,10 +177,10 @@ export function ProgressChart() {
             >
                 <Row gutter={12} style={{ overflow: "hidden" }} >
                     {
-                        value.map(({ label, color }, index) => {
+                        chartData.map(({ label, color, value }, index) => {
                             return (
                                 <Col key={index} span={12} style={{ marginTop: 2 }}>
-                                    <Label key={index} label={label} color={color} />
+                                    <Label key={index} label={label} color={color} value={value} />
                                 </Col>
                             )
                         })
@@ -173,13 +191,13 @@ export function ProgressChart() {
     )
 }
 
-function Label({ color, label }: Props) {
+function Label({ color, label, value }: Props) {
     return (
         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", whiteSpace: "nowrap" }} >
             <div style={{ borderRadius: 6, border: `1px solid grey`, width: 10, height: 10, backgroundColor: color }} >
             </div>
             <div style={{ fontSize: 15, color: "grey", marginLeft: 5 }} >
-                {label}
+                {label} {`(${value})`}
             </div>
         </div>
     )

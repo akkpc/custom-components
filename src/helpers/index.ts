@@ -79,8 +79,25 @@ function scrollIntoView(ref: any) {
     }
 }
 
+function indexOfMax(arr: number[]) {
+    if (arr.length === 0) {
+        return -1;
+    }
+
+    var max = arr[0];
+    var maxIndex = 0;
+
+    for (var i = 1; i < arr.length; i++) {
+        if (arr[i] > max) {
+            maxIndex = i;
+            max = arr[i];
+        }
+    }
+
+    return maxIndex;
+}
+
 export {
-    calculateSplitValue, convertStringToDate, generateColorCode as getColorCode, getDateObj, getKey, getUniqueString,
-    parseJSON, scrollIntoView
+    calculateSplitValue, convertStringToDate, generateColorCode as getColorCode, getDateObj, getKey, getUniqueString, indexOfMax, parseJSON, scrollIntoView
 };
 
