@@ -1,5 +1,7 @@
 const _id = kf.eventParameters._id
 
+const allComponents = ["Container_XQUsOfW1X", "Container_DMRyxcgut", "Container_rHVp1xWj8", "Container_HMbQnrRvH", "Container_3wWraW-Xd", "Container_rYxUj_KKv"]
+
 var SourcingDetails = await kf.api(`/process/2/${kf.account._id}/admin/Sourcing_Master_A00/${_id}`);
 console.log("SourcingDetails", SourcingDetails)
 const {
@@ -135,7 +137,8 @@ if (_status == "Draft") {
     eventNumber: Event_Number,
     sourcing_event_id: _id,
     stepper: JSON.stringify(stepperObj),
-    end_date: SourcingDetails[`${Current_Stage}_End_Date`]
+    end_date: SourcingDetails[`${Current_Stage}_End_Date`],
+    allComponents: JSON.stringify(allComponents)
   }
 
   if (_current_step.includes("Evaluation")) {
@@ -154,16 +157,14 @@ if (_status == "Draft") {
       payload.aid = _last_completed_step;
     }
   } else if (_current_step == "Assess & Award") {
-    if (!Freeze_Award) {
-      availableTabs.push(
-        {
-          key: "Responses",
-          componentId: "Container_XQUsOfW1X",
-          name: "Responses",
-          hideComponents: []
-        },
-      )
-    }
+    availableTabs.push(
+      {
+        key: "Responses",
+        componentId: "Container_XQUsOfW1X",
+        name: "Responses",
+        hideComponents: []
+      },
+    )
     availableTabs.push(
       {
         key: "Awarded_Items",
@@ -175,6 +176,7 @@ if (_status == "Draft") {
   }
 
   console.log("stepperObj : ", payload)
+  await kf.app.setVariable("sourcing_custom_tab_key", "Summary")
 
   kf.app.openPage("Sourcing_Buyer_Dashboard_A01", {
     ...payload,
