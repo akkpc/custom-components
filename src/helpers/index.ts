@@ -13,6 +13,35 @@ function generateColorCode(value: number) {
     return color;
 }
 
+
+function calculateColorCode(min: number, max: number, value: number) {
+    min = Math.floor(min)
+    max = Math.ceil(max)
+    value = Math.round(value)
+    if (min == max) return getColorCode([141, 204, 139, 1])
+    let color: number[] = [];
+    let diff = (max - min) / 3;
+    let redInterval = [min, min + diff]
+    let yellowInterval = [min + diff + 0.1, (min + diff * 2)]
+    let greenInterval = [(min + diff * 2 + 0.1), max]
+
+    if (value >= redInterval[0] && value <= redInterval[1]) {
+        color = [236, 143, 140, (1 - (max - value) / (max - min)) + 0.1]
+    }
+    if (value >= yellowInterval[0] && value <= yellowInterval[1]) {
+        color = [252, 231, 171, (1 - (max - value) / (max - min))+ 0.1]
+    }
+    if (value >= greenInterval[0] && value <= greenInterval[1]) {
+        color = [141, 204, 139, (1 - (max - value) / (max - min))+ 0.1]
+    }
+
+    return getColorCode(color)
+}
+
+function getColorCode(color: number[]) {
+    return `rgba(${color.join(",")})`;
+}
+
 function lerpColor(color1: number[], color2: number[], t: number) {
     let r = Math.round(color1[0] * (1 - t) + color2[0] * t);
     let g = Math.round(color1[1] * (1 - t) + color2[1] * t);
@@ -97,7 +126,5 @@ function indexOfMax(arr: number[]) {
     return maxIndex;
 }
 
-export {
-    calculateSplitValue, convertStringToDate, generateColorCode as getColorCode, getDateObj, getKey, getUniqueString, indexOfMax, parseJSON, scrollIntoView
-};
+export { calculateColorCode, calculateSplitValue, convertStringToDate, generateColorCode as getColorCode, getDateObj, getKey, getUniqueString, indexOfMax, parseJSON, scrollIntoView };
 

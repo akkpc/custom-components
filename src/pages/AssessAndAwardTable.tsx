@@ -3,7 +3,7 @@ import type { TableRowSelection } from 'antd/es/table/interface';
 import React, { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { KFLoader } from '../components/KFLoader';
-import { getColorCode } from '../helpers';
+import { calculateColorCode } from '../helpers';
 import { tableFontColor } from '../helpers/colors';
 import { Applicable_commercial_info, dataforms, leafNodes, rootNodes as oldRootNode, processes } from '../helpers/constants';
 import { showMessage } from '../hooks/KFFunctions';
@@ -169,9 +169,13 @@ const AssessAndAwardTable: React.FC = () => {
                 }
 
                 for (let i = 0; i < respondedSuppliers.length; i++) {
-                    const { Supplier_ID: supplierId, Score } = respondedSuppliers[i];
-                    overAllScore[supplierId] = questionnaires[supplierId] + commercials[supplierId];
-                    overAllScore[`${supplierId}_instance_id`] = respondedSuppliers[i]._id;
+                    const { Supplier_ID: supplierId, Agg_Weighted_Score, _id } = respondedSuppliers[i];
+                    // overAllScore[supplierId] = questionnaires[supplierId] + commercials[supplierId];
+                    overAllScore[supplierId] = Agg_Weighted_Score;
+                    overAllScore[`${supplierId}_instance_id`] = _id;
+
+                    overAllScore.min = Math.min(Agg_Weighted_Score, overAllScore.min || Number.MAX_VALUE);
+                    overAllScore.max = Math.max(Agg_Weighted_Score, overAllScore.max || 0);
                 }
 
                 console.log("overAllScore: ", overAllScore)
@@ -290,6 +294,8 @@ const AssessAndAwardTable: React.FC = () => {
                     ...technicalItems[sectionKey[section.Section_ID]],
                     [`${Supplier_ID}_instance_id`]: section._id,
                     [`${Supplier_ID}`]: section.Agg_Weighted_Score,
+                    min: Math.min(technicalItems[sectionKey[section.Section_ID]].min, section.Agg_Weighted_Score),
+                    max: Math.max(technicalItems[sectionKey[section.Section_ID]].max, section.Agg_Weighted_Score)
                     // [`${Supplier_ID}`]: section.Weighted_Score,
                 }
             } else {
@@ -302,6 +308,8 @@ const AssessAndAwardTable: React.FC = () => {
                         path: [0, technicalItems.length],
                         [`${Supplier_ID}_instance_id`]: section._id,
                         [`${Supplier_ID}`]: section.Agg_Weighted_Score,
+                        min: section.Agg_Weighted_Score,
+                        max: section.Agg_Weighted_Score
                         // [`${Supplier_ID}`]: section.Weighted_Score
                     }
                 )
@@ -319,6 +327,8 @@ const AssessAndAwardTable: React.FC = () => {
                         [Supplier_ID]: rest.Weighted_Score || 0,
                         [getResponseKey(Supplier_ID)]: Text_Response,
                         [`${Supplier_ID}_instance_id`]: _id,
+                        min: Math.min(questionCols[questionKey[Question_ID]].min, rest.Weighted_Score),
+                        max: Math.max(questionCols[questionKey[Question_ID]].max, rest.Weighted_Score)
                     }
                 } else {
                     questionCols.push(
@@ -331,6 +341,8 @@ const AssessAndAwardTable: React.FC = () => {
                             [Supplier_ID]: rest.Weighted_Score || 0,
                             [getResponseKey(Supplier_ID)]: Text_Response,
                             [`${Supplier_ID}_instance_id`]: _id,
+                            min: rest.Weighted_Score,
+                            max: rest.Weighted_Score
                         }
                     )
                     questionKey[Question_ID] = questionCols.length - 1;
@@ -338,6 +350,8 @@ const AssessAndAwardTable: React.FC = () => {
             }
             questionnaires[`${Supplier_ID}_instance_id`] = supplierResponse?._id
             questionnaires[Supplier_ID] = supplierResponse?.Agg_Weighted_Questionnaire_Score;
+            questionnaires.min = Math.min(supplierResponse?.Agg_Weighted_Questionnaire_Score || 0, questionnaires.min || Number.MAX_VALUE)
+            questionnaires.max = Math.max(supplierResponse?.Agg_Weighted_Questionnaire_Score || 0, questionnaires.max || 0)
             // questionnaires[Supplier_ID] = supplierResponse?.Questionnaire_Weighted_Score;
         }
 
@@ -384,7 +398,9 @@ const AssessAndAwardTable: React.FC = () => {
                         ...commercials.children[commercialInfoKeys[key]],
                         [Supplier_ID]: rest[key],
                         [`${Supplier_ID}_instance_id`]: id,
-                        [getResponseKey(Supplier_ID)]: rest[info.replaceAll(" ", "_")]
+                        [getResponseKey(Supplier_ID)]: rest[info.replaceAll(" ", "_")],
+                        min: Math.min(commercials.children[commercialInfoKeys[key]].min, rest[key]),
+                        max: Math.max(commercials.children[commercialInfoKeys[key]].max, rest[key])
                     }
                 } else {
                     commercialInfoKeys[key] = commercials.children ? commercials.children?.length : 0;
@@ -396,7 +412,9 @@ const AssessAndAwardTable: React.FC = () => {
                         path: [1, commercials.children?.length],
                         [Supplier_ID]: rest[key],
                         [`${Supplier_ID}_instance_id`]: id,
-                        [getResponseKey(Supplier_ID)]: rest[info.replaceAll(" ", "_")]
+                        [getResponseKey(Supplier_ID)]: rest[info.replaceAll(" ", "_")],
+                        min: rest[key],
+                        max: rest[key]
                     })
                 }
 
@@ -416,6 +434,8 @@ const AssessAndAwardTable: React.FC = () => {
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item.Weighted_Score,
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
+                            min: Math.min(lineItems.children[commercialInfoKeys[key]].min, item.Weighted_Score),
+                            max: Math.max(lineItems.children[commercialInfoKeys[key]].max, item.Weighted_Score)
                         }
                     } else {
                         commercialInfoKeys[key] = lineItems.children ? lineItems.children?.length : 0;
@@ -429,7 +449,9 @@ const AssessAndAwardTable: React.FC = () => {
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item.Weighted_Score,
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
-                            showCheckBox: true
+                            showCheckBox: true,
+                            min: item.Weighted_Score,
+                            max: item.Weighted_Score
                         })
                     }
                     // lineItemsSum += item[`Score`];
@@ -440,6 +462,11 @@ const AssessAndAwardTable: React.FC = () => {
             // commercials[Supplier_ID] = Commercial_Weighted_Score;
             lineItems[Supplier_ID] = rest.Agg_weighted_line_item_score;
             commercials[Supplier_ID] = Agg_Weighted_Commercial_Score;
+
+            lineItems.min = Math.min(rest.Agg_weighted_line_item_score || 0, lineItems.min || Number.MAX_VALUE)
+            lineItems.max = Math.max(rest.Agg_weighted_line_item_score || 0, lineItems.max || 0)
+            commercials.min = Math.min(Agg_Weighted_Commercial_Score || 0, commercials.min || Number.MAX_VALUE)
+            commercials.max = Math.max(Agg_Weighted_Commercial_Score || 0, commercials.max || 0)
 
             lineItems[`${Supplier_ID}_instance_id`] = id;
             commercials[`${Supplier_ID}_instance_id`] = _id;
@@ -753,7 +780,7 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
         <div style={{
             height: "100%", width: "100%", display: "flex", alignItems: "center",
             // backgroundColor: "#fafafa"
-            backgroundColor: getColorCode(scoreValue)
+            backgroundColor: calculateColorCode(rest.min, rest.max, rest[supplierId])
         }} >
             {
                 <div style={{ textAlign: "left", paddingLeft: 15 }} >
@@ -779,7 +806,7 @@ export function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier,
                     }} style={{ marginRight: 5 }} ></Checkbox>
                 <p>{title}</p>
             </div>
-            {Rank && <Typography style={{textAlign: "left"}} ># {Rank}</Typography>}
+            {Rank && <Typography style={{ textAlign: "left" }} ># {Rank}</Typography>}
         </div>)
 }
 
