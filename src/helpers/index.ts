@@ -15,8 +15,8 @@ function generateColorCode(value: number) {
 
 
 function calculateColorCode(min: number, max: number, value: number) {
-    min = Math.floor(min)
-    max = Math.ceil(max)
+    min = Math.round(min)
+    max = Math.round(max)
     value = Math.round(value)
     if (min == max) return getColorCode([141, 204, 139, 1])
     let color: number[] = [];
@@ -26,13 +26,13 @@ function calculateColorCode(min: number, max: number, value: number) {
     let greenInterval = [(min + diff * 2 + 0.1), max]
 
     if (value >= redInterval[0] && value <= redInterval[1]) {
-        color = [236, 143, 140, (1 - (max - value) / (max - min)) + 0.1]
+        color = [236, 143, 140, (1 - (redInterval[0] - value) / (redInterval[1] - redInterval[0])) + 0.01]
     }
     if (value >= yellowInterval[0] && value <= yellowInterval[1]) {
-        color = [252, 231, 171, (1 - (max - value) / (max - min))+ 0.1]
+        color = [252, 231, 171, (1 - (yellowInterval[0] - value) / (yellowInterval[1] - yellowInterval[0]))+ 0.01]
     }
     if (value >= greenInterval[0] && value <= greenInterval[1]) {
-        color = [141, 204, 139, (1 - (max - value) / (max - min))+ 0.1]
+        color = [141, 204, 139, (1 - (greenInterval[1] - value) / (greenInterval[1] - greenInterval[0]))+ 0.01]
     }
 
     return getColorCode(color)
