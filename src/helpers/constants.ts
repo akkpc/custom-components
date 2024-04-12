@@ -37,8 +37,8 @@ const Line_Items = "Line_Items"
 const Questionnaire = "Questionnaire"
 
 
-const leafNodes = ["question", "line_item_info", "line_item"]
-const rootNodes = ["questionnaire", "section", "commercial_details", "line_items"]
+const leafNodes = ["question", "line_item_info","line_item_price"]
+const rootNodes = ["questionnaire", "section", "commercial_details", "line_items", "line_item"]
 
 const questionnaireComponentId = "Container_VRSTDYbWW"
 const lineComponentId = "Container_ZUfUF-TIt"
