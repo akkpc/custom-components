@@ -48,8 +48,8 @@ export function CheckboxComponent() {
             if (supplierTaskId) {
                 const my_task: any = await getDetail(supplierTaskId);
                 const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${my_task.Event_ID}`);
-                const response = await getPrevSupplierResponses(my_task,SourcingDetails);
-                if(response.length > 0) {
+                const response = await getPrevSupplierResponses(my_task, SourcingDetails);
+                if (response.length > 0) {
                     setResponseStatus(response[0].Response_Status)
                 }
                 setCurrentConsentStatus(my_task.Consent_Status);
@@ -236,14 +236,17 @@ export function CheckboxComponent() {
 
     async function createResponse(taskDetails: Record<string, any>, SourcingDetails: Record<string, any>) {
         const { Supplier_ID: supplierId, Supplier_Name } = taskDetails;
-        const { _id, Current_Stage } = SourcingDetails;
-        const payload = {
+        const { _id, Current_Stage, Event_Type } = SourcingDetails;
+        const payload: any = {
             Sourcing_Event_ID: _id,
             Supplier_ID: supplierId,
             Supplier_Name,
             Response_Type: Current_Stage,
             Response_Status: "Draft",
             _is_created: true
+        }
+        if (Current_Stage == "RFQ" || (Current_Stage == "RFP" && !Event_Type.includes("RFQ")) ) {
+            payload.Commercial_Included = "Yes";
         }
         const response = await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/batch`,
             {
@@ -479,22 +482,22 @@ export function CheckboxComponent() {
                             </Typography> : <></>
                         }
                         <div>
-                            {currentConsentStatus == StatusType.Accepted ? 
-                            responesStatus == "Active" ? 
-                            <Typography>
-                                Already responded
-                            </Typography>
-                             :
-                            <KFButton
-                                buttonType='primary'
-                                // style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
-                                // className=""
-                                loading={loading}
-                                onClick={async () => {
-                                    setLoading(true);
-                                    await createOrContinueSupplierResponses();
-                                }}
-                            >Continue</KFButton>
+                            {currentConsentStatus == StatusType.Accepted ?
+                                responesStatus == "Active" ?
+                                    <Typography>
+                                        Already responded
+                                    </Typography>
+                                    :
+                                    <KFButton
+                                        buttonType='primary'
+                                        // style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
+                                        // className=""
+                                        loading={loading}
+                                        onClick={async () => {
+                                            setLoading(true);
+                                            await createOrContinueSupplierResponses();
+                                        }}
+                                    >Continue</KFButton>
                                 :
                                 currentConsentStatus == StatusType.Declined ?
                                     <div>
