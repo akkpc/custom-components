@@ -811,10 +811,16 @@ export function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier,
 }
 
 export function customExpandIcon(props: any) {
+
+    function getPadding(type: string) {
+        if(type == "line_items") return 50;
+        if(type == "line_item") return 75;
+        return 0;
+    }
     if (rootNodes.includes(props.record.type)) {
         if (props.expanded) {
             return (
-                <div style={{ marginLeft: props.record.type == "line_items" ? 50 : 0 }} >
+                <div style={{ marginLeft: getPadding(props.record.type)}} >
                     <a style={{ color: 'black', position: "relative", float: "left", marginRight: 15, marginLeft: 15 }} onClick={e => {
                         props.onExpand(props.record, e);
                     }}>
@@ -824,7 +830,7 @@ export function customExpandIcon(props: any) {
             )
         } else {
             return (
-                <div style={{ marginLeft: props.record.type == "line_items" ? 50 : 0 }} >
+                <div style={{ marginLeft: getPadding(props.record.type)}} >
                     <a style={{ color: 'black', position: "relative", float: "left", marginRight: 15, marginLeft: 15 }} onClick={e => {
                         props.onExpand(props.record, e);
                     }}>

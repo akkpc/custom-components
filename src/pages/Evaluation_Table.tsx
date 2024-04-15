@@ -156,19 +156,30 @@ const Evaluation_Table: React.FC = () => {
                     }
                 })
 
-                const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage, evaluatorSequence);
-                const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails, evaluatorSequence);
-
                 let overAllScore: TableRowData = {
                     key: `Score_${evaluatorSequence}`,
                     parameters: "OverAll Score",
                     type: "root",
-                    children: [questionnaires, commercials]
+                    children: []
                 }
+
+                if (["RFI", "RFP"].includes(sourcingDetails.Current_Stage)) {
+                    const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage, evaluatorSequence, 0);
+                    overAllScore?.children?.push(questionnaires);
+                }
+
+
+                if (sourcingDetails.Current_Stage == "RFQ" || sourcingDetails.Current_Stage == "RFP" && !sourcingDetails.Event_Type.includes("RFQ")) {
+                    let cIndex = overAllScore?.children?.length || 0;
+                    const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails, evaluatorSequence, cIndex);
+                    overAllScore?.children?.push(commercials);
+                }
+
 
                 for (let i = 0; i < respondedSuppliers.length; i++) {
                     const { Supplier_ID: supplierId } = respondedSuppliers[i];
-                    overAllScore[supplierId] = questionnaires[supplierId] + commercials[supplierId];
+                    overAllScore[supplierId] = overAllScore.children?.reduce((prev: any, current: any) => prev[supplierId] || 0 + current[supplierId] || 0, 0);
+                    //  questionnaires[supplierId] + commercials[supplierId];
                     overAllScore[`${supplierId}_instance_id`] = respondedSuppliers[i]._id;
                 }
 
@@ -278,7 +289,7 @@ const Evaluation_Table: React.FC = () => {
         }
     }
 
-    async function buildTechnicalItems(respondedSuppliers: SourcingSupplierResponses[], currentStage: string, evaluatorSequence: number) {
+    async function buildTechnicalItems(respondedSuppliers: SourcingSupplierResponses[], currentStage: string, evaluatorSequence: number, qIndex: number) {
         let sections = await getSupplierSections(sourcingEventId, currentStage);
         let questions = await getSupplierQuestions(sourcingEventId, currentStage);
 
@@ -290,7 +301,7 @@ const Evaluation_Table: React.FC = () => {
             key: `Questionnaire_Score_${evaluatorSequence}`,
             parameters: "Questionnaire",
             type: "questionnaire",
-            path: [0],
+            path: [qIndex],
             children: []
         };
         // let sectionsColumns = questionnaires.children ? questionnaires.children : [];
@@ -313,7 +324,7 @@ const Evaluation_Table: React.FC = () => {
                         parameters: section.Section_Name,
                         type: "section",
                         children: [],
-                        path: [0, technicalItems.length],
+                        path: [qIndex, technicalItems.length],
                         [`${Supplier_ID}_instance_id`]: section._id
                     }
                 )
@@ -359,7 +370,7 @@ const Evaluation_Table: React.FC = () => {
         return questionnaires
     }
 
-    async function buildCommercialItems(supplierResponses: SourcingSupplierResponses[], SourcingDetails: any, evaluatorSequence: number) {
+    async function buildCommercialItems(supplierResponses: SourcingSupplierResponses[], SourcingDetails: any, evaluatorSequence: number, cIndex: number) {
         const applicableCommercialInfo = SourcingDetails[Applicable_commercial_info]
         const commercialInfoKeys: Record<string, number> = {};
         let commercials: TableRowData = {
@@ -367,7 +378,7 @@ const Evaluation_Table: React.FC = () => {
             parameters: "Commercials",
             type: "commercial_details",
             children: [],
-            path: [1]
+            path: [cIndex]
         }
         let lineItems: TableRowData = {
             key: `Line_Items_Score_${evaluatorSequence}`,
@@ -403,7 +414,7 @@ const Evaluation_Table: React.FC = () => {
                         type: "line_item_info",
                         parameters: info,
                         editScore: true,
-                        path: [1, commercials.children?.length],
+                        path: [cIndex, commercials.children?.length],
                         [Supplier_ID]: rest[key],
                         [`${Supplier_ID}_instance_id`]: id,
                         [getResponseKey(Supplier_ID)]: rest[`${info.replaceAll(" ", "_")}`],
@@ -421,13 +432,35 @@ const Evaluation_Table: React.FC = () => {
             if (lines.length > 0) {
                 for (const item of lines) {
                     let key = item.Item?._id;
+                    const paramData = {
+                        [`${Supplier_ID}_key`]: item._id,
+                        [`${Supplier_ID}_instance_id`]: id
+                    };
+                    const lineItemParamKeys = item["Request_Quote_For"].split(",").map((key: string, index: number) => ({
+                        key: `${key.replaceAll(" ", "_")}_Score_${evaluatorSequence}#${item._id}`,
+                        type: "line_item_params",
+                        parameters: key,
+                        editScore: true,
+                        path: [cIndex, commercials.children?.length, lineItems.children?.length, index],
+                        ...paramData,
+                        [Supplier_ID]: item[`${key}_Score_${evaluatorSequence}`],
+                        [getResponseKey(Supplier_ID)]: item[key],
+                    }));
                     if (key in commercialInfoKeys && lineItems.children) {
+                        lineItems.children[commercialInfoKeys[key]].children = lineItems.children[commercialInfoKeys[key]].children?.map((data) => {
+                            return ({
+                                ...data,
+                                ...paramData,
+                                [Supplier_ID]: item[`${data.parameters}_Score_${evaluatorSequence}`],
+                                [getResponseKey(Supplier_ID)]: item[data.parameters],
+                            })
+                        })
                         lineItems.children[commercialInfoKeys[key]] = {
                             ...lineItems.children[commercialInfoKeys[key]],
                             [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item[`Score_${evaluatorSequence}`],
-                            [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
+                            [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`
                         }
                     } else {
                         commercialInfoKeys[key] = lineItems.children ? lineItems.children?.length : 0;
@@ -436,11 +469,12 @@ const Evaluation_Table: React.FC = () => {
                             type: "line_item",
                             parameters: item.Item?.Item,
                             editScore: true,
-                            path: [1, commercials.children?.length, lineItems.children?.length],
+                            path: [cIndex, commercials.children?.length, lineItems.children?.length],
                             [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item[`Score_${evaluatorSequence}`],
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
+                            children: lineItemParamKeys
                         })
                     }
                     lineItemsSum += item[`Score_${evaluatorSequence}`];
@@ -473,7 +507,7 @@ const Evaluation_Table: React.FC = () => {
                 }} >
                     <div style={{ display: "flex", color: tableFontColor, width: "100%" }}  >
                         <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
-                            {record.type != "question" && `${index + 1}. `} {text}
+                            {!["question", "line_item_params"].includes(record.type) ? `${index + 1}. ` : ""} {text}
                         </Typography>
                     </div>
                 </div>
@@ -803,9 +837,9 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
 }
 
 function getLeftPadding(key: string) {
-    if (key == "question") return 35
+    if (key == "question") return 12
     if (key == "line_item_info") return 36
-    if (key == "line_item") return 60
+    if (key == "line_item_params") return 70
     return 0;
 }
 
