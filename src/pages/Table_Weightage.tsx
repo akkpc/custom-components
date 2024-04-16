@@ -431,10 +431,10 @@ const AccordionTableWeightage: React.FC = () => {
                             children: []
                         })
                     }
-                    if (lineItem.Request_Quote_For.includes("Lead Time")) {
+                    if (lineItem.Request_Quote_For.includes("Leadtime")) {
                         lineItemReq.push({
                             key: `${lineItem._id}#Leadtime_Weightage`,
-                            parameters: "Lead Time",
+                            parameters: "Leadtime",
                             Weightage: lineItem.Leadtime_Weightage || 0,
                             type: "line_item_params",
                             children: []

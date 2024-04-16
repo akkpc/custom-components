@@ -254,6 +254,20 @@ const Evaluation_Table: React.FC = () => {
                     })
                 }))
                 break;
+            case "line_item_params":
+                const [keyname] = key.split("#");
+                (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        [`Table::Line_Items`]: [
+                            {
+                                _id: rest[`${supplierId}_key`],
+                                [keyname]: scoreValue
+                            }
+                        ]
+                    })
+                }))
+                break;
             case "line_item":
                 (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
                     method: "PUT",
@@ -436,22 +450,22 @@ const Evaluation_Table: React.FC = () => {
                         [`${Supplier_ID}_key`]: item._id,
                         [`${Supplier_ID}_instance_id`]: id
                     };
-                    const lineItemParamKeys = item["Request_Quote_For"].split(",").map((key: string, index: number) => ({
-                        key: `${key.replaceAll(" ", "_")}_Score_${evaluatorSequence}#${item._id}`,
+                    const lineItemParamKeys = item["Request_Quote_For"].split(",").map((requestKeyName: string, index: number) => ({
+                        key: `${requestKeyName.replaceAll(" ", "_")}_Score_${evaluatorSequence}#${key}`,
                         type: "line_item_params",
-                        parameters: key,
+                        parameters: requestKeyName,
                         editScore: true,
                         path: [cIndex, commercials.children?.length, lineItems.children?.length, index],
                         ...paramData,
-                        [Supplier_ID]: item[`${key}_Score_${evaluatorSequence}`],
-                        [getResponseKey(Supplier_ID)]: item[key],
+                        [Supplier_ID]: item[`${requestKeyName}_Score_${evaluatorSequence}`] || 0,
+                        [getResponseKey(Supplier_ID)]: item[requestKeyName],
                     }));
                     if (key in commercialInfoKeys && lineItems.children) {
                         lineItems.children[commercialInfoKeys[key]].children = lineItems.children[commercialInfoKeys[key]].children?.map((data) => {
                             return ({
                                 ...data,
                                 ...paramData,
-                                [Supplier_ID]: item[`${data.parameters}_Score_${evaluatorSequence}`],
+                                [Supplier_ID]: item[data.key.split("#")[0]] || 0,
                                 [getResponseKey(Supplier_ID)]: item[data.parameters],
                             })
                         })
@@ -468,7 +482,6 @@ const Evaluation_Table: React.FC = () => {
                             key,
                             type: "line_item",
                             parameters: item.Item?.Item,
-                            editScore: true,
                             path: [cIndex, commercials.children?.length, lineItems.children?.length],
                             [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
