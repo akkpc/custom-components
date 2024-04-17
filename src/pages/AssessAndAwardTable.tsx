@@ -427,15 +427,39 @@ const AssessAndAwardTable: React.FC = () => {
             if (lines.length > 0) {
                 for (const item of lines) {
                     let key = item.Item?._id;
+                    const lineItemParamKeys = item["Request_Quote_For"].split(",").map((requestKeyName: string, index: number) => ({
+                        key: `Weighted_${requestKeyName.replaceAll(" ", "_")}_Score#${key}`,
+                        type: "line_item_params",
+                        parameters: requestKeyName,
+                        editScore: true,
+                        [Supplier_ID]: item[`Weighted_${requestKeyName}_Score`] || 0,
+                        [getResponseKey(Supplier_ID)]: item[requestKeyName],
+                        [`${Supplier_ID}_key`]: item._id,
+                        [`${Supplier_ID}_instance_id`]: id,
+                        min: item[`Weighted_${requestKeyName}_Score`],
+                        max: item[`Weighted_${requestKeyName}_Score`],
+                    }));
                     if (key in commercialInfoKeys && lineItems.children) {
+                        lineItems.children[commercialInfoKeys[key]].children = lineItems.children[commercialInfoKeys[key]].children?.map((prevParams) => {
+                            const scoreKey = `Weighted_${prevParams.key.split("#")[0]}_Score`;
+                            return ({
+                                ...prevParams,
+                                [Supplier_ID]: item[scoreKey] || 0,
+                                [getResponseKey(Supplier_ID)]: item[prevParams.key.split("#")[0]],
+                                [`${Supplier_ID}_key`]: item._id,
+                                [`${Supplier_ID}_instance_id`]: id,
+                                min : Math.max(item[scoreKey],prevParams.min),
+                                max : Math.max(item[scoreKey],prevParams.max)
+                            })
+                        })
                         lineItems.children[commercialInfoKeys[key]] = {
                             ...lineItems.children[commercialInfoKeys[key]],
                             [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
-                            [Supplier_ID]: item.Weighted_Score,
+                            [Supplier_ID]: item.Agg_Weighted_Score,
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
-                            min: Math.min(lineItems.children[commercialInfoKeys[key]].min, item.Weighted_Score),
-                            max: Math.max(lineItems.children[commercialInfoKeys[key]].max, item.Weighted_Score)
+                            min: Math.min(lineItems.children[commercialInfoKeys[key]].min, item.Agg_Weighted_Score),
+                            max: Math.max(lineItems.children[commercialInfoKeys[key]].max, item.Agg_Weighted_Score)
                         }
                     } else {
                         commercialInfoKeys[key] = lineItems.children ? lineItems.children?.length : 0;
@@ -447,11 +471,12 @@ const AssessAndAwardTable: React.FC = () => {
                             path: [1, commercials.children?.length, lineItems.children?.length],
                             [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
-                            [Supplier_ID]: item.Weighted_Score,
+                            [Supplier_ID]: item.Agg_Weighted_Score,
                             [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
                             showCheckBox: true,
-                            min: item.Weighted_Score,
-                            max: item.Weighted_Score
+                            min: item.Agg_Weighted_Score,
+                            max: item.Agg_Weighted_Score,
+                            children: lineItemParamKeys
                         })
                     }
                     // lineItemsSum += item[`Score`];
@@ -492,7 +517,7 @@ const AssessAndAwardTable: React.FC = () => {
                 }} >
                     <div style={{ display: "flex", color: tableFontColor, width: "100%" }}  >
                         <Typography style={{ width: record.type == "question" ? "95%" : "100%" }} >
-                            {record.type != "question" && `${index + 1}. `} {text}
+                            {!["question", "line_item_params"].includes(record.type) ? `${index + 1}. ` : ""} {text}
                         </Typography>
                     </div>
                 </div>
@@ -813,14 +838,14 @@ export function CustomTitle({ _id, title, selectedSupplier, setSelectedSupplier,
 export function customExpandIcon(props: any) {
 
     function getPadding(type: string) {
-        if(type == "line_items") return 50;
-        if(type == "line_item") return 75;
+        if (type == "line_items") return 50;
+        if (type == "line_item") return 70;
         return 0;
     }
     if (rootNodes.includes(props.record.type)) {
         if (props.expanded) {
             return (
-                <div style={{ marginLeft: getPadding(props.record.type)}} >
+                <div style={{ marginLeft: getPadding(props.record.type) }} >
                     <a style={{ color: 'black', position: "relative", float: "left", marginRight: 15, marginLeft: 15 }} onClick={e => {
                         props.onExpand(props.record, e);
                     }}>
@@ -830,7 +855,7 @@ export function customExpandIcon(props: any) {
             )
         } else {
             return (
-                <div style={{ marginLeft: getPadding(props.record.type)}} >
+                <div style={{ marginLeft: getPadding(props.record.type) }} >
                     <a style={{ color: 'black', position: "relative", float: "left", marginRight: 15, marginLeft: 15 }} onClick={e => {
                         props.onExpand(props.record, e);
                     }}>
@@ -844,9 +869,9 @@ export function customExpandIcon(props: any) {
 
 
 function getLeftPadding(key: string) {
-    if (key == "question") return 35
+    if (key == "question") return 12
     if (key == "line_item_info") return 36
-    if (key == "line_item") return 60
+    if (key == "line_item_params") return 65
     return 0;
 }
 

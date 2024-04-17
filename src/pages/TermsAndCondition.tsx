@@ -279,7 +279,8 @@ export function CheckboxComponent() {
                         Weightage: Weightage,
                         sourcing_event_id: sourcing_event_id,
                         item_id
-                    }
+                    },
+                    Quantity
                 }
             }),
             Response_ID: res._id,

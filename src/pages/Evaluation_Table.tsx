@@ -215,29 +215,66 @@ const Evaluation_Table: React.FC = () => {
     }
 
 
-    const updateValueFields = async (supplierId: string, value: number, diff: number, path: number[]) => {
-        let dataObject = JSON.parse(JSON.stringify(prevData.current));
-        let overallData = dataObject[0]
-        overallData[supplierId] = overallData[supplierId] + (diff)
-        // let updatePromises = []
-        update(overallData, overallData[supplierId], supplierId)
-        path.map((index, i) => {
-            let currentData = overallData.children[index];
+    // const updateValueFields = async (supplierId: string, value: number, diff: number, path: number[]) => {
+    //     let dataObject = prevData.current;
+    //     let overallData = dataObject[0]
+    //     overallData[supplierId] = overallData[supplierId] + (diff)
+    //     // overallData[supplierId] = 0
 
+    //     await update(overallData, overallData[supplierId], supplierId)
+    //     await Promise.all(path.map(async (index, i) => {
+    //         let currentData = overallData.children[index];
+
+    //         if (i == path.length - 1) {
+    //             currentData[supplierId] = value;
+    //             // currentData[supplierId] = 0;
+    //         } else {
+    //             currentData[supplierId] = overallData.children[index]
+    //             [supplierId] + (diff);
+    //             // currentData[supplierId] = 0;
+    //             overallData = overallData.children[index];
+    //         }
+    //         await update(currentData, currentData[supplierId], supplierId)
+    //     }));
+
+    //     prevData.current = JSON.parse(JSON.stringify(dataObject));
+    //     setData(() => prevData.current)
+    // }
+
+    const updateValueFields = async (supplierId: string, value: number, path: number[]) => {
+        let dataObject = JSON.parse(JSON.stringify(prevData.current));
+        let overallData = dataObject[0];
+        path.map(async (index, i) => {
+            let currentData = overallData.children[index];
             if (i == path.length - 1) {
                 currentData[supplierId] = value;
-            } else {
-                currentData[supplierId] = overallData.children[index]
-                [supplierId] + (diff);
-                overallData = overallData.children[index];
             }
-            update(currentData, currentData[supplierId], supplierId)
+            overallData = currentData;
         })
-        // await Promise.all(
 
-        // )
+        dataObject[0] = updateSumValue(dataObject[0], supplierId);
+
+        overallData = dataObject[0];
         prevData.current = dataObject;
-        setData(() => (dataObject))
+        setData(() => (dataObject));
+
+        await update(overallData, overallData[supplierId], supplierId);
+        for await (const dataIndex of path) {
+            let currentData = overallData.children[dataIndex];
+            await update(currentData, currentData[supplierId], supplierId);
+            overallData = currentData;
+        }
+    }
+
+    const updateSumValue = (data: any, supplierId: string) => {
+        if (!data.children) {
+            return;
+        }
+        for (let i = 0; i < data.children.length; i++) {
+            updateSumValue(data.children[i], supplierId);
+        }
+        data[supplierId] = data.children.reduce((prev: number, current: any) => prev + current[supplierId], 0);
+        return data;
     }
 
     async function update(instance: TableRowData, scoreValue: number, supplierId: string) {
@@ -446,25 +483,13 @@ const Evaluation_Table: React.FC = () => {
             if (lines.length > 0) {
                 for (const item of lines) {
                     let key = item.Item?._id;
-                    const paramData = {
-                        [`${Supplier_ID}_key`]: item._id,
-                        [`${Supplier_ID}_instance_id`]: id
-                    };
-                    const lineItemParamKeys = item["Request_Quote_For"].split(",").map((requestKeyName: string, index: number) => ({
-                        key: `${requestKeyName.replaceAll(" ", "_")}_Score_${evaluatorSequence}#${key}`,
-                        type: "line_item_params",
-                        parameters: requestKeyName,
-                        editScore: true,
-                        path: [cIndex, commercials.children?.length, lineItems.children?.length, index],
-                        ...paramData,
-                        [Supplier_ID]: item[`${requestKeyName}_Score_${evaluatorSequence}`] || 0,
-                        [getResponseKey(Supplier_ID)]: item[requestKeyName],
-                    }));
+
                     if (key in commercialInfoKeys && lineItems.children) {
                         lineItems.children[commercialInfoKeys[key]].children = lineItems.children[commercialInfoKeys[key]].children?.map((data) => {
                             return ({
                                 ...data,
-                                ...paramData,
+                                [`${Supplier_ID}_key`]: item._id,
+                                [`${Supplier_ID}_instance_id`]: id,
                                 [Supplier_ID]: item[data.key.split("#")[0]] || 0,
                                 [getResponseKey(Supplier_ID)]: item[data.parameters],
                             })
@@ -474,7 +499,7 @@ const Evaluation_Table: React.FC = () => {
                             [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item[`Score_${evaluatorSequence}`],
-                            [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`
+                            [getResponseKey(Supplier_ID)]: item.Line_Total
                         }
                     } else {
                         commercialInfoKeys[key] = lineItems.children ? lineItems.children?.length : 0;
@@ -486,8 +511,19 @@ const Evaluation_Table: React.FC = () => {
                             [`${Supplier_ID}_key`]: item._id,
                             [`${Supplier_ID}_instance_id`]: id,
                             [Supplier_ID]: item[`Score_${evaluatorSequence}`],
-                            [getResponseKey(Supplier_ID)]: `$${item.Line_Total}`,
-                            children: lineItemParamKeys
+                            [getResponseKey(Supplier_ID)]: item.Line_Total,
+
+                            children: item["Request_Quote_For"].split(",").map((requestKeyName: string, index: number) => ({
+                                key: `${requestKeyName.replaceAll(" ", "_")}_Score_${evaluatorSequence}#${key}`,
+                                type: "line_item_params",
+                                parameters: requestKeyName,
+                                editScore: true,
+                                path: [cIndex, commercials.children?.length, lineItems.children?.length, index],
+                                [`${Supplier_ID}_key`]: item._id,
+                                [`${Supplier_ID}_instance_id`]: id,
+                                [Supplier_ID]: item[`${requestKeyName}_Score_${evaluatorSequence}`] || 0,
+                                [getResponseKey(Supplier_ID)]: item[requestKeyName],
+                            }))
                         })
                     }
                     lineItemsSum += item[`Score_${evaluatorSequence}`];
@@ -536,7 +572,14 @@ const Evaluation_Table: React.FC = () => {
                         dataIndex: getResponseKey(_id),
                         key: getResponseKey(_id),
                         render: (text: string, record: any) => ({
-                            children: <p style={{ marginLeft: 8 }} >{text}</p>
+                            children: <p style={{ marginLeft: 8 }} >
+                                {
+                                    record.type == "line_item_params" ?
+                                        record.key.includes("Leadtime") ? `${text} Days` :
+                                            record.key.includes("Price") ? `$${text}` : text : record.type == "line_item"
+                                            ? `$${text}` : text
+                                }
+                            </p>
                         }),
                         width: 300,
                     },
@@ -828,11 +871,8 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
                         }
                     }}
                     onBlur={async () => {
-                        if (scoreValue != rest[supplierId]) {
-                            let diff = scoreValue - rest[supplierId];
-                            await updateValueFields(supplierId, scoreValue, diff, path)
-                            // await saveScore()
-                        }
+                        // let diff = scoreValue - (rest[supplierId] || 0);
+                        await updateValueFields(supplierId, scoreValue, path)
                     }}
                     min={0}
                     max={100}
