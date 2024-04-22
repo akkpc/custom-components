@@ -1,7 +1,7 @@
 import { Checkbox, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
-import { dataforms, lineComponentId, lineItemTypes, processes, questionnaireComponentId } from '../helpers/constants';
+import { dataforms, lineComponentId, processes, questionnaireComponentId } from '../helpers/constants';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 enum StatusType {
@@ -98,14 +98,13 @@ export function CheckboxComponent() {
         };
 
         if (prevResponses.length > 0) {
-            const { Line_Item_instance_id, Line_item_activity_instance_id, Response_Status } = prevResponses[0];
-            if (lineItemTypes.includes(Current_Stage) && Line_item_activity_instance_id && Line_Item_instance_id) {
-                payload = {
-                    ...payload,
-                    line_id: Line_Item_instance_id,
-                    line_aid: Line_item_activity_instance_id,
-                    Response_Status
-                }
+            const { Line_Item_instance_id, Line_item_activity_instance_id, Response_Status, _id } = prevResponses[0];
+            payload = {
+                ...payload,
+                line_id: Line_Item_instance_id,
+                line_aid: Line_item_activity_instance_id,
+                Response_Status,
+                res_instance_id: _id
             }
         } else {
             let response = await createResponse(taskDetails, SourcingDetails);
@@ -173,7 +172,8 @@ export function CheckboxComponent() {
             availableTabs: JSON.stringify(availableTabs),
             initialTab,
             sourcing_event_number,
-            allComponents: JSON.stringify(allComponents)
+            allComponents: JSON.stringify(allComponents),
+            supplierTaskId
         });
         setLoading(false);
     }

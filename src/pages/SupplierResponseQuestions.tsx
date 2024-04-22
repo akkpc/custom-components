@@ -6,11 +6,17 @@ import { KFButton } from '../components/KFButton';
 import { KFLoader } from '../components/KFLoader';
 import { parseJSON } from '../helpers';
 import { borderColor, lightGrey } from '../helpers/colors';
+import { dataforms } from '../helpers/constants';
 import { EventSection, Question } from './SourcingTemplate';
 const KFSDK = require('@kissflow/lowcode-client-sdk')
 
 const questionnaireDataform = "Sourcing_Supplier_Response_Questio_A01"
 const sectionDataform = "Sourcing_Supplier_Response_Section_A00"
+
+const {
+    sourcingSupplierTasks,
+    supplierResponses
+} = dataforms;
 
 interface Props {
     type: string;
@@ -83,6 +89,8 @@ const SupplierResponseQuestions: React.FC = () => {
     const [eventTypes, setEventTypes] = useState<string[]>([])
     const [supplierId, setSupplierId] = useState("");
     const [isResponseSubmitted, setIsResponseSubmitted] = useState(false)
+    const [supplierTaskId,setSupplierTaskId] = useState("");
+    const [supplierResponseId,setSupplierResponseId] = useState("");
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
@@ -95,7 +103,7 @@ const SupplierResponseQuestions: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let { currentStage, sourcingEventId, Event_Type, Response_Status } = await KFSDK.app.page.getAllParameters();
+            let { currentStage, sourcingEventId, Event_Type, Response_Status, supplierTaskId, res_instance_id } = await KFSDK.app.page.getAllParameters();
             const eventTypes: string[] = JSON.parse(Event_Type || "[]");
             const supplier_id = await KFSDK.app.getVariable("currentSupplierId");
             if (sourcingEventId) {
@@ -104,7 +112,9 @@ const SupplierResponseQuestions: React.FC = () => {
                 setCurrentStage(currentStage)
                 setSections(sections);
                 setEventTypes(eventTypes);
-                setSupplierId(supplier_id)
+                setSupplierId(supplier_id);
+                setSupplierTaskId(supplierTaskId);
+                setSupplierResponseId(res_instance_id);
                 if (Response_Status == "Active") {
                     setIsResponseSubmitted(true);
                 }
@@ -156,6 +166,24 @@ const SupplierResponseQuestions: React.FC = () => {
             }).catch((err: any) => console.log("cannot fetch", err))
         const sections: SourcingSupplierSection[] = sectionResponse.Data;
         return sections;
+    }
+
+    async function submitCurrentProcess() {
+        (await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`, {
+            method: "POST",
+            body: JSON.stringify({
+                Response_Status: "Responded",
+                Response_Window: "Close"
+            })
+        }));
+
+        (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/${supplierResponseId}`, {
+            method: "POST",
+            body: JSON.stringify({
+                Response_Status: "Active"
+            })
+        }));
+        KFSDK.app.openPage("Sourcing_Buyer_My_Tasks_A00");
     }
 
 
@@ -214,7 +242,8 @@ const SupplierResponseQuestions: React.FC = () => {
                         <KFButton
                             buttonType='secondary'
                         >Close</KFButton>
-                        {(currentStage != "RFI" || !eventTypes.includes("RFQ")) ?
+                        {((currentStage == "RFP" && !eventTypes.includes("RFQ")) || (currentStage == "RFI" && eventTypes.length == 1))
+                            ?
                             <KFButton
                                 onClick={async () => {
                                     await KFSDK.app.setVariable("sourcing_custom_tab_key", "lines")
@@ -226,6 +255,7 @@ const SupplierResponseQuestions: React.FC = () => {
                             </KFButton>
                             :
                             <KFButton
+                                onClick={submitCurrentProcess}
                                 buttonType='primary' >
                                 Submit
                             </KFButton>

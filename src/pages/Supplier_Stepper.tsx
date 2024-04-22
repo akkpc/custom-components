@@ -107,7 +107,8 @@ const Supplier_Stepper: React.FC = () => {
       currentStage = Current_Stage;
     }
 
-    const time: any = getDateObj(SourcingDetails[`${Current_Stage}_End_Date`])?.getTime();
+    const sorted = Event_Type.sort();
+    const time: any = getDateObj(SourcingDetails[`${sorted[sorted.length - 1]}_End_Date`])?.getTime();
     if (time) {
       if (time < new Date().getTime()) {
         // if (Current_Stage == "RFP") {
@@ -119,10 +120,10 @@ const Supplier_Stepper: React.FC = () => {
       }
     }
 
-    if(taskDetails.Response_Status == "Responded") {
-      // currentStage = "RFP_Supplier_Clarification";
-      currentStage = "AwardCommunicaiton";
-    }
+    // if(taskDetails.Response_Status == "Responded") {
+    //   // currentStage = "RFP_Supplier_Clarification";
+    //   currentStage = "AwardCommunicaiton";
+    // }
 
     KFSDK.app.setVariable("supplier_stage" , stepsMetaData.find((s) => s.key == currentStage)?.title )
 
