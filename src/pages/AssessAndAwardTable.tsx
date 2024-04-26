@@ -158,14 +158,21 @@ const AssessAndAwardTable: React.FC = () => {
                     }
                 }).sort((r1, r2) => r1.Rank - r2.Rank)
 
-                const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage);
-                const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails);
-
                 let overAllScore: TableRowData = {
                     key: `Score`,
                     parameters: "OverAll Score",
                     type: "root",
-                    children: [questionnaires, commercials]
+                    children: []
+                }
+
+                if (["RFI", "RFP"].includes(sourcingDetails.Current_Stage)) {
+                    const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage);
+                    overAllScore?.children?.push(questionnaires);
+                }
+
+                if (sourcingDetails.Current_Stage == "RFQ" || sourcingDetails.Current_Stage == "RFP" && !sourcingDetails.Event_Type.includes("RFQ")) {
+                    const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails);
+                    overAllScore?.children?.push(commercials);
                 }
 
                 for (let i = 0; i < respondedSuppliers.length; i++) {
@@ -408,7 +415,6 @@ const AssessAndAwardTable: React.FC = () => {
                         key,
                         type: "line_item_info",
                         parameters: info,
-                        editScore: true,
                         path: [1, commercials.children?.length],
                         [Supplier_ID]: rest[key],
                         [`${Supplier_ID}_instance_id`]: id,
@@ -427,28 +433,30 @@ const AssessAndAwardTable: React.FC = () => {
             if (lines.length > 0) {
                 for (const item of lines) {
                     let key = item.Item?._id;
-                    const lineItemParamKeys = item["Request_Quote_For"].split(",").map((requestKeyName: string, index: number) => ({
-                        key: `Weighted_${requestKeyName.replaceAll(" ", "_")}_Score#${key}`,
+                    const lineItemParamKeys = item["Request_Quote_For"].split(",").map((requestKeyName: string, index: number) => {
+                        const keyName = `Weighted_${requestKeyName.replaceAll(" ", "_")}_Score`;
+                        return ({
+                        key: `${keyName}#${key}`,
                         type: "line_item_params",
                         parameters: requestKeyName,
                         editScore: true,
-                        [Supplier_ID]: item[`Weighted_${requestKeyName}_Score`] || 0,
+                        [Supplier_ID]: item[keyName] || 0,
                         [getResponseKey(Supplier_ID)]: item[requestKeyName],
                         [`${Supplier_ID}_key`]: item._id,
                         [`${Supplier_ID}_instance_id`]: id,
-                        min: item[`Weighted_${requestKeyName}_Score`],
-                        max: item[`Weighted_${requestKeyName}_Score`],
-                    }));
+                        min: item[keyName],
+                        max: item[keyName],
+                    })});
                     if (key in commercialInfoKeys && lineItems.children) {
                         lineItems.children[commercialInfoKeys[key]].children = lineItems.children[commercialInfoKeys[key]].children?.map((prevParams) => {
-                            const scoreKey = `Weighted_${prevParams.key.split("#")[0]}_Score`;
+                            const scoreKey = prevParams.key.split("#")[0];
                             return ({
                                 ...prevParams,
                                 [Supplier_ID]: item[scoreKey] || 0,
-                                [getResponseKey(Supplier_ID)]: item[prevParams.key.split("#")[0]],
+                                [getResponseKey(Supplier_ID)]: item[prevParams.parameters],
                                 [`${Supplier_ID}_key`]: item._id,
                                 [`${Supplier_ID}_instance_id`]: id,
-                                min : Math.max(item[scoreKey],prevParams.min),
+                                min : Math.min(item[scoreKey],prevParams.min),
                                 max : Math.max(item[scoreKey],prevParams.max)
                             })
                         })
@@ -540,10 +548,17 @@ const AssessAndAwardTable: React.FC = () => {
                         dataIndex: getResponseKey(_id),
                         key: getResponseKey(_id),
                         render: (text: string, record: any) => ({
-                            children: <p style={{ marginLeft: 8 }} >{text}</p>
+                            
+                            children: 
+                            <div style={{ 
+                                border: "1px solid white",
+                                height: "100%", width: "100%", display: "flex", alignItems: "center",
+                                backgroundColor: calculateColorCode(record.min, record.max, record[_id]) }} >
+                            <p style={{marginLeft: 8}} >{text}</p>
+                            </div>
                         }),
-                        // width: 300,
-                        width: "auto",
+                        width: 130,
+                        // width: "auto",
                         hidden: !showResponse
                     },
                     {
@@ -559,8 +574,8 @@ const AssessAndAwardTable: React.FC = () => {
                             // data={data}
                             />
                         }),
-                        // width: 130,
-                        width: "auto",
+                        width: 130, 
+                        // width: "auto",
                         hidden: !showRating
                     }
                 ],
@@ -803,6 +818,7 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
 
     return (
         <div style={{
+            margin:3,
             height: "100%", width: "100%", display: "flex", alignItems: "center",
             // backgroundColor: "#fafafa"
             backgroundColor: calculateColorCode(rest.min, rest.max, rest[supplierId])

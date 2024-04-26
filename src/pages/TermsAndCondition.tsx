@@ -29,6 +29,7 @@ export function CheckboxComponent() {
     const [loading, setLoading] = useState(false)
     const [eventEnded, setEventEnded] = useState(false);
     const [responesStatus, setResponseStatus] = useState();
+    const [multipleBid, setMultipleBid] = useState(false);
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
@@ -52,6 +53,7 @@ export function CheckboxComponent() {
                 if (response.length > 0) {
                     setResponseStatus(response[0].Response_Status)
                 }
+                setMultipleBid(SourcingDetails.Allow_multiple_bids_for_RFQ);
                 setCurrentConsentStatus(my_task.Consent_Status);
             }
         })()
@@ -72,7 +74,7 @@ export function CheckboxComponent() {
         return my_task
     }
 
-    async function createOrContinueSupplierResponses() {
+    async function createOrContinueSupplierResponses(isMultipleBid?: boolean) {
         const taskDetails = await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`);
         const { Event_ID: eventId, Supplier_Email: supplier_email } = taskDetails;
         const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
@@ -97,7 +99,7 @@ export function CheckboxComponent() {
             supplierTaskId
         };
 
-        if (prevResponses.length > 0) {
+        if (prevResponses.length > 0 && !isMultipleBid) {
             const { Line_Item_instance_id, Line_item_activity_instance_id, Response_Status, _id } = prevResponses[0];
             payload = {
                 ...payload,
@@ -245,7 +247,7 @@ export function CheckboxComponent() {
             Response_Status: "Draft",
             _is_created: true
         }
-        if (Current_Stage == "RFQ" || (Current_Stage == "RFP" && !Event_Type.includes("RFQ")) ) {
+        if (Current_Stage == "RFQ" || (Current_Stage == "RFP" && !Event_Type.includes("RFQ"))) {
             payload.Commercial_Included = "Yes";
         }
         const response = await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/batch`,
@@ -485,9 +487,20 @@ export function CheckboxComponent() {
                         <div>
                             {currentConsentStatus == StatusType.Accepted ?
                                 responesStatus == "Active" ?
-                                    <Typography>
-                                        Already responded
-                                    </Typography>
+                                    multipleBid ?
+                                        <KFButton
+                                            buttonType='primary'
+                                            // style={{ backgroundColor: "red", marginRight: 10, fontWeight: "600" }}
+                                            // className=""
+                                            loading={loading}
+                                            onClick={async () => {
+                                                setLoading(true);
+                                                await createOrContinueSupplierResponses(true);
+                                            }}
+                                        >Submit another quote</KFButton> :
+                                        <Typography>
+                                            Already responded
+                                        </Typography>
                                     :
                                     <KFButton
                                         buttonType='primary'
