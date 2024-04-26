@@ -514,7 +514,7 @@ const AssessAndAwardTable: React.FC = () => {
             dataIndex: 'parameters',
             key: 'parameters',
             fixed: "left",
-            width: "40%",
+            width: `${suppliers.length >= 2 ? 40 : 60}%`,
             className: "table-header table-parameter",
             render: (text: string, record: any, index: any) => (
                 <div style={{
@@ -557,8 +557,7 @@ const AssessAndAwardTable: React.FC = () => {
                             <p style={{marginLeft: 8}} >{text}</p>
                             </div>
                         }),
-                        width: 130,
-                        // width: "auto",
+                        width: "auto",
                         hidden: !showResponse
                     },
                     {
@@ -574,7 +573,7 @@ const AssessAndAwardTable: React.FC = () => {
                             // data={data}
                             />
                         }),
-                        width: 130, 
+                        width: 150, 
                         // width: "auto",
                         hidden: !showRating
                     }
