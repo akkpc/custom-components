@@ -76,7 +76,7 @@ export function CheckboxComponent() {
 
     async function createOrContinueSupplierResponses(isMultipleBid?: boolean) {
         const taskDetails = await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`);
-        const { Event_ID: eventId, Supplier_Email: supplier_email } = taskDetails;
+        const { Event_ID: eventId, Supplier_Email: supplier_email, Supplier_ID } = taskDetails;
         const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
         const prevResponses = await getPrevSupplierResponses(taskDetails, SourcingDetails);
 
@@ -131,6 +131,18 @@ export function CheckboxComponent() {
                 console.log("Response Line items created : ", _id, _activity_instance_id, rest, updatedResonse)
                 payload.line_id = _id;
                 payload.line_aid = _activity_instance_id;
+            }
+            if (multipleBid && prevResponses.length > 0) {
+                for await (const prevResponse of prevResponses) {
+                    await KFSDK.api(
+                        `/form/2/${KFSDK.account._id}/${supplierResponses}/${prevResponse._id}`,
+                        {
+                            method: "POST",
+                            body: JSON.stringify({
+                                Lastest_bid: "No"
+                            })
+                        });
+                }
             }
         }
         const questionnaireTab = {
