@@ -88,9 +88,10 @@ const SupplierResponseQuestions: React.FC = () => {
     const [sections, setSections] = useState<SourcingSupplierSection[]>([])
     const [eventTypes, setEventTypes] = useState<string[]>([])
     const [supplierId, setSupplierId] = useState("");
-    const [isResponseSubmitted, setIsResponseSubmitted] = useState(false)
+    const [isResponseSubmitted, setIsResponseSubmitted] = useState(false);
     const [supplierTaskId,setSupplierTaskId] = useState("");
     const [supplierResponseId,setSupplierResponseId] = useState("");
+    const [viewOnly, setViewOnly] = useState(false)
 
     const panelStyle: React.CSSProperties = {
         backgroundColor: "#F5F7FA",
@@ -103,7 +104,7 @@ const SupplierResponseQuestions: React.FC = () => {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            let { currentStage, sourcingEventId, Event_Type, Response_Status, supplierTaskId, res_instance_id } = await KFSDK.app.page.getAllParameters();
+            let { currentStage, sourcingEventId, Event_Type, Response_Status, supplierTaskId, res_instance_id, isViewOnly } = await KFSDK.app.page.getAllParameters();
             const eventTypes: string[] = JSON.parse(Event_Type || "[]");
             const supplier_id = await KFSDK.app.getVariable("currentSupplierId");
             if (sourcingEventId) {
@@ -115,6 +116,7 @@ const SupplierResponseQuestions: React.FC = () => {
                 setSupplierId(supplier_id);
                 setSupplierTaskId(supplierTaskId);
                 setSupplierResponseId(res_instance_id);
+                setViewOnly(isViewOnly);
                 if (Response_Status == "Active") {
                     setIsResponseSubmitted(true);
                 }
@@ -212,7 +214,7 @@ const SupplierResponseQuestions: React.FC = () => {
                                 sourcingSectionId={section._id}
                                 setSections={setSections}
                                 supplierId={supplierId}
-                                disabled={isResponseSubmitted}
+                                disabled={isResponseSubmitted || viewOnly}
                             />,
                         style: panelStyle,
                     }))}
@@ -221,8 +223,8 @@ const SupplierResponseQuestions: React.FC = () => {
                 <div style={{ height: 60 }} ></div>
             </div>
             {
-                currentStage != "RFQ" &&
-                !isResponseSubmitted &&
+                (currentStage != "RFQ" &&
+                !isResponseSubmitted && !viewOnly) &&
                 <div
                     style={{
                         position: "fixed",
