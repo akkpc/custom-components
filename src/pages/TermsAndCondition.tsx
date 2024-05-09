@@ -113,7 +113,7 @@ export function CheckboxComponent() {
             payload.res_instance_id = response._id;
             console.log("Response created : ", response)
 
-            if (Current_Stage != "RFQ") {
+            if (Current_Stage != "RFQ" && !isMultipleBid) {
                 await addQuestionnaireToSupplier(response._id, taskDetails, SourcingDetails);
             }
 
@@ -187,7 +187,8 @@ export function CheckboxComponent() {
             initialTab,
             sourcing_event_number,
             allComponents: JSON.stringify(allComponents),
-            supplierTaskId
+            supplierTaskId,
+            isViewOnly: prevResponses.length > 0 ? true : false
         });
         setLoading(false);
     }
@@ -236,7 +237,13 @@ export function CheckboxComponent() {
                                 ]
                             }
                         ]
-                    }
+                    },
+                    Sort: [
+                        {
+                            "Id": "_created_at",
+                            "SortType": "DESC"
+                        }
+                    ]
                 })
             }
         ).catch((err: any) => {
