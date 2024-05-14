@@ -178,7 +178,7 @@ const Evaluation_Table: React.FC = () => {
 
                 for (let i = 0; i < respondedSuppliers.length; i++) {
                     const { Supplier_ID: supplierId } = respondedSuppliers[i];
-                    overAllScore[supplierId] = overAllScore.children?.reduce((prev: any, current: any) => prev[supplierId] || 0 + current[supplierId] || 0, 0);
+                    overAllScore[supplierId] = overAllScore.children?.reduce((prev: number, current: any) => prev + current[supplierId] || 0, 0);
                     //  questionnaires[supplierId] + commercials[supplierId];
                     overAllScore[`${supplierId}_instance_id`] = respondedSuppliers[i]._id;
                 }
@@ -281,16 +281,16 @@ const Evaluation_Table: React.FC = () => {
         const { type, key, ...rest } = instance;
         let dataInstanceId = rest[`${supplierId}_instance_id`];
         switch (type) {
-            case "root":
-            case "questionnaire":
-            case "commercial_details":
-                (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/${dataInstanceId}`, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        [key]: scoreValue
-                    })
-                }))
-                break;
+            // case "root":
+            // case "questionnaire":
+            // case "commercial_details":
+            //     (await KFSDK.api(`/form/2/${KFSDK.account._id}/${supplierResponses}/${dataInstanceId}`, {
+            //         method: "POST",
+            //         body: JSON.stringify({
+            //             [key]: scoreValue
+            //         })
+            //     }))
+            //     break;
             case "line_item_params":
                 const [keyname] = key.split("#");
                 (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
@@ -305,20 +305,20 @@ const Evaluation_Table: React.FC = () => {
                     })
                 }))
                 break;
-            case "line_item":
-                (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
-                    method: "PUT",
-                    body: JSON.stringify({
-                        [`Table::Line_Items`]: [
-                            {
-                                _id: rest[`${supplierId}_key`],
-                                [`Score_${evaluatorSequence}`]: scoreValue
-                            }
-                        ]
-                    })
-                }))
-                break;
-            case "line_items":
+            // case "line_item":
+            //     (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
+            //         method: "PUT",
+            //         body: JSON.stringify({
+            //             [`Table::Line_Items`]: [
+            //                 {
+            //                     _id: rest[`${supplierId}_key`],
+            //                     [`Score_${evaluatorSequence}`]: scoreValue
+            //                 }
+            //             ]
+            //         })
+            //     }))
+            //     break;
+            // case "line_items":
             case "line_item_info":
                 (await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SupplierLineItem}/${dataInstanceId}`, {
                     method: "PUT",
@@ -327,9 +327,10 @@ const Evaluation_Table: React.FC = () => {
                     })
                 }))
                 break;
-            case "section":
+            // case "section":
             case "question":
-                let dataform = type == "section" ? supplierResponseSection : supplierResponseQuestion;
+                // let dataform = type == "section" ? supplierResponseSection : supplierResponseQuestion;
+                let dataform = supplierResponseQuestion;
                 (await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform}/${dataInstanceId}`, {
                     method: "POST",
                     body: JSON.stringify({
@@ -472,7 +473,7 @@ const Evaluation_Table: React.FC = () => {
                     })
                 }
 
-                commercialSum += rest[key];
+                commercialSum += rest[key] || 0;
             }
 
             let lines = rest[`Table::Line_Items`];
@@ -526,7 +527,7 @@ const Evaluation_Table: React.FC = () => {
                             }))
                         })
                     }
-                    lineItemsSum += item[`Score_${evaluatorSequence}`];
+                    lineItemsSum += item[`Score_${evaluatorSequence}`] || 0;
                 }
             }
 
