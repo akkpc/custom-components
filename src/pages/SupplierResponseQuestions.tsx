@@ -116,7 +116,10 @@ const SupplierResponseQuestions: React.FC = () => {
                 setSupplierId(supplier_id);
                 setSupplierTaskId(supplierTaskId);
                 setSupplierResponseId(res_instance_id);
-                setViewOnly(isViewOnly);
+                if(isViewOnly == "true" || isViewOnly==true) {
+                    setViewOnly(true);
+                }
+
                 if (Response_Status == "Active") {
                     setIsResponseSubmitted(true);
                 }

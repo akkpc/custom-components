@@ -188,7 +188,7 @@ export function CheckboxComponent() {
             sourcing_event_number,
             allComponents: JSON.stringify(allComponents),
             supplierTaskId,
-            isViewOnly: prevResponses.length > 0 ? true : false
+            isViewOnly: (prevResponses.length > 0 && isMultipleBid) ? true : false
         });
         setLoading(false);
     }
