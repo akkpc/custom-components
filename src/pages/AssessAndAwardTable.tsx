@@ -428,7 +428,7 @@ const AssessAndAwardTable: React.FC = () => {
             }
 
             let lines = rest[`Table::Line_Items`];
-            // let lineItemsSum = 0;
+            let lineItemsSum = 0;
 
             if (lines.length > 0) {
                 for (const item of lines) {
@@ -488,11 +488,13 @@ const AssessAndAwardTable: React.FC = () => {
                         })
                     }
                     // lineItemsSum += item[`Score`];
+                    lineItemsSum = lineItemsSum + item.Line_Total;
                 }
             }
 
             // lineItems[Supplier_ID] = rest.Line_Item_Weighted_Score;
             // commercials[Supplier_ID] = Commercial_Weighted_Score;
+            lineItems[getResponseKey(Supplier_ID)] = `$${lineItemsSum}`;
             lineItems[Supplier_ID] = rest.Agg_weighted_line_item_score;
             commercials[Supplier_ID] = Agg_Weighted_Commercial_Score;
 
