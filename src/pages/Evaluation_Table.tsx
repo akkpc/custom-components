@@ -876,7 +876,7 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
                         await updateValueFields(supplierId, scoreValue, path)
                     }}
                     min={0}
-                    max={100}
+                    max={10}
                     style={{
                         display: "flex",
                         alignItems: "center",

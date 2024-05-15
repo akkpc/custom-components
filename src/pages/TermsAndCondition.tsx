@@ -33,7 +33,7 @@ export function CheckboxComponent() {
     useEffect(() => {
         (async () => {
             await KFSDK.initialize();
-            const { supplierTaskId: stid, end_date, allow_multiple_bid } = await KFSDK.app.page.getAllParameters();
+            const { supplierTaskId: stid, end_date } = await KFSDK.app.page.getAllParameters();
             let date = getDate(end_date);
             if (date) {
                 if (date?.getTime() <= new Date().getTime()) {
@@ -53,7 +53,9 @@ export function CheckboxComponent() {
                 if (response.length > 0) {
                     setResponseStatus(response[0].Response_Status)
                 }
-                setMultipleBid(SourcingDetails.Allow_multiple_bids_for_RFQ);
+                if(SourcingDetails.Allow_multiple_bids_for_RFQ == "Yes") {
+                    setMultipleBid(true);
+                }
                 setCurrentConsentStatus(my_task.Consent_Status);
             }
         })()

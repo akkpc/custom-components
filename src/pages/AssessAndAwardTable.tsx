@@ -811,7 +811,8 @@ function RowRender({ record: { key, type, path, ...rest }, text, supplierId }: a
 
     useEffect(() => {
         if (rest[supplierId]) {
-            setScoreValue(Number(rest[supplierId].toFixed(0)))
+            // setScoreValue(Number(rest[supplierId].toFixed(0)))
+            setScoreValue(rest[supplierId].toFixed(2))
         }
     }, [rest[supplierId]])
 
