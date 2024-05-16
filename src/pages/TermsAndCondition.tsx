@@ -493,7 +493,7 @@ export function CheckboxComponent() {
                                 Read and Accept
                                 <a
                                     target='__blank'
-                                    href={`/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
+                                    href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
                                 >&nbsp;Terms & Conditions</a>
                             </Typography>
                         </div> :
@@ -501,7 +501,7 @@ export function CheckboxComponent() {
                                 Read Accepted
                                 <a
                                     target='__blank'
-                                    href={`/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
+                                    href={`${process.env.REACT_APP_API_URL}/view/filepreview/form/${sourcingSupplierTasks}/${supplierTaskId}/Terms__Conditions?fileindex=0`}
                                 >&nbsp;Terms & Conditions</a>
                             </Typography> : <></>
                         }
