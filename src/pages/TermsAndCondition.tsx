@@ -2,6 +2,7 @@ import { Checkbox, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { KFButton } from '../components/KFButton';
 import { dataforms, lineComponentId, processes, questionnaireComponentId } from '../helpers/constants';
+import { showMessage } from '../hooks/KFFunctions';
 const KFSDK = require("@kissflow/lowcode-client-sdk")
 
 enum StatusType {
@@ -62,13 +63,26 @@ export function CheckboxComponent() {
     }, [supplierTaskId])
 
     async function updateConsent(isAccepted: boolean) {
+        const taskDetails = await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`);
+        const { Event_ID: eventId } = taskDetails;
+        const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
+        const end_date: any = getDate(SourcingDetails.RSVP_End_Date_3);
+        const start_date: any = getDate(SourcingDetails.RSVP_Start_Date);
+        if(start_date.getTime() > new Date().getTime()) {
+            showMessage(KFSDK, "The RSVP period has not yet started");
+            return false;
+        }
+        if(end_date.getTime() < new Date().getTime()) {
+            showMessage(KFSDK, "The deadline to RSVP has ended");
+            return false;
+        }
         const consent: any[] = (await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`, {
             method: "POST",
             body: JSON.stringify({
                 Consent_Status: isAccepted ? "Accepted" : "Declined"
             })
         })).Data
-        return consent
+        return true;
     }
 
     async function getDetail(supplierTaskId: string) {
@@ -192,7 +206,6 @@ export function CheckboxComponent() {
             supplierTaskId,
             isViewOnly: (prevResponses.length > 0 && multipleBid) ? true : false
         });
-        setLoading(false);
     }
 
     async function getPrevSupplierResponses(taskDetails: Record<string, any>, SourcingDetails: Record<string, any>) {
@@ -517,6 +530,7 @@ export function CheckboxComponent() {
                                             onClick={async () => {
                                                 setLoading(true);
                                                 await createOrContinueSupplierResponses();
+                                                setLoading(false);
                                             }}
                                         >Submit another quote</KFButton> :
                                         <Typography>
@@ -531,6 +545,7 @@ export function CheckboxComponent() {
                                         onClick={async () => {
                                             setLoading(true);
                                             await createOrContinueSupplierResponses();
+                                            setLoading(false);
                                         }}
                                     >Continue</KFButton>
                                 :
@@ -549,9 +564,8 @@ export function CheckboxComponent() {
                                                     content
                                                 }).then(async (action: any) => {
                                                     if (action === "OK") {
-                                                        await updateConsent(false)
-                                                    }
-                                                    else {
+                                                        await updateConsent(false);
+                                                    } else {
                                                     }
                                                 })
                                             }}
@@ -564,8 +578,11 @@ export function CheckboxComponent() {
                                             className=""
                                             onClick={async () => {
                                                 setLoading(true);
-                                                await updateConsent(true)
-                                                await createOrContinueSupplierResponses();
+                                                const status = await updateConsent(true);
+                                                if(status) {
+                                                    await createOrContinueSupplierResponses();
+                                                }
+                                                setLoading(false);
                                             }}
                                         >Accept Invite</KFButton>
                                     </div>
