@@ -227,3 +227,7 @@ th.ant-table-cell {
   top: 0;
   z-index: 1000;
 }
+
+.inputnumber .ant-input-number-input-wrap input {
+  text-align: right;
+}

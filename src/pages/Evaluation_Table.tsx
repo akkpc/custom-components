@@ -857,12 +857,30 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
 
     return (
         <div style={{
-            height: "100%", width: "100%", display: "flex", alignItems: "center", backgroundColor: "#fafafa"
+            height: "100%",
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            backgroundColor: "#fafafa"
         }} >
             {isViewOnly ?
-                <div style={{ textAlign: "left", marginLeft: 28 }} >
-                    {scoreValue}
-                </div> :
+                <InputNumber
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent:"flex-end",
+                        width: "100%",
+                        height: "100%",
+                        fontWeight: "bolder",
+                        color: "black"
+                    }}
+                    disabled={true}
+                    value={scoreValue}
+                    className='inputnumber'
+                    variant='borderless'
+                    controls={false}
+                /> :
+
                 <InputNumber
                     disabled={rest[supplierId] == undefined}
                     value={scoreValue}
@@ -880,11 +898,13 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
                     style={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
+                        justifyContent:"flex-end",
                         width: "100%",
                         height: "100%",
                         borderRadius: 2
                     }}
+                    className='inputnumber'
+                    controls={false}
                 />
             }
         </div>)

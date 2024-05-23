@@ -76,7 +76,7 @@ export function CheckboxComponent() {
         return my_task
     }
 
-    async function createOrContinueSupplierResponses(isMultipleBid?: boolean) {
+    async function createOrContinueSupplierResponses() {
         const taskDetails = await KFSDK.api(`/form/2/${KFSDK.account._id}/${sourcingSupplierTasks}/${supplierTaskId}`);
         const { Event_ID: eventId, Supplier_Email: supplier_email, Supplier_ID } = taskDetails;
         const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
@@ -101,7 +101,7 @@ export function CheckboxComponent() {
             supplierTaskId
         };
 
-        if (prevResponses.length > 0 && !isMultipleBid) {
+        if (prevResponses.length > 0 && (prevResponses[0].Response_Status != "Active" || !multipleBid)) {
             const { Line_Item_instance_id, Line_item_activity_instance_id, Response_Status, _id } = prevResponses[0];
             payload = {
                 ...payload,
@@ -115,7 +115,7 @@ export function CheckboxComponent() {
             payload.res_instance_id = response._id;
             console.log("Response created : ", response)
 
-            if (Current_Stage != "RFQ" && !isMultipleBid) {
+            if (Current_Stage != "RFQ" && !multipleBid) {
                 await addQuestionnaireToSupplier(response._id, taskDetails, SourcingDetails);
             }
 
@@ -190,7 +190,7 @@ export function CheckboxComponent() {
             sourcing_event_number,
             allComponents: JSON.stringify(allComponents),
             supplierTaskId,
-            isViewOnly: (prevResponses.length > 0 && isMultipleBid) ? true : false
+            isViewOnly: (prevResponses.length > 0 && multipleBid) ? true : false
         });
         setLoading(false);
     }
@@ -516,7 +516,7 @@ export function CheckboxComponent() {
                                             loading={loading}
                                             onClick={async () => {
                                                 setLoading(true);
-                                                await createOrContinueSupplierResponses(true);
+                                                await createOrContinueSupplierResponses();
                                             }}
                                         >Submit another quote</KFButton> :
                                         <Typography>
