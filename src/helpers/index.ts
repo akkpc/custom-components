@@ -15,15 +15,15 @@ function generateColorCode(value: number) {
 
 
 function calculateColorCode(min: number, max: number, value: number) {
-    min = Math.round(min)
-    max = Math.round(max)
-    value = Math.round(value)
+    // min = Math.round(min)
+    // max = Math.round(max)
+    // value = Math.round(value)
     if (min == max) return getColorCode([141, 204, 139, 1])
     let color: number[] = [];
     let diff = (max - min) / 3;
     let redInterval = [min, min + diff]
-    let yellowInterval = [min + diff + 0.1, (min + diff * 2)]
-    let greenInterval = [(min + diff * 2 + 0.1), max]
+    let yellowInterval = [min + diff, (min + diff * 2)]
+    let greenInterval = [(min + diff * 2), max]
 
     if (value >= redInterval[0] && value <= redInterval[1]) {
         color = [236, 143, 140, (1 - (redInterval[0] - value) / (redInterval[1] - redInterval[0])) + 0.01]

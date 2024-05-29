@@ -48,21 +48,16 @@ export interface SourcingMaster {
     Supplier_Clarification_Window_End_Date: string;
     Weightage_Applicable: string;
     Scoring_Scale: string;
-    Evaluator_1: {
+    Technical_Evaluators: {
         Name: string;
-        Email_address: string;
+        Kind: string;
         _id: string;
-    };
-    Evaluator_2: {
+    }[];
+    Commercial_Evaluators: {
         Name: string;
-        Email_address: string;
+        Kind: string;
         _id: string;
-    };
-    Evaluator_3: {
-        Name: string;
-        Email_address: string;
-        _id: string;
-    };
+    }[];
     Evaluation_Start_Date: string;
     Evaluation_End_Date: string;
     Awarding_Communication: string;

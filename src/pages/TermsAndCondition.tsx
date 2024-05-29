@@ -129,7 +129,7 @@ export function CheckboxComponent() {
             payload.res_instance_id = response._id;
             console.log("Response created : ", response)
 
-            if (Current_Stage != "RFQ" && !multipleBid) {
+            if (Current_Stage != "RFQ" && prevResponses.length == 0) {
                 await addQuestionnaireToSupplier(response._id, taskDetails, SourcingDetails);
             }
 
@@ -204,7 +204,7 @@ export function CheckboxComponent() {
             sourcing_event_number,
             allComponents: JSON.stringify(allComponents),
             supplierTaskId,
-            isViewOnly: (prevResponses.length > 0 && multipleBid) ? true : false
+            isViewOnly: (prevResponses.length > 0 && prevResponses[0].Response_Status == "Active") ? true : false
         });
     }
 
@@ -331,7 +331,7 @@ export function CheckboxComponent() {
     }
 
     async function addQuestionnaireToSupplier(instance_id: string, taskDetails: Record<string, any>, SourcingDetails: Record<string, any>) {
-        const { _id, Current_Stage, Evaluator_Count } = SourcingDetails;
+        const { _id, Current_Stage } = SourcingDetails;
         const { Supplier_ID } = taskDetails;
 
         const flowLogicPayload = {
@@ -394,7 +394,6 @@ export function CheckboxComponent() {
             ...flowLogicPayload,
             Template_Name: template.Template_Name,
             Weightage: template.Weightage,
-            Evaluator_Count,
             _is_created: true
         }]
 
@@ -405,7 +404,6 @@ export function CheckboxComponent() {
             Weightage: section.Weightage,
             Template_ID: section.Template_ID,
             Section_ID: section.Section_ID,
-            Evaluator_Count,
             _is_created: true
         }))
 
@@ -418,7 +416,6 @@ export function CheckboxComponent() {
             Template_ID: question.Template_ID,
             Section_ID: question.Section_ID,
             Question_ID: question.Question_ID,
-            Evaluator_Count,
             _is_created: true
         }))
 

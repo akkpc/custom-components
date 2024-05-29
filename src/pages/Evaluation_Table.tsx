@@ -103,10 +103,10 @@ const rowSelection: TableRowSelection<DataType> = {
     hideSelectAll: true,
 };
 
-function getScoreKey(sequence: number): ("Score_1" | "Score_2" | "Score_3") {
-    if (sequence == 1) return "Score_1"
-    if (sequence == 2) return "Score_1"
-    return "Score_3"
+function getScoreKey(sequence: number): "Score_1" | "Score_2" | "Score_3" {
+    if (sequence == 2) return "Score_2"
+    if (sequence == 3) return "Score_3"
+    return "Score_1"
 }
 
 
@@ -116,7 +116,8 @@ const Evaluation_Table: React.FC = () => {
     const [sourcingEventId, setSourcingEventId] = useState<string>("");
     const [columns, setColumns] = useState<any[]>([])
     const [data, setData] = useState<any[]>([])
-    const [evaluatorSequence, setEvaluatorSequence] = useState(0);
+    const [technicalSequence, setTechnicalSequence] = useState(0);
+    const [commercialSequence, setCommercialSequence] = useState(0);
     const [isViewOnly, setIsViewOnly] = useState(true);
     const [sourcingDetails, setSourcingDetails] = useState<SourcingMaster>();
     const [expandedRows, setExpandedRows] = useState<string[]>([]);
@@ -128,9 +129,11 @@ const Evaluation_Table: React.FC = () => {
             let { sourcing_event_id, supplierIds } = await KFSDK.app.page.getAllParameters();
             const viewOnly = false
             const sourcing_details: SourcingMaster = await getSourcingDetails(sourcing_event_id)
-            const es = findSequence(sourcing_details)
+            const _technicalSequence = findTechnicalSequence(sourcing_details);
+            const _commercialSequence = findCommercialSequence(sourcing_details);
+            setTechnicalSequence(_technicalSequence);
+            setCommercialSequence(_commercialSequence);
             setSelectedSuppliers(JSON.parse(supplierIds));
-            setEvaluatorSequence(es)
             setSourcingDetails(sourcing_details);
             setSourcingEventId(sourcing_event_id)
             setIsViewOnly(viewOnly);
@@ -157,21 +160,21 @@ const Evaluation_Table: React.FC = () => {
                 })
 
                 let overAllScore: TableRowData = {
-                    key: `Score_${evaluatorSequence}`,
+                    key: `Score_${technicalSequence}`,
                     parameters: "OverAll Score",
                     type: "root",
                     children: []
                 }
 
-                if (["RFI", "RFP"].includes(sourcingDetails.Current_Stage)) {
-                    const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage, evaluatorSequence, 0);
+                if (["RFI", "RFP"].includes(sourcingDetails.Current_Stage) && technicalSequence > 0) {
+                    const questionnaires = await buildTechnicalItems(respondedSuppliers, sourcingDetails.Current_Stage, technicalSequence, 0);
                     overAllScore?.children?.push(questionnaires);
                 }
 
 
-                if (sourcingDetails.Current_Stage == "RFQ" || sourcingDetails.Current_Stage == "RFP" && !sourcingDetails.Event_Type.includes("RFQ")) {
+                if ((sourcingDetails.Current_Stage == "RFQ" || (sourcingDetails.Current_Stage == "RFP" && !sourcingDetails.Event_Type.includes("RFQ"))) && commercialSequence > 0) {
                     let cIndex = overAllScore?.children?.length || 0;
-                    const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails, evaluatorSequence, cIndex);
+                    const commercials = await buildCommercialItems(respondedSuppliers, sourcingDetails, commercialSequence, cIndex);
                     overAllScore?.children?.push(commercials);
                 }
 
@@ -186,21 +189,35 @@ const Evaluation_Table: React.FC = () => {
                 console.log("overAllScore: ", overAllScore)
                 prevData.current = [overAllScore];
                 setData([overAllScore]);
-                buildColumns(respondedSuppliers, evaluatorSequence);
+                buildColumns(respondedSuppliers, technicalSequence);
                 setContentLoaded(true);
             })()
         }
     }, [sourcingDetails])
 
-    function findSequence(sourcingDetails: SourcingMaster) {
-        if (sourcingDetails.Evaluator_1.Email_address === KFSDK.user.Email) {
+    function findTechnicalSequence(sourcingDetails: SourcingMaster) {
+        if (sourcingDetails.Event_Type.includes("RFP")) {
+            if (sourcingDetails.Technical_Evaluators[0]?._id == KFSDK.user._id) {
+                return 1
+            } else if (sourcingDetails.Technical_Evaluators[1]?._id == KFSDK.user._id) {
+                return 2
+            } else if (sourcingDetails.Technical_Evaluators[2]?._id == KFSDK.user._id) {
+                return 3
+            }
+        }
+        // KFSDK.client.showInfo("Something went wrong");
+        return 0;
+    }
+
+    function findCommercialSequence(sourcingDetails: SourcingMaster) {
+        if (sourcingDetails.Commercial_Evaluators[0]?._id == KFSDK.user._id) {
             return 1
-        } else if (sourcingDetails?.Evaluator_2?.Email_address === KFSDK.user.Email) {
+        } else if (sourcingDetails.Commercial_Evaluators[1]?._id == KFSDK.user._id) {
             return 2
-        } else if (sourcingDetails?.Evaluator_3?.Email_address === KFSDK.user.Email) {
+        } else if (sourcingDetails.Commercial_Evaluators[2]?._id == KFSDK.user._id) {
             return 3
         } else {
-            KFSDK.client.showInfo("Something went wrong");
+            // KFSDK.client.showInfo("Something went wrong");
             return 0;
         }
     }
@@ -334,7 +351,7 @@ const Evaluation_Table: React.FC = () => {
                 (await KFSDK.api(`/form/2/${KFSDK.account._id}/${dataform}/${dataInstanceId}`, {
                     method: "POST",
                     body: JSON.stringify({
-                        [`Score_${evaluatorSequence}`]: scoreValue
+                        [`Score_${technicalSequence}`]: scoreValue
                     })
                 }))
                 break;
@@ -810,7 +827,7 @@ const Evaluation_Table: React.FC = () => {
                                 }
                             },
                             expandIcon: customExpandIcon,
-                            defaultExpandedRowKeys: [`Score_${evaluatorSequence}`]
+                            defaultExpandedRowKeys: [`Score_${technicalSequence}`]
                         }}
                         rootClassName='root'
                         rowKey={(record) => record.key}
@@ -868,7 +885,7 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
                     style={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent:"flex-end",
+                        justifyContent: "flex-end",
                         width: "100%",
                         height: "100%",
                         fontWeight: "bolder",
@@ -893,12 +910,12 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
                         // let diff = scoreValue - (rest[supplierId] || 0);
                         await updateValueFields(supplierId, scoreValue, path)
                     }}
-                    min={0}
+                    min={1}
                     max={10}
                     style={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent:"flex-end",
+                        justifyContent: "flex-end",
                         width: "100%",
                         height: "100%",
                         borderRadius: 2
@@ -911,7 +928,7 @@ function RowRender({ record: { key, type, path, ...rest }, isViewOnly = true, te
 }
 
 function getLeftPadding(key: string) {
-    if (key == "question") return 12
+    if (key == "question") return 36
     if (key == "line_item_info") return 36
     if (key == "line_item_params") return 70
     return 0;

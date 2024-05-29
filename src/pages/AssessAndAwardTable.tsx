@@ -887,7 +887,7 @@ export function customExpandIcon(props: any) {
 
 
 function getLeftPadding(key: string) {
-    if (key == "question") return 12
+    if (key == "question") return 36
     if (key == "line_item_info") return 36
     if (key == "line_item_params") return 65
     return 0;
