@@ -68,11 +68,11 @@ export function CheckboxComponent() {
         const SourcingDetails = await KFSDK.api(`/process/2/${KFSDK.account._id}/admin/${SourcingMaster}/${eventId}`);
         const end_date: any = getDate(SourcingDetails.RSVP_End_Date_3);
         const start_date: any = getDate(SourcingDetails.RSVP_Start_Date);
-        if(start_date.getTime() > new Date().getTime()) {
+        if(start_date && start_date.getTime() > new Date().getTime()) {
             showMessage(KFSDK, "The RSVP period has not yet started");
             return false;
         }
-        if(end_date.getTime() < new Date().getTime()) {
+        if(end_date && end_date.getTime() < new Date().getTime()) {
             showMessage(KFSDK, "The deadline to RSVP has ended");
             return false;
         }
